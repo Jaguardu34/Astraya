@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 SIZE = 2000
 
@@ -84,9 +85,23 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
 
 # --- 5. Résultat final : liste de listes ---
 biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
-
-
 map = biome_map
+
+
+nb_villages = 80
+coord_vil = []
+
+for vil in range(nb_villages):
+    posable = False
+
+    while not posable:
+        cord_vil_x = random.randint(0, SIZE)
+        cord_vil_y = random.randint(0,SIZE)
+        if map[cord_vil_x][cord_vil_y] != 0:
+            coord_vil.append([cord_vil_x, cord_vil_y])
+            posable = True
+
+
 
 # biome_map est maintenant une liste de listes Python
 
