@@ -10,6 +10,8 @@ Ce tableau est ensuite affiché sous formes de "tiles" ou tuiles en fonction de 
 
 ### Utilisation
 Pour lancer le jeu il s'uffit de lancer le fichier **main.py** dans le dosssier **Astraya2.0**
+
 **Il est obligatoire pour le bon fonctionnement de Pygames d'utilise Python<=3.12**
+
 **Modules requis** : *Pygames* et *Numpy*
 
