@@ -85,6 +85,9 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
 # --- 5. Résultat final : liste de listes ---
 biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
 
+
+map = biome_map
+
 # biome_map est maintenant une liste de listes Python
 
 #map = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -99,5 +102,5 @@ biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
 #       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 #
 #
-#collide_tiles = [3]
+collide_tiles = [3]
 
