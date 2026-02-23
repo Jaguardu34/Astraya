@@ -15,7 +15,7 @@ dt = 0
 
 player_pos = 3, 3
 
-scale_map = 23, 19
+scale_map = 39, 19
 
 timing_step = 10 #frame a attendre entre chaque déplacement du joueur 60 frames = 1 seconde
 
@@ -32,7 +32,7 @@ def draw_minimap(x, y, scale, player_position):
         for j in range(scale):
             map_i = posx - scale//2 + i
             map_j = posy - scale//2 + j
-            if map_i < 0 or map_j < 0 or map_i >= len(map.map[0]) or map_j >= len(map.map):
+            if map_i < 0 or map_j < 0 or map_j >= len(map.map) or map_i >= len(map.map[map_j]):
                 pygame.draw.rect(screen, "blue", (x + (i*8), y + (j*8), 8, 8))
             else:
                 if map.map[map_j][map_i] == 0:
@@ -44,6 +44,7 @@ def draw_minimap(x, y, scale, player_position):
     
     #player
     pygame.draw.rect(screen, "yellow", (x + (scale//2*8), y + (scale//2*8), 8, 8))
+
     
 def draw_map(x, y, scalex, scaley, player_position):
     posx, posy = player_position
@@ -51,7 +52,7 @@ def draw_map(x, y, scalex, scaley, player_position):
         for j in range(scaley):
             map_i = posx - scalex//2 + i
             map_j = posy - scaley//2 + j
-            if map_i < 0 or map_j < 0 or map_i >= len(map.map[0]) or map_j >= len(map.map):
+            if map_i < 0 or map_j < 0 or map_j >= len(map.map) or map_i >= len(map.map[map_j]):
                 pygame.draw.rect(screen, "blue", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
             else:
                 if map.map[map_j][map_i] == 0:
@@ -68,11 +69,13 @@ def draw_map(x, y, scalex, scaley, player_position):
     
     draw_minimap(x+scalex*16*SCALE - 8*scale_minimap - 8, y+8, scale_minimap, player_pos)
     
-
+def drawcoeurs(x, y, nbcoeurs):
+    for i in range(nbcoeurs):
+        pygame.draw.rect(screen, "red", (x + (i*16+16), y, 16, 16))
                     
                     
 def veriftile(x, y):
-    if x < 0 or y < 0 or x >= len(map.map[0]) or y >= len(map.map) or x == None or y == None:
+    if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
         return False
     elif map.map[y][x] in map.collide_tiles:
         return False
@@ -94,6 +97,8 @@ while running:
     scalemapx, scalemapy = scale_map
     
     draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player_pos)
+    
+    drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
 
     keys = pygame.key.get_pressed()
