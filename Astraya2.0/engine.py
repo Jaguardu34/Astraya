@@ -1,6 +1,7 @@
 # Example file showing a circle moving on screen
 import pygame
 import map
+import random
 
 GAME_W = 640 
 GAME_H = 480
@@ -15,7 +16,7 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-player_pos = 3, 3
+player_pos = random.randint(0, 2000), random.randint(0, 2000)
 
 scale_map = 39, 19
 
