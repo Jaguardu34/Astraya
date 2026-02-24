@@ -106,13 +106,8 @@ for vil in range(nb_villages):
 for i in range(len(map)):
     for j in range(len(map[0])):
         if map[i][j] == "plains":
-            x_text = random.randint(1,3)
-            if x_text == 1:
-                map[i][j] = "plains_1"
-            elif x_text == 2:
-                map[i][j] = "plains_2"
-            else : 
-                map[i][j] = "plains_3"
+            x_text = random.randint(1,9)
+            map[i][j] = f"plains_{x_text}"
 
 
 

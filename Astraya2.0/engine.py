@@ -36,15 +36,16 @@ def get_sprite(sheet, x, y, width, height):
     sprite.blit(sheet, (0, 0), (x, y, width, height))
     return sprite
 
+texture_herbe = []
+for i in range(3):
+    texture_herbe.append(get_sprite(textures, 0 + (i * 16), 0, 16, 16))
+    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), 90))
+    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), -90))
+    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), 180))
 
-text_herbe_1 = get_sprite(textures, 0, 0, 16, 16)
-text_herbe_2 = get_sprite(textures, 16, 0, 16, 16)
-text_herbe_3 = get_sprite(textures, 32, 0, 16, 16)
-
-
-text_herbe_1_upscaled = pygame.transform.scale(text_herbe_1, (text_herbe_1.get_width() * SCALE, text_herbe_1.get_height()*SCALE))
-text_herbe_2_upscaled = pygame.transform.scale(text_herbe_2, (text_herbe_2.get_width() * SCALE, text_herbe_2.get_height()*SCALE))
-text_herbe_3_upscaled = pygame.transform.scale(text_herbe_3, (text_herbe_3.get_width() * SCALE, text_herbe_3.get_height()*SCALE))
+texture_herbe_upscaled = []
+for i in range(len(texture_herbe)):
+    texture_herbe_upscaled.append(pygame.transform.scale(texture_herbe[i], (texture_herbe[i].get_width() * SCALE, texture_herbe[i].get_height()*SCALE)))
 
 
 def draw_player():
@@ -68,7 +69,7 @@ def draw_minimap(x, y, scale, player_position):
                     pygame.draw.rect(screen, "yellow", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
                 elif map.map[map_j][map_i] == "jungle":
                     pygame.draw.rect(screen, "lightgreen", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
-                elif map.map[map_j][map_i] == "plains":
+                elif map.map[map_j][map_i].startswith("plains"):
                     pygame.draw.rect(screen, "green", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
                 elif map.map[map_j][map_i] == "mountains":
                     pygame.draw.rect(screen, "gray", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
@@ -97,12 +98,9 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "yellow", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "jungle":
                     pygame.draw.rect(screen, "lightgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
-                elif map.map[map_j][map_i] == "plains_1":
-                    screen.blit(text_herbe_1_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
-                elif map.map[map_j][map_i] == "plains_2":
-                    screen.blit(text_herbe_2_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
-                elif map.map[map_j][map_i] == "plains_3":
-                    screen.blit(text_herbe_3_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
+                elif map.map[map_j][map_i].startswith("plains"):
+                    index = int(map.map[map_j][map_i].split("_")[1])
+                    screen.blit(texture_herbe_upscaled[index - 1], (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
                 elif map.map[map_j][map_i] == "mountains":
                     pygame.draw.rect(screen, "gray", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "snow_peak":
@@ -111,7 +109,7 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
     
     #player
-    pygame.draw.rect(screen, "yellow", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))
+    pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))
     
     
     
