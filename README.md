@@ -13,5 +13,5 @@ Pour lancer le jeu il s'uffit de lancer le fichier **main.py** dans le dosssier 
 
 **Il est obligatoire pour le bon fonctionnement de Pygames d'utilise Python<=3.12**
 
-**Modules requis** : *Pygames* et *Numpy*
+**Modules requis** : *Pygames*, *Numpy* et *matplotlib*
 
