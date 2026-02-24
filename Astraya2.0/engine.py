@@ -145,7 +145,7 @@ class Chicken:
                 
         if now-self.last_walking_animation >= 500:  
             if dx > 0:
-                if self.texture_index < 1:
+                if self.texture_index < 1 :
                     self.texture_index += 1
                 else: self.texture_index = 0
             elif dx < 0:
