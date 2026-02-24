@@ -100,36 +100,28 @@ class Chicken:
                 self.last_direction = self.direction
                 
                 if self.direction == 1:
-                       
-                    if veriftile(self.x + 1, self.y):
-                        if not any(poulet.x == self.x+1 for poulet in tab_poulet):
-                            self.texture_index = random.randint(0, 2)
-                            self.x += 1
-                            self.move_count += 1
+                    self.move(1, 0, random.randint(0, 2))
                 elif self.direction == 2:
-                    if veriftile(self.x -1 , self.y):
-                        if not any(poulet.x == self.x-1 for poulet in tab_poulet):
-                            self.texture_index = random.randint(5, 7)
-                            self.x -= 1
-                            self.move_count += 1
+                    self.move(-1, 0, random.randint(5, 7))
                 elif self.direction == 3:
-                    if veriftile(self.x, self.y + 1):
-                        if not any(poulet.y == self.y +1 for poulet in tab_poulet):
-                            self.texture_index = random.randint(8, 11)
-                            self.y += 1
-                            self.move_count += 1
+                    self.move(0, 1, random.randint(10, 11))
                 elif self.direction == 4: 
-                    if veriftile(self.x, self.y - 1):
-                        if not any(poulet.y == self.y-1 for poulet in tab_poulet):
-                            self.texture_index = random.randint(8, 9)
-                            self.y -= 1
-                            self.move_count += 1
+                    self.move(0, -1, random.randint(8, 9))
+
                 self.last_move_time = now
                 
-                if self.move_count >= 10:
+                if self.move_count >= random.randint(5, 20):
                     self.emoting_state = True
                     self.emoting_start = now
                     self.last_emoting = now
+                    
+    def move(self, dx, dy, texture):
+        if veriftile(self.x + dx, self.y + dy) and not any(poulet.x == self.x + dx and poulet.y == self.y + dy for poulet in tab_poulet) and (player.x != self.x + dx and player.y != self.y+dy):
+            self.texture_index = texture
+            self.x += dx
+            self.y += dy
+            self.move_count += 1
+        
                 
     def emoting(self):
         now = pygame.time.get_ticks()
@@ -159,10 +151,11 @@ class Player:
     def move(self, dx, dy):
         now = pygame.time.get_ticks()
         if now - self.last_move >= self.move_cooldown:
-            if veriftile(self.x + dx, self.y + dy):
-                self.x += dx
-                self.y += dy
-            self.last_move = now
+            if not any(poulet.x == self.x + dx and poulet.y == self.y + dy for poulet in tab_poulet):
+                if veriftile(self.x + dx, self.y + dy):
+                    self.x += dx
+                    self.y += dy
+                self.last_move = now
 
 
     def input(self, keys):
@@ -276,8 +269,12 @@ def draw_coordinates(x, y, pos):
     font_to_write = pygame.font.SysFont(None, 24)
     text = font_to_write.render(f"Coordinates: ({pos[0]}, {pos[1]})", True, "red")
     screen.blit(text, (x, y))
-
-
+    
+def draw_fps(x, y):
+    font_to_write = pygame.font.SysFont(None, 24)
+    fps = clock.get_fps()
+    text = font_to_write.render(f"FPS: ({fps:.2f})", True, "red")
+    screen.blit(text, (x, y))
         
 
 #boucle de jeu
@@ -297,6 +294,8 @@ while running:
     drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
     draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
+    
+    draw_fps(8*SCALE, 16*SCALE)
     
     for i in range(len(tab_poulet)):
         tab_poulet[i].update()
