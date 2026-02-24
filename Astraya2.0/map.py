@@ -3,6 +3,8 @@ import random
 
 SIZE = 2000
 
+collide_tiles = [3]
+
 # --- 1. Bruit Perlin-like vectorisé ---
 def perlin(width, height, scale=10, seed=0):
     rng = np.random.default_rng(seed)
@@ -100,22 +102,17 @@ for vil in range(nb_villages):
         if map[cord_vil_x][cord_vil_y] != 0:
             coord_vil.append([cord_vil_x, cord_vil_y])
             posable = True
+            
+for i in range(len(map)):
+    for j in range(len(map[0])):
+        if map[i][j] == "plains":
+            x_text = random.randint(1,3)
+            if x_text == 1:
+                map[i][j] = "plains_1"
+            elif x_text == 2:
+                map[i][j] = "plains_2"
+            else : 
+                map[i][j] = "plains_3"
 
 
-
-# biome_map est maintenant une liste de listes Python
-
-#map = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-#       [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-#       [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-#       [0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
-#       [0, 1, 0, 1, 0, 0, 1, 0, 1, 0],
-#       [0, 1, 0, 1, 0, 0, 1, 0, 1, 0],
-#       [0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
-#       [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-#       [0, 1, 1, 1, 1, 3, 3, 3, 1, 0],
-#       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-#
-#
-collide_tiles = [3]
 

@@ -2,6 +2,7 @@
 import pygame
 import map
 import random
+import os
 
 GAME_W = 640 
 GAME_H = 480
@@ -12,21 +13,38 @@ pygame.init()
 pygame.font.init()
 pygame.display.set_caption("Astraya 2.0")
 screen = pygame.display.set_mode((GAME_W * SCALE, GAME_H * SCALE))
+
+#Chargement des textures
+textures = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png'))
+
 clock = pygame.time.Clock()
 running = True
 dt = 0
 
 player_pos = random.randint(0, 2000), random.randint(0, 2000)
-
 scale_map = 39, 19
 
-timing_step = 10 #frame a attendre entre chaque déplacement du joueur 60 frames = 1 seconde
-
+timing_step = 1 #frame a attendre entre chaque déplacement du joueur 60 frames = 1 seconde
 timing_step_count = timing_step
 
 resolution_minimap = 4
-
 scale_minimap = 65
+
+def get_sprite(sheet, x, y, width, height):
+    """Découpe un sprite à la position (x, y) avec la taille donnée."""
+    sprite = pygame.Surface((width, height), pygame.SRCALPHA)
+    sprite.blit(sheet, (0, 0), (x, y, width, height))
+    return sprite
+
+
+text_herbe_1 = get_sprite(textures, 0, 0, 16, 16)
+text_herbe_2 = get_sprite(textures, 16, 0, 16, 16)
+text_herbe_3 = get_sprite(textures, 32, 0, 16, 16)
+
+
+text_herbe_1_upscaled = pygame.transform.scale(text_herbe_1, (text_herbe_1.get_width() * SCALE, text_herbe_1.get_height()*SCALE))
+text_herbe_2_upscaled = pygame.transform.scale(text_herbe_2, (text_herbe_2.get_width() * SCALE, text_herbe_2.get_height()*SCALE))
+text_herbe_3_upscaled = pygame.transform.scale(text_herbe_3, (text_herbe_3.get_width() * SCALE, text_herbe_3.get_height()*SCALE))
 
 
 def draw_player():
@@ -61,7 +79,7 @@ def draw_minimap(x, y, scale, player_position):
                 
     
     #player
-    pygame.draw.rect(screen, "yellow", (x + (scale//2*resolution_minimap), y + (scale//2*resolution_minimap), 8, 8))
+    pygame.draw.rect(screen, "orange", (x + (scale//2*resolution_minimap), y + (scale//2*resolution_minimap), 8, 8))
 
     
 def draw_map(x, y, scalex, scaley, player_position):
@@ -79,8 +97,12 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "yellow", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "jungle":
                     pygame.draw.rect(screen, "lightgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
-                elif map.map[map_j][map_i] == "plains":
-                    pygame.draw.rect(screen, "green", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
+                elif map.map[map_j][map_i] == "plains_1":
+                    screen.blit(text_herbe_1_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
+                elif map.map[map_j][map_i] == "plains_2":
+                    screen.blit(text_herbe_2_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
+                elif map.map[map_j][map_i] == "plains_3":
+                    screen.blit(text_herbe_3_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
                 elif map.map[map_j][map_i] == "mountains":
                     pygame.draw.rect(screen, "gray", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "snow_peak":
@@ -113,6 +135,8 @@ def draw_coordinates(x, y, posx, posy):
     font_to_write = pygame.font.SysFont(None, 24)
     text = font_to_write.render(f"Coordinates: ({posx}, {posy})", True, "red")
     screen.blit(text, (x, y))
+    
+
 
 while running:
     
