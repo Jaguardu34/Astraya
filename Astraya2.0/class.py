@@ -94,9 +94,12 @@ class Chicken(Entity):
 
 
 class Player(Entity):
+    
     def __init__(self, x=1500, y=1500):
         super().__init__(x, y)
         self.speed = 100
+        self.inventory = [None] * 20
+        self.hotbar = self.inventory[:5]
 
     def _on_valid_move(self, new_x, new_y):
         if not any(engine.check_collision_entites(new_x, new_y, p.x, p.y) for p in engine.tab_poulet):
