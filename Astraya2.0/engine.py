@@ -26,6 +26,8 @@ scale_map = 39, 19
 resolution_minimap = 4
 scale_minimap = 65
 
+nbr_poulet = 10
+
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
     sprite.blit(sheet, (0, 0), (x, y, width, height))
@@ -59,7 +61,7 @@ def create_texture_with_rotation(posx, posy, nbr):
 texture_herbe_upscaled = create_texture_with_rotation(0, 0, 3)
 texture_sand_upscaled = create_texture_with_rotation(0, 16, 3)
 
-texture_chicken = create_texture_basic(0, 48, 8)
+texture_chicken = create_texture_basic(0, 48, 12)
 
 
 
@@ -98,23 +100,30 @@ class Chicken:
                 self.last_direction = self.direction
                 
                 if self.direction == 1:
+                       
                     if veriftile(self.x + 1, self.y):
-                        self.texture_index = random.randint(0, 2)
-                        self.x += 1
-                        self.move_count += 1
+                        if not any(poulet.x == self.x+1 for poulet in tab_poulet):
+                            self.texture_index = random.randint(0, 2)
+                            self.x += 1
+                            self.move_count += 1
                 elif self.direction == 2:
                     if veriftile(self.x -1 , self.y):
-                        self.texture_index = random.randint(5, 7)
-                        self.x -= 1
-                        self.move_count += 1
+                        if not any(poulet.x == self.x-1 for poulet in tab_poulet):
+                            self.texture_index = random.randint(5, 7)
+                            self.x -= 1
+                            self.move_count += 1
                 elif self.direction == 3:
                     if veriftile(self.x, self.y + 1):
-                        self.y += 1
-                        self.move_count += 1
+                        if not any(poulet.y == self.y +1 for poulet in tab_poulet):
+                            self.texture_index = random.randint(8, 11)
+                            self.y += 1
+                            self.move_count += 1
                 elif self.direction == 4: 
                     if veriftile(self.x, self.y - 1):
-                        self.y -= 1
-                        self.move_count += 1
+                        if not any(poulet.y == self.y-1 for poulet in tab_poulet):
+                            self.texture_index = random.randint(8, 9)
+                            self.y -= 1
+                            self.move_count += 1
                 self.last_move_time = now
                 
                 if self.move_count >= 10:
@@ -169,10 +178,13 @@ class Player:
     def get_pos(self):
         return (self.x, self.y)
     
-#creation d'un poulet de test et du joueur
-player = Player()
+    
+tab_poulet = []
+for i in range(nbr_poulet):
+    tab_poulet.append(Chicken())
 
-poulet = Chicken()
+#joueur    
+player = Player()
 
     
 #afficher la minimap (appeler dans draw_map())    
@@ -233,8 +245,9 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                    
                    
-                if map_i == poulet.x and map_j == poulet.y:
-                    screen.blit(texture_chicken[poulet.texture_index], (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
+                for poulet_index in range(len(tab_poulet)):
+                    if map_i == tab_poulet[poulet_index].x and map_j == tab_poulet[poulet_index].y:
+                        screen.blit(texture_chicken[tab_poulet[poulet_index].texture_index], (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
     
     #player
     pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))   
@@ -285,7 +298,8 @@ while running:
     
     draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
     
-    poulet.update()
+    for i in range(len(tab_poulet)):
+        tab_poulet[i].update()
     
     keys = pygame.key.get_pressed()
     player.input(keys)
