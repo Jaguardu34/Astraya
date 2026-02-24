@@ -21,11 +21,7 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-player_pos = 0, 0
 scale_map = 39, 19
-
-timing_step = 1 #frame a attendre entre chaque déplacement du joueur 60 frames = 1 seconde
-timing_step_count = timing_step
 
 resolution_minimap = 4
 scale_minimap = 65
@@ -50,11 +46,66 @@ texture_chicken = get_sprite(textures, 0, 48, 16, 16)
 texture_chicken_upscaled = pygame.transform.scale(texture_chicken, (texture_chicken.get_width() * SCALE, texture_chicken.get_height()*SCALE))
 
 
-def draw_player():
-    pygame.draw.rect(screen, "yellow", (screen.get_width()//2-8*SCALE, screen.get_height()//2-8*SCALE, 16*SCALE, 16*SCALE))
-    
-    
 
+class Chicken:
+    def __init__(self, x=10, y=10):
+        self.x = x
+        self.y = y
+        self.direction = random.randint(1, 4)
+        self.timing_chicken = 60
+        self.timing_chicken_count = self.timing_chicken
+
+    def deplacement(self):
+        if self.timing_chicken_count > 0:
+            self.timing_chicken_count -= 1
+        if self.timing_chicken_count == 0:
+            if self.direction == 1:
+                self.x += 1
+            elif self.direction == 2:
+                self.x -= 1
+            elif self.direction == 3:
+                self.y += 1
+            else: 
+                self.y -= 1
+            self.timing_chicken_count = self.timing_chicken
+    
+poulet = Chicken()
+
+class Player:
+    def __init__(self, x=0, y=0, nb_coeurs=10):
+        self.x = x
+        self.y = y
+        self.nb_coeurs = nb_coeurs
+        self.timing_step = 10        # frames entre chaque déplacement
+        self.timing_step_count = 0
+
+    def move(self, dx, dy):
+        if self.timing_step_count == 0:
+            if veriftile(self.x + dx, self.y + dy):
+                self.x += dx
+                self.y += dy
+                self.timing_step_count = self.timing_step
+
+    def update_timing(self):
+        if self.timing_step_count > 0:
+            self.timing_step_count -= 1
+
+    def input(self, keys):
+        if keys[pygame.K_z] or keys[pygame.K_UP]:
+            self.move(0, -1)
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+            self.move(0, 1)
+        if keys[pygame.K_q] or keys[pygame.K_LEFT]:
+            self.move(-1, 0)
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            self.move(1, 0)
+
+    def get_pos(self):
+        return (self.x, self.y)
+    
+player = Player()
+    
+    
 def draw_minimap(x, y, scale, player_position):
     pygame.draw.rect(screen, "orange", (x-resolution_minimap, y-resolution_minimap, scale*resolution_minimap+resolution_minimap*2, scale*resolution_minimap+resolution_minimap*2))
     posx, posy = player_position
@@ -84,30 +135,7 @@ def draw_minimap(x, y, scale, player_position):
     #player
     pygame.draw.rect(screen, "orange", (x + (scale//2*resolution_minimap), y + (scale//2*resolution_minimap), 8, 8))
 
-
-timing_chicken = 60
-timing_chicken_count = timing_chicken 
-coord_chicken = 10, 10 
-  
-def deplacement_poulet():
-    global timing_chicken_count, coord_chicken, timing_chicken
-    posx , posy = coord_chicken
-    direction = random.randint(1, 4)
-    if timing_chicken_count == 0:
-        if direction == 1:
-            posx += 1
-        elif direction == 2:
-            posx -= 1
-        elif direction == 3:
-            posy += 1
-        else: 
-            posy -= 1
-        timing_chicken_count = timing_chicken
-        print("poulet bouge")
-    coord_chicken = posx , posy
-    
 def draw_map(x, y, scalex, scaley, player_position):
-    global coord_chicken
     posx, posy = player_position
     for i in range(scalex):
         for j in range(scaley):
@@ -131,8 +159,8 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "white", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "forest":
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
-                    
-                if map_j == coord_chicken[0] and map_i == coord_chicken[1]:
+                   
+                if map_j == poulet.x and map_i == poulet.y:
                     screen.blit(texture_chicken_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
     
     #player
@@ -143,8 +171,10 @@ def draw_map(x, y, scalex, scaley, player_position):
     draw_minimap(x+scalex*16*SCALE - resolution_minimap*scale_minimap - resolution_minimap, y+resolution_minimap, scale_minimap, player_position)
     
 def drawcoeurs(x, y, nbcoeurs):
+    texture_coeur = get_sprite(textures, 0, 241, 16, 16)
+    texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*SCALE, texture_coeur.get_height()*SCALE))
     for i in range(nbcoeurs):
-        screen.blit(textures, (x + (i*32), y), pygame.Rect(0, 241, 16, 16))
+        screen.blit(texture_coeur_upscaled, (x + (i*(texture_coeur_upscaled.get_width()+8)), y))
                     
                     
 def veriftile(x, y):
@@ -156,9 +186,9 @@ def veriftile(x, y):
         return True
 
 
-def draw_coordinates(x, y, posx, posy):
+def draw_coordinates(x, y, pos):
     font_to_write = pygame.font.SysFont(None, 24)
-    text = font_to_write.render(f"Coordinates: ({posx}, {posy})", True, "red")
+    text = font_to_write.render(f"Coordinates: ({pos[0]}, {pos[1]})", True, "red")
     screen.blit(text, (x, y))
 
 
@@ -167,7 +197,7 @@ def draw_coordinates(x, y, posx, posy):
 
 while running:
     
-    player_pos_x, player_pos_y = player_pos
+
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     for event in pygame.event.get():
@@ -179,47 +209,25 @@ while running:
     
     scalemapx, scalemapy = scale_map
     
-    draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player_pos)
+    draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player.get_pos())
     
     drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
-    draw_coordinates(8*SCALE, 8*SCALE, player_pos_x, player_pos_y)
+    draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
     
-    deplacement_poulet()
+    poulet.deplacement()
     
-
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_z] or keys[pygame.K_UP]:
-        if veriftile(player_pos_x, player_pos_y-1):
-            if timing_step_count == 0:
-                timing_step_count = timing_step
-                player_pos_y -= 1
-    if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-        if veriftile(player_pos_x, player_pos_y+1):
-            if timing_step_count == 0:
-                timing_step_count = timing_step
-                player_pos_y += 1
-    if keys[pygame.K_q] or keys[pygame.K_LEFT]:
-        if veriftile(player_pos_x-1, player_pos_y):
-            if timing_step_count == 0:
-                timing_step_count = timing_step
-                player_pos_x -= 1
-    if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-        if veriftile(player_pos_x+1, player_pos_y):
-            if timing_step_count == 0:
-                timing_step_count = timing_step
-                player_pos_x += 1
 
-    player_pos = (player_pos_x, player_pos_y)
+    player.input(keys)
+    
+    
+    player.update_timing()
+
 
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-    if timing_step_count > 0:
-        timing_step_count -= 1
-    
-    if timing_chicken_count > 0:
-        timing_chicken_count -= 1
     # limits FPS to 60
     # dt is delta time in seconds since last frame, used for framerate-
     # independent physics.
