@@ -108,6 +108,12 @@ for i in range(len(map)):
         if map[i][j] == "plains":
             x_text = random.randint(1,9)
             map[i][j] = f"plains_{x_text}"
+            
+for i in range(len(map)):
+    for j in range(len(map[0])):
+        if map[i][j] == "beach":
+            x_text = random.randint(1,9)
+            map[i][j] = f"beach_{x_text}"
 
 
 
