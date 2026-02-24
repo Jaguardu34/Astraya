@@ -12,7 +12,9 @@ SCALE = 2
 pygame.init()
 pygame.font.init()
 pygame.display.set_caption("Astraya 2.0")
-screen = pygame.display.set_mode((GAME_W * SCALE, GAME_H * SCALE), pygame.RESIZABLE)
+info = pygame.display.Info()
+screen = pygame.display.set_mode((info.current_w - 0.1*info.current_w, info.current_h - 0.1*info.current_h),pygame.RESIZABLE)
+#screen = pygame.display.set_mode((GAME_W * SCALE, GAME_H * SCALE), pygame.RESIZABLE)
 
 #Chargement des textures
 textures = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png'))

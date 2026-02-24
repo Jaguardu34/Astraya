@@ -16,7 +16,7 @@ class Entity:
             self._on_valid_move(new_x, new_y)
 
     def _on_valid_move(self, new_x, new_y):
-        """À surcharger dans les sous-classes pour ajouter des conditions."""
+        """À surcharger dans les sous-classes pour ajouter des conditions. c'est ##super()._on_valid_move(new_x, new_y)## pour faire le mouvement."""
         self.x = new_x
         self.y = new_y
 
