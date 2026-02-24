@@ -31,7 +31,6 @@ resolution_minimap = 4
 scale_minimap = 65
 
 def get_sprite(sheet, x, y, width, height):
-    """Découpe un sprite à la position (x, y) avec la taille donnée."""
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
     sprite.blit(sheet, (0, 0), (x, y, width, height))
     return sprite
