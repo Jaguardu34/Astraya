@@ -93,7 +93,7 @@ def veriftile_pixel(px, py, size=12):
 
 #class du poulet
 class Chicken:
-    def __init__(self, x=10, y=10):
+    def __init__(self, x=1500, y=1500):
         self.x = float(x * 16)
         self.y = float(y * 16)
         self.texture_index = 0
@@ -145,7 +145,7 @@ class Chicken:
                 
         if now-self.last_walking_animation >= 500:  
             if dx > 0:
-                if self.texture_index < 1:
+                if self.texture_index < 1 :
                     self.texture_index += 1
                 else: self.texture_index = 0
             elif dx < 0:
@@ -168,7 +168,7 @@ class Chicken:
 
 #class du joueur
 class Player:
-    def __init__(self, x=5, y=5):
+    def __init__(self, x=1500, y=1500):
         self.x = float(x * 16)  # position en pixels monde
         self.y = float(y * 16)
         self.speed = 100  # pixels par seconde
