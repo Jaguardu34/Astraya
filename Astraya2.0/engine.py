@@ -113,7 +113,7 @@ class Chicken:
         self.cible_y = random.randint(int(self.y-50), int(self.y+50))
 
     def update(self, dt):
-        self.emoting()
+        self.animate()
         now = pygame.time.get_ticks()
         
         if self.emoting_state:
@@ -149,13 +149,13 @@ class Chicken:
                     self.texture_index += 1
                 else: self.texture_index = 0
             elif dx < 0:
-                if self.texture_index < 7:
+                if self.texture_index < 7 and self.texture_index >= 6:
                     self.texture_index += 1
                 else: self.texture_index = 6
             self.last_walking_animation = now
         
                 
-    def emoting(self):
+    def animate(self):
         now = pygame.time.get_ticks()
         if self.emoting_state:
             if now - self.last_animation >= random.randint(1000, 3000):
