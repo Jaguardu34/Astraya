@@ -301,7 +301,23 @@ map = compute_biomes(heightmap, humiditymap, temperaturemap)
 coord_vil = generate_villages(map)
 
 # Tiles sur lesquelles on ne peut pas marcher
-collide_tiles = ["ocean"]
+collide_tiles = ["ocean", "collide"]
 
 print(f"Monde généré : {SIZE}x{SIZE}")
 print(f"{len(coord_vil)} villages placés")
+
+
+for i in range(len(map)):
+    for j in range(len(map[i])):
+        if map[j][i] == "plains":
+            x = random.randint(0, 15)
+            map[j][i] = f"plains_{x}"
+            
+for i in range(len(map)):
+    for j in range(len(map[i])):
+        if map[j][i] == "beach":
+            x = random.randint(0, 15)
+            map[j][i] = f"beach_{x}"
+
+
+map[1510][1510] = "collide"
