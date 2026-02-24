@@ -116,7 +116,7 @@ def draw_map(x, y, scalex, scaley, player_position):
     
 def drawcoeurs(x, y, nbcoeurs):
     for i in range(nbcoeurs):
-        pygame.draw.rect(screen, "red", (x + (i*32), y, 16, 16))
+        screen.blit(textures, (x + (i*32), y), pygame.Rect(0, 241, 16, 16))
                     
                     
 def veriftile(x, y):
