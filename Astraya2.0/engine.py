@@ -46,7 +46,7 @@ texture_chicken = get_sprite(textures, 0, 48, 16, 16)
 texture_chicken_upscaled = pygame.transform.scale(texture_chicken, (texture_chicken.get_width() * SCALE, texture_chicken.get_height()*SCALE))
 
 
-
+#class du poulet
 class Chicken:
     def __init__(self, x=10, y=10):
         self.x = x
@@ -69,8 +69,9 @@ class Chicken:
                 self.y -= 1
             self.timing_chicken_count = self.timing_chicken
     
-poulet = Chicken()
 
+
+#class du joueur
 class Player:
     def __init__(self, x=0, y=0, nb_coeurs=10):
         self.x = x
@@ -103,9 +104,11 @@ class Player:
     def get_pos(self):
         return (self.x, self.y)
     
+#creation d'un poulet de test et du joueur
 player = Player()
+poulet = Chicken()
     
-    
+#afficher la minimap (appeler dans draw_map())    
 def draw_minimap(x, y, scale, player_position):
     pygame.draw.rect(screen, "orange", (x-resolution_minimap, y-resolution_minimap, scale*resolution_minimap+resolution_minimap*2, scale*resolution_minimap+resolution_minimap*2))
     posx, posy = player_position
@@ -135,6 +138,7 @@ def draw_minimap(x, y, scale, player_position):
     #player
     pygame.draw.rect(screen, "orange", (x + (scale//2*resolution_minimap), y + (scale//2*resolution_minimap), 8, 8))
 
+#afficher le viewport principal
 def draw_map(x, y, scalex, scaley, player_position):
     posx, posy = player_position
     for i in range(scalex):
@@ -164,19 +168,19 @@ def draw_map(x, y, scalex, scaley, player_position):
                     screen.blit(texture_chicken_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
     
     #player
-    pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))
-    
-    
+    pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))   
     
     draw_minimap(x+scalex*16*SCALE - resolution_minimap*scale_minimap - resolution_minimap, y+resolution_minimap, scale_minimap, player_position)
     
+    
+#afficher les coeurs
 def drawcoeurs(x, y, nbcoeurs):
     texture_coeur = get_sprite(textures, 0, 241, 16, 16)
     texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*SCALE, texture_coeur.get_height()*SCALE))
     for i in range(nbcoeurs):
         screen.blit(texture_coeur_upscaled, (x + (i*(texture_coeur_upscaled.get_width()+8)), y))
                     
-                    
+#verif collisions                   
 def veriftile(x, y):
     if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
         return False
@@ -185,7 +189,7 @@ def veriftile(x, y):
     else:
         return True
 
-
+#afficher les coordonés (peut etre temp)
 def draw_coordinates(x, y, pos):
     font_to_write = pygame.font.SysFont(None, 24)
     text = font_to_write.render(f"Coordinates: ({pos[0]}, {pos[1]})", True, "red")
@@ -194,12 +198,9 @@ def draw_coordinates(x, y, pos):
 
         
 
-
+#boucle de jeu
 while running:
-    
-
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
+    #quitter le jeu
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
