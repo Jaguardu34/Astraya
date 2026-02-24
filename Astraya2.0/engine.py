@@ -31,7 +31,18 @@ def get_sprite(sheet, x, y, width, height):
     sprite.blit(sheet, (0, 0), (x, y, width, height))
     return sprite
 
-def create_texture(posx, posy, nbr):
+def create_texture_basic(posx, posy, nbr):
+    tab = []
+    for i in range(nbr):
+        tab.append(get_sprite(textures, posx + (i * 16), posy, 16, 16))
+    
+    tab_upscaled = []
+    for i in range(len(tab)):
+        tab_upscaled.append(pygame.transform.scale(tab[i], (tab[i].get_width() * SCALE, tab[i].get_height()*SCALE)))
+        
+    return tab_upscaled
+
+def create_texture_with_rotation(posx, posy, nbr):
     tab = []
     for i in range(nbr):
         tab.append(get_sprite(textures, posx + (i * 16), posy, 16, 16))
@@ -45,12 +56,12 @@ def create_texture(posx, posy, nbr):
         
     return tab_upscaled
 
-texture_herbe_upscaled = create_texture(0, 0, 3)
-texture_sand_upscaled = create_texture(0, 16, 3)
+texture_herbe_upscaled = create_texture_with_rotation(0, 0, 3)
+texture_sand_upscaled = create_texture_with_rotation(0, 16, 3)
 
-    
-texture_chicken = get_sprite(textures, 0, 48, 16, 16)
-texture_chicken_upscaled = pygame.transform.scale(texture_chicken, (texture_chicken.get_width() * SCALE, texture_chicken.get_height()*SCALE))
+texture_chicken = create_texture_basic(0, 48, 8)
+
+
 
 
 #class du poulet
@@ -60,27 +71,72 @@ class Chicken:
         self.y = y
         self.direction = random.randint(1, 4)
         self.last_move_time = 0
-        self.move_cooldown = 1000
+        self.texture_index = 0
+        self.last_animation = 0
+        self.emoting_state = True
+        self.emoting_start = 0
+        self.last_emoting = 0
+        self.move_count = 0
+        self.last_direction = 0
 
     def update(self):
+        self.emoting()
         now = pygame.time.get_ticks()
-        if now - self.last_move_time >= self.move_cooldown:
-            self.direction = random.randint(1,4)
-            if self.direction == 1:
-                if veriftile(self.x + 1, self.y):
-                    self.x += 1
-            elif self.direction == 2:
-                if veriftile(self.x -1 , self.y):
-                    self.x -= 1
-            elif self.direction == 3:
-                if veriftile(self.x, self.y + 1):
-                    self.y += 1
-            else: 
-                if veriftile(self.x, self.y - 1):
-                    self.y - 1
-            self.last_move_time = now
-    
-
+        if self.emoting_state:
+            if now - self.last_emoting >= random.randint(5000, 8000):
+                self.emoting_state = False
+                self.move_count = 0
+        else:
+            if now - self.last_move_time >= random.randint(500, 3000):
+                attempts = 0
+                while self.direction == self.last_direction or self.direction == self.direction_opposee(self.last_direction):
+                    self.direction = random.randint(1, 4)
+                    attempts += 1
+                    if attempts >= 10:
+                        self.direction = self.last_direction
+                        break
+                self.last_direction = self.direction
+                
+                if self.direction == 1:
+                    if veriftile(self.x + 1, self.y):
+                        self.texture_index = random.randint(0, 2)
+                        self.x += 1
+                        self.move_count += 1
+                elif self.direction == 2:
+                    if veriftile(self.x -1 , self.y):
+                        self.texture_index = random.randint(5, 7)
+                        self.x -= 1
+                        self.move_count += 1
+                elif self.direction == 3:
+                    if veriftile(self.x, self.y + 1):
+                        self.y += 1
+                        self.move_count += 1
+                elif self.direction == 4: 
+                    if veriftile(self.x, self.y - 1):
+                        self.y -= 1
+                        self.move_count += 1
+                self.last_move_time = now
+                
+                if self.move_count >= 10:
+                    self.emoting_state = True
+                    self.emoting_start = now
+                    self.last_emoting = now
+                
+    def emoting(self):
+        now = pygame.time.get_ticks()
+        if self.emoting_state:
+            if now - self.last_animation >= random.randint(1000, 3000):
+                if self.texture_index == 0:
+                    self.texture_index = 3
+                else: 
+                    self.texture_index = 0 
+                self.last_animation = now
+                
+    def direction_opposee(self, direction):
+        if direction == 1: return 2 
+        if direction == 2: return 1
+        if direction == 3: return 4 
+        if direction == 4: return 3
 
 #class du joueur
 class Player:
@@ -177,8 +233,8 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                    
                    
-                if map_j == poulet.x and map_i == poulet.y:
-                    screen.blit(texture_chicken_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
+                if map_i == poulet.x and map_j == poulet.y:
+                    screen.blit(texture_chicken[poulet.texture_index], (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
     
     #player
     pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))   

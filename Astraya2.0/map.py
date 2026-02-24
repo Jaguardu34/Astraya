@@ -290,3 +290,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+#map de test (j'en ai besoin)
+
+map = [["plains_1" for _ in range(100)] for _ in range(100)]
+
+collide_tiles= []
+        
