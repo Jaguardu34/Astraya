@@ -63,6 +63,31 @@ texture_sand_upscaled = create_texture_with_rotation(0, 16, 3)
 
 texture_chicken = create_texture_basic(0, 48, 12)
 
+def check_collision_entites(ax, ay, bx, by, size=12):
+    return abs(ax - bx) < size and abs(ay - by) < size
+
+#verif collisions                   
+def veriftile(x, y):
+    if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
+        return False
+    elif map.map[y][x] in map.collide_tiles:
+        return False
+    else:
+        return True
+
+def veriftile_pixel(px, py, size=12):
+    half = size // 2
+    corners = [
+        (px - half, py - half),  # haut gauche
+        (px + half, py - half),  # haut droite
+        (px - half, py + half),  # bas gauche
+        (px + half, py + half),  # bas droite
+    ]
+    for cx, cy in corners:
+        if not veriftile(int(cx // 16), int(cy // 16)):
+            return False
+    return True
+
 
 
 
@@ -71,59 +96,63 @@ class Chicken:
     def __init__(self, x=10, y=10):
         self.x = float(x * 16)
         self.y = float(y * 16)
-        self.direction = random.randint(1, 4)
-        self.last_move_time = 0
         self.texture_index = 0
         self.last_animation = 0
-        self.emoting_state = True
+        self.emoting_state = False
         self.emoting_start = 0
         self.last_emoting = 0
-        self.move_count = 0
-        self.last_direction = 0
-        self.speed = 200
+        self.speed = 10
+        self.cible_x = 0
+        self.cible_y = 0
+        self.last_walking_animation = 0
+        self.random_cible()
 
-    def update(self):
+
+    def random_cible(self):
+        self.cible_x = random.randint(int(self.x-50), int(self.x+50))
+        self.cible_y = random.randint(int(self.y-50), int(self.y+50))
+
+    def update(self, dt):
         self.emoting()
         now = pygame.time.get_ticks()
+        
         if self.emoting_state:
             if now - self.last_emoting >= random.randint(5000, 8000):
                 self.emoting_state = False
                 self.move_count = 0
         else:
-            if now - self.last_move_time >= random.randint(500, 3000):
-                attempts = 0
-                while self.direction == self.last_direction or self.direction == self.direction_opposee(self.last_direction):
-                    self.direction = random.randint(1, 4)
-                    attempts += 1
-                    if attempts >= 10:
-                        self.direction = self.last_direction
-                        break
-                self.last_direction = self.direction
-                
-                if self.direction == 1:
-                    self.move(self.speed*dt, 0, random.randint(0, 2))
-                elif self.direction == 2:
-                    self.move(-self.speed*dt, 0, random.randint(5, 7))
-                elif self.direction == 3:
-                    self.move(0, -self.speed*dt, random.randint(10, 11))
-                elif self.direction == 4: 
-                    self.move(0, -self.speed*dt, random.randint(8, 9))
+            dist_x = self.cible_x - self.x
+            dist_y = self.cible_y - self.y
+            dist = (dist_x**2 + dist_y**2) ** 0.5
 
-                self.last_move_time = now
-                
-                if self.move_count >= random.randint(5, 20):
-                    self.emoting_state = True
-                    self.emoting_start = now
-                    self.last_emoting = now
+            if dist > 1:
+                self.move((dist_x / dist) * self.speed * dt, (dist_y / dist) * self.speed * dt)
+            else:
+                self.random_cible()
+                self.emoting_state = True
+                self.emoting_start = now
+                self.last_emoting = now
                     
-    def move(self, dx, dy, texture):
+    def move(self, dx, dy):
+        now = pygame.time.get_ticks()
         new_x = self.x + dx
         new_y = self.y + dy
-        tile_x = int(new_x // 16)
-        tile_y = int(new_y // 16)
-        self.texture_index = texture
-        self.x = new_x
-        self.y = new_y
+        if veriftile_pixel(new_x, new_y):
+            if not any(check_collision_entites(new_x, new_y, p.x, p.y) for p in tab_poulet if p is not self):
+                if not check_collision_entites(new_x, new_y, player.x, player.y):
+                    self.x = new_x
+                    self.y = new_y
+                
+        if now-self.last_walking_animation >= 500:  
+            if dx > 0:
+                if self.texture_index < 1:
+                    self.texture_index += 1
+                else: self.texture_index = 0
+            elif dx < 0:
+                if self.texture_index < 7:
+                    self.texture_index += 1
+                else: self.texture_index = 6
+            self.last_walking_animation = now
         
                 
     def emoting(self):
@@ -136,15 +165,10 @@ class Chicken:
                     self.texture_index = 0 
                 self.last_animation = now
                 
-    def direction_opposee(self, direction):
-        if direction == 1: return 2 
-        if direction == 2: return 1
-        if direction == 3: return 4 
-        if direction == 4: return 3
 
 #class du joueur
 class Player:
-    def __init__(self, x=0, y=0):
+    def __init__(self, x=5, y=5):
         self.x = float(x * 16)  # position en pixels monde
         self.y = float(y * 16)
         self.speed = 100  # pixels par seconde
@@ -152,13 +176,10 @@ class Player:
     def move(self, dx, dy):
         new_x = self.x + dx
         new_y = self.y + dy
-        
-        tile_x = int(new_x // 16)
-        tile_y = int(new_y // 16)
-        
-        if veriftile(tile_x, tile_y):
-            self.x = new_x
-            self.y = new_y
+        if veriftile_pixel(new_x, new_y):
+            if not any(check_collision_entites(new_x, new_y, p.x, p.y) for p in tab_poulet):
+                self.x = new_x
+                self.y = new_y
 
     def input(self, keys, dt):
         if keys[pygame.K_z] or keys[pygame.K_UP]:
@@ -176,7 +197,7 @@ class Player:
     
 tab_poulet = []
 for i in range(nbr_poulet):
-    tab_poulet.append(Chicken())
+    tab_poulet.append(Chicken(random.randint(5, 50), random.randint(5,50)))
 
 #joueur    
 player = Player()
@@ -268,6 +289,12 @@ def draw_map(x, y, scalex, scaley, player_position):
 
     # Le joueur reste toujours au centre de l'écran
     pygame.draw.rect(screen, "orange", (x + (scalex//2 * 16 * SCALE), y + (scaley//2 * 16 * SCALE), 16*SCALE, 16*SCALE))
+    
+    #bords
+    pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, scalex*16*SCALE + 32*SCALE, 16*SCALE))
+    pygame.draw.rect(screen, "white", (x-16*SCALE, y+scaley*16*SCALE, scalex*16*SCALE + 32*SCALE, 16*SCALE))
+    pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, 16*SCALE, scalex*16*SCALE))
+    pygame.draw.rect(screen, "white", (x+scalex*16*SCALE, y-16*SCALE, 16*SCALE, scalex*16*SCALE))
 
     draw_minimap(x + scalex*16*SCALE - resolution_minimap*scale_minimap - resolution_minimap, y + resolution_minimap, scale_minimap, player_position)
     
@@ -280,19 +307,12 @@ def drawcoeurs(x, y, nbcoeurs):
     for i in range(nbcoeurs):
         screen.blit(texture_coeur_upscaled, (x + (i*(texture_coeur_upscaled.get_width()+8)), y))
                     
-#verif collisions                   
-def veriftile(x, y):
-    if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
-        return False
-    elif map.map[y][x] in map.collide_tiles:
-        return False
-    else:
-        return True
+
 
 #afficher les coordonés (peut etre temp)
 def draw_coordinates(x, y, pos):
     font_to_write = pygame.font.SysFont(None, 24)
-    text = font_to_write.render(f"Coordinates: ({pos[0]:.2f}, {pos[1]:.2f})", True, "red")
+    text = font_to_write.render(f"Coordinates: (x: {int(pos[0])//16}, y: {int(pos[1])//16})", True, "red")
     screen.blit(text, (x, y))
     
 def draw_fps(x, y):
@@ -323,7 +343,7 @@ while running:
     draw_fps(8*SCALE, 16*SCALE)
     
     for i in range(len(tab_poulet)):
-        tab_poulet[i].update()
+        tab_poulet[i].update(dt)
     
     keys = pygame.key.get_pressed()
     player.input(keys, dt)
