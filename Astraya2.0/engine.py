@@ -21,7 +21,7 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-player_pos = random.randint(0, 2000), random.randint(0, 2000)
+player_pos = 0, 0
 scale_map = 39, 19
 
 timing_step = 1 #frame a attendre entre chaque déplacement du joueur 60 frames = 1 seconde
@@ -45,6 +45,9 @@ for i in range(3):
 texture_herbe_upscaled = []
 for i in range(len(texture_herbe)):
     texture_herbe_upscaled.append(pygame.transform.scale(texture_herbe[i], (texture_herbe[i].get_width() * SCALE, texture_herbe[i].get_height()*SCALE)))
+    
+texture_chicken = get_sprite(textures, 0, 48, 16, 16)
+texture_chicken_upscaled = pygame.transform.scale(texture_chicken, (texture_chicken.get_width() * SCALE, texture_chicken.get_height()*SCALE))
 
 
 def draw_player():
@@ -81,8 +84,30 @@ def draw_minimap(x, y, scale, player_position):
     #player
     pygame.draw.rect(screen, "orange", (x + (scale//2*resolution_minimap), y + (scale//2*resolution_minimap), 8, 8))
 
+
+timing_chicken = 60
+timing_chicken_count = timing_chicken 
+coord_chicken = 10, 10 
+  
+def deplacement_poulet():
+    global timing_chicken_count, coord_chicken, timing_chicken
+    posx , posy = coord_chicken
+    direction = random.randint(1, 4)
+    if timing_chicken_count == 0:
+        if direction == 1:
+            posx += 1
+        elif direction == 2:
+            posx -= 1
+        elif direction == 3:
+            posy += 1
+        else: 
+            posy -= 1
+        timing_chicken_count = timing_chicken
+        print("poulet bouge")
+    coord_chicken = posx , posy
     
 def draw_map(x, y, scalex, scaley, player_position):
+    global coord_chicken
     posx, posy = player_position
     for i in range(scalex):
         for j in range(scaley):
@@ -106,6 +131,9 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "white", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "forest":
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
+                    
+                if map_j == coord_chicken[0] and map_i == coord_chicken[1]:
+                    screen.blit(texture_chicken_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
     
     #player
     pygame.draw.rect(screen, "orange", (x + (scalex//2*16*SCALE), y + (scaley//2*16*SCALE), 16*SCALE, 16*SCALE))
@@ -132,7 +160,9 @@ def draw_coordinates(x, y, posx, posy):
     font_to_write = pygame.font.SysFont(None, 24)
     text = font_to_write.render(f"Coordinates: ({posx}, {posy})", True, "red")
     screen.blit(text, (x, y))
-    
+
+
+        
 
 
 while running:
@@ -154,6 +184,8 @@ while running:
     drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
     draw_coordinates(8*SCALE, 8*SCALE, player_pos_x, player_pos_y)
+    
+    deplacement_poulet()
     
 
     keys = pygame.key.get_pressed()
@@ -185,6 +217,9 @@ while running:
 
     if timing_step_count > 0:
         timing_step_count -= 1
+    
+    if timing_chicken_count > 0:
+        timing_chicken_count -= 1
     # limits FPS to 60
     # dt is delta time in seconds since last frame, used for framerate-
     # independent physics.
