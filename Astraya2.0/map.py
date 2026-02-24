@@ -294,7 +294,14 @@ if __name__ == "__main__":
     
 #map de test (j'en ai besoin)
 
-map = [["plains_1" for _ in range(100)] for _ in range(100)]
 
-collide_tiles= []
-        
+print("Génération du monde...")
+heightmap, humiditymap, temperaturemap = generate_overworld()
+map = compute_biomes(heightmap, humiditymap, temperaturemap)
+coord_vil = generate_villages(map)
+
+# Tiles sur lesquelles on ne peut pas marcher
+collide_tiles = ["ocean"]
+
+print(f"Monde généré : {SIZE}x{SIZE}")
+print(f"{len(coord_vil)} villages placés")
