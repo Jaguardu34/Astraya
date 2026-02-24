@@ -31,16 +31,23 @@ def get_sprite(sheet, x, y, width, height):
     sprite.blit(sheet, (0, 0), (x, y, width, height))
     return sprite
 
-texture_herbe = []
-for i in range(3):
-    texture_herbe.append(get_sprite(textures, 0 + (i * 16), 0, 16, 16))
-    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), 90))
-    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), -90))
-    texture_herbe.append(pygame.transform.rotate(get_sprite(textures, 0 + (i * 16), 0, 16, 16), 180))
+def create_texture(posx, posy, nbr):
+    tab = []
+    for i in range(nbr):
+        tab.append(get_sprite(textures, posx + (i * 16), posy, 16, 16))
+        tab.append(pygame.transform.rotate(get_sprite(textures, posx + (i * 16), posy, 16, 16), 90))
+        tab.append(pygame.transform.rotate(get_sprite(textures, posx + (i * 16), posy, 16, 16), -90))
+        tab.append(pygame.transform.rotate(get_sprite(textures, posx + (i * 16), posy, 16, 16), 180))
+    
+    tab_upscaled = []
+    for i in range(len(tab)):
+        tab_upscaled.append(pygame.transform.scale(tab[i], (tab[i].get_width() * SCALE, tab[i].get_height()*SCALE)))
+        
+    return tab_upscaled
 
-texture_herbe_upscaled = []
-for i in range(len(texture_herbe)):
-    texture_herbe_upscaled.append(pygame.transform.scale(texture_herbe[i], (texture_herbe[i].get_width() * SCALE, texture_herbe[i].get_height()*SCALE)))
+texture_herbe_upscaled = create_texture(0, 0, 3)
+texture_sand_upscaled = create_texture(0, 16, 3)
+
     
 texture_chicken = get_sprite(textures, 0, 48, 16, 16)
 texture_chicken_upscaled = pygame.transform.scale(texture_chicken, (texture_chicken.get_width() * SCALE, texture_chicken.get_height()*SCALE))
@@ -52,22 +59,26 @@ class Chicken:
         self.x = x
         self.y = y
         self.direction = random.randint(1, 4)
-        self.timing_chicken = 60
-        self.timing_chicken_count = self.timing_chicken
+        self.last_move_time = 0
+        self.move_cooldown = 1000
 
-    def deplacement(self):
-        if self.timing_chicken_count > 0:
-            self.timing_chicken_count -= 1
-        if self.timing_chicken_count == 0:
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_move_time >= self.move_cooldown:
+            self.direction = random.randint(1,4)
             if self.direction == 1:
-                self.x += 1
+                if veriftile(self.x + 1, self.y):
+                    self.x += 1
             elif self.direction == 2:
-                self.x -= 1
+                if veriftile(self.x -1 , self.y):
+                    self.x -= 1
             elif self.direction == 3:
-                self.y += 1
+                if veriftile(self.x, self.y + 1):
+                    self.y += 1
             else: 
-                self.y -= 1
-            self.timing_chicken_count = self.timing_chicken
+                if veriftile(self.x, self.y - 1):
+                    self.y - 1
+            self.last_move_time = now
     
 
 
@@ -77,19 +88,17 @@ class Player:
         self.x = x
         self.y = y
         self.nb_coeurs = nb_coeurs
-        self.timing_step = 10        # frames entre chaque déplacement
-        self.timing_step_count = 0
+        self.last_move = 0
+        self.move_cooldown = 200 #millisecondes entre chaque mvt
 
     def move(self, dx, dy):
-        if self.timing_step_count == 0:
+        now = pygame.time.get_ticks()
+        if now - self.last_move >= self.move_cooldown:
             if veriftile(self.x + dx, self.y + dy):
                 self.x += dx
                 self.y += dy
-                self.timing_step_count = self.timing_step
+            self.last_move = now
 
-    def update_timing(self):
-        if self.timing_step_count > 0:
-            self.timing_step_count -= 1
 
     def input(self, keys):
         if keys[pygame.K_z] or keys[pygame.K_UP]:
@@ -106,7 +115,9 @@ class Player:
     
 #creation d'un poulet de test et du joueur
 player = Player()
+
 poulet = Chicken()
+
     
 #afficher la minimap (appeler dans draw_map())    
 def draw_minimap(x, y, scale, player_position):
@@ -121,7 +132,7 @@ def draw_minimap(x, y, scale, player_position):
             else:
                 if map.map[map_j][map_i] == "ocean":
                     pygame.draw.rect(screen, "blue", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
-                elif map.map[map_j][map_i] == "beach":
+                elif map.map[map_j][map_i].startswith("beach"):
                     pygame.draw.rect(screen, "yellow", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
                 elif map.map[map_j][map_i] == "jungle":
                     pygame.draw.rect(screen, "lightgreen", (x + (i*resolution_minimap), y + (j*resolution_minimap), resolution_minimap, resolution_minimap))
@@ -150,8 +161,9 @@ def draw_map(x, y, scalex, scaley, player_position):
             else:
                 if map.map[map_j][map_i] == "ocean":
                     pygame.draw.rect(screen, "blue", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
-                elif map.map[map_j][map_i] == "beach":
-                    pygame.draw.rect(screen, "yellow", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
+                elif map.map[map_j][map_i].startswith("beach"):
+                    index = int(map.map[map_j][map_i].split("_")[1])
+                    screen.blit(texture_sand_upscaled[index - 1], (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
                 elif map.map[map_j][map_i] == "jungle":
                     pygame.draw.rect(screen, "lightgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i].startswith("plains"):
@@ -163,6 +175,7 @@ def draw_map(x, y, scalex, scaley, player_position):
                     pygame.draw.rect(screen, "white", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
                 elif map.map[map_j][map_i] == "forest":
                     pygame.draw.rect(screen, "darkgreen", (x + (i*16*SCALE), y + (j*16*SCALE), 16*SCALE, 16*SCALE))
+                   
                    
                 if map_j == poulet.x and map_i == poulet.y:
                     screen.blit(texture_chicken_upscaled, (x + (i * 16 * SCALE), y + (j * 16 * SCALE)))
@@ -216,14 +229,10 @@ while running:
     
     draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
     
-    poulet.deplacement()
+    poulet.update()
     
     keys = pygame.key.get_pressed()
-
     player.input(keys)
-    
-    
-    player.update_timing()
 
 
     # flip() the display to put your work on screen
