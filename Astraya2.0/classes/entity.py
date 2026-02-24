@@ -1,7 +1,22 @@
+"""
+pour créer un joueur de manière précise: 
+player = Player(x=1500, y=1500)  # position initiale en pixels (1500, 1500) correspond à (93, 93) en tiles
+player.x = 1600  # déplacer le joueur à x=1600 pixels (100 tiles)
+player.y = 1400  # déplacer le joueur à y=1400 pixels (87   tiles)
+player.get_pos()  # retourne (1600.0, 1400.0)
+palyer.move(32, 0)  # déplacer le joueur de 32 pixels à droite (1 tile)
+player.move(0, -32)  # déplacer le joueur de 32 pixels vers le haut (1 tile)
+player.inventory.add_item(ITEMS["wood_sword"], quantity=1)  # ajouter une épée en bois à l'inventaire
+player.selected_hotbar = 0  # sélectionner le premier slot de la hotbar (y'a pas encore de rendu de l'inventaire, mais c'est pour montrer comment ça marche)
+les items du jeux ce touvent dans le items.py dans le dico ITEMS
+"""
+
+
+
 import pygame
 import random
 import engine
-
+from inventory import Inventory
 class Entity:
     def __init__(self, x=1500, y=1500):
         self.x = float(x * 16)
@@ -93,18 +108,14 @@ class Chicken(Entity):
                 self.last_animation = now
 
 
+
 class Player(Entity):
-    
     def __init__(self, x=1500, y=1500):
         super().__init__(x, y)
         self.speed = 100
-        self.inventory = [None] * 20
-        self.hotbar = self.inventory[:5]
-
-    def _on_valid_move(self, new_x, new_y):
-        if not any(engine.check_collision_entites(new_x, new_y, p.x, p.y) for p in engine.tab_poulet):
-            self.x = new_x
-            self.y = new_y
+        self.hp = 100
+        self.max_hp = 100
+        self.inventory = Inventory(size=20, hotbar_size=5)
 
     def input(self, keys, dt):
         if keys[pygame.K_z] or keys[pygame.K_UP]:
@@ -115,3 +126,16 @@ class Player(Entity):
             self.move(-self.speed * dt, 0)
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             self.move(self.speed * dt, 0)
+
+    def handle_event(self, event):
+        # scroll molette → changer slot hotbar
+        if event.type == pygame.MOUSEWHEEL:
+            self.inventory.scroll_hotbar(-event.y)
+        # clic gauche → utiliser item
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            self.inventory.use_selected(self)
+        # touches 1-5 → sélectionner hotbar
+        if event.type == pygame.KEYDOWN:
+            for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
+                if event.key == key:
+                    self.inventory.select_hotbar(i)

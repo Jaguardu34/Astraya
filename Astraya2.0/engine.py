@@ -28,7 +28,7 @@ scale_map = 39, 19
 resolution_minimap = 4
 scale_minimap = 65
 
-nbr_poulet = 10
+nbr_poulet = 1
 
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
