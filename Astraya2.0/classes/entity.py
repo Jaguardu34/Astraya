@@ -8,7 +8,12 @@ palyer.move(32, 0)  # déplacer le joueur de 32 pixels à droite (1 tile)
 player.move(0, -32)  # déplacer le joueur de 32 pixels vers le haut (1 tile)
 player.inventory.add_item(ITEMS["wood_sword"], quantity=1)  # ajouter une épée en bois à l'inventaire
 player.selected_hotbar = 0  # sélectionner le premier slot de la hotbar (y'a pas encore de rendu de l'inventaire, mais c'est pour montrer comment ça marche)
-les items du jeux ce touvent dans le items.py dans le dico ITEMS
+
+les items du jeux ce touvent dans le items.py dans le dico ITEMS --> nv item --> "stick": Item("Bâton", item_type=ItemType.MISC, max_stack=64),
+from items import get_item
+epee = get_item("iron_sword")
+player.inventory.add_item(epee)
+
 """
 
 
