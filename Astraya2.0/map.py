@@ -1,12 +1,19 @@
 import numpy as np
 import random
+import matplotlib.pyplot as plt
 
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
 SIZE = 2000
+NB_VILLAGES = 80
 
-collide_tiles = [3]
+# ==============================================================================
+# GÉNÉRATION DE BRUIT PERLIN
+# ==============================================================================
 
-# --- 1. Bruit Perlin-like vectorisé ---
 def perlin(width, height, scale=10, seed=0):
+    """Génère un bruit de Perlin vectorisé."""
     rng = np.random.default_rng(seed)
 
     gx = rng.uniform(-1, 1, (width//scale + 2, height//scale + 2))
@@ -32,30 +39,72 @@ def perlin(width, height, scale=10, seed=0):
     return (1 - u) * ((1 - v) * g00 + v * g01) + u * ((1 - v) * g10 + v * g11)
 
 
-# --- 2. Bruit fractal pour continents ---
 def fractal_noise(scale, seed):
+    """Génère un bruit fractal multi-octaves."""
     base = perlin(SIZE, SIZE, scale=scale, seed=seed)
     mid  = perlin(SIZE, SIZE, scale=scale//2, seed=seed+1) * 0.5
     fine = perlin(SIZE, SIZE, scale=scale//4, seed=seed+2) * 0.25
     return base + mid + fine
 
 
-# --- 3. Génération des continents ---
-heightmap = fractal_noise(scale=300, seed=1)
-humiditymap = fractal_noise(scale=500, seed=2)
-temperaturemap = fractal_noise(scale=500, seed=3)
-
-# Normalisation
 def norm(a):
+    """Normalise un array entre 0 et 1."""
     return (a - a.min()) / (a.max() - a.min())
 
-heightmap = norm(heightmap)
-humiditymap = norm(humiditymap)
-temperaturemap = norm(temperaturemap)
+
+# ==============================================================================
+# MASQUE D'ÎLE
+# ==============================================================================
+
+def create_island_mask(size, falloff=0.4):
+    """
+    Crée un masque radial pour forcer les bords à être de l'océan.
+    
+    Args:
+        size: Taille de la carte
+        falloff: Contrôle la douceur de la transition (0.1 = bords durs, 0.5 = doux)
+    
+    Returns:
+        Masque normalisé entre 0 (bords) et 1 (centre)
+    """
+    # Créer une grille de coordonnées centrées
+    y, x = np.ogrid[0:size, 0:size]
+    center = size / 2
+    
+    # Distance normalisée au centre (0 au centre, 1 aux coins)
+    dx = (x - center) / center
+    dy = (y - center) / center
+    distance = np.sqrt(dx**2 + dy**2)
+    
+    # Appliquer une fonction smooth pour la transition
+    # Plus falloff est petit, plus la transition est abrupte
+    mask = np.clip(1 - (distance - (1 - falloff)) / falloff, 0, 1)
+    
+    return mask
 
 
-# --- 4. Biomes ---
+# ==============================================================================
+# MONDE DE SURFACE
+# ==============================================================================
+
+def generate_overworld():
+    """Génère les cartes de hauteur, humidité et température avec masque d'île."""
+    heightmap = fractal_noise(scale=300, seed=1)
+    humiditymap = fractal_noise(scale=500, seed=2)
+    temperaturemap = fractal_noise(scale=500, seed=3)
+    
+    # Créer le masque d'île
+    island_mask = create_island_mask(SIZE, falloff=0.4)
+    
+    # Appliquer le masque à la heightmap pour créer l'île
+    heightmap = norm(heightmap)
+    heightmap = heightmap * island_mask  # Multiplie par le masque (0 aux bords)
+    
+    return heightmap, norm(humiditymap), norm(temperaturemap)
+
+
 def compute_biomes(heightmap, humiditymap, temperaturemap):
+    """Calcule les biomes."""
     biomes = [["" for _ in range(SIZE)] for _ in range(SIZE)]
 
     for y in range(SIZE):
@@ -64,9 +113,9 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
             hum = humiditymap[y][x]
             temp = temperaturemap[y][x]
 
-            if h < 0.35:
+            if h < 0.25:
                 biome = "ocean"
-            elif h < 0.40:
+            elif h < 0.32:
                 biome = "beach"
             elif h < 0.65:
                 if hum > 0.6 and temp > 0.5:
@@ -85,35 +134,159 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
     return biomes
 
 
-# --- 5. Résultat final : liste de listes ---
-biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
-map = biome_map
+# ==============================================================================
+# GROTTES
+# ==============================================================================
+
+def generate_cave_system():
+    """Génère le système de grottes."""
+    cave_noise = (
+        perlin(SIZE, SIZE, scale=80, seed=100) * 0.6 +
+        perlin(SIZE, SIZE, scale=40, seed=101) * 0.3 +
+        perlin(SIZE, SIZE, scale=20, seed=102) * 0.1
+    )
+    cave_noise = norm(cave_noise)
+
+    cave_map = [
+        ["air" if cave_noise[y][x] < 0.50 else "rock"
+         for x in range(SIZE)]
+        for y in range(SIZE)
+    ]
+
+    biome_noise = (
+        perlin(SIZE, SIZE, scale=120, seed=300) * 0.6 +
+        perlin(SIZE, SIZE, scale=60, seed=301) * 0.3 +
+        perlin(SIZE, SIZE, scale=30, seed=302) * 0.1
+    )
+    biome_noise = norm(biome_noise)
+
+    cave_biomes = [["" for _ in range(SIZE)] for _ in range(SIZE)]
+
+    for y in range(SIZE):
+        for x in range(SIZE):
+            if cave_map[y][x] == "rock":
+                cave_biomes[y][x] = "rock"
+                continue
+
+            n = biome_noise[y][x]
+            if n < 0.20:
+                cave_biomes[y][x] = "cave_ice"
+            elif n < 0.40:
+                cave_biomes[y][x] = "cave_mushroom"
+            elif n < 0.60:
+                cave_biomes[y][x] = "cave_normal"
+            elif n < 0.80:
+                cave_biomes[y][x] = "cave_crystal"
+            else:
+                cave_biomes[y][x] = "cave_lava"
+
+    return cave_map, cave_noise, cave_biomes, biome_noise
 
 
-nb_villages = 80
-coord_vil = []
+# ==============================================================================
+# VILLAGES
+# ==============================================================================
 
-for vil in range(nb_villages):
-    posable = False
+def generate_villages(biome_map, nb_villages=NB_VILLAGES):
+    """Place des villages en évitant l'océan."""
+    coord_vil = []
 
-    while not posable:
-        cord_vil_x = random.randint(0, SIZE)
-        cord_vil_y = random.randint(0,SIZE)
-        if map[cord_vil_x][cord_vil_y] != 0:
-            coord_vil.append([cord_vil_x, cord_vil_y])
-            posable = True
+    for _ in range(nb_villages):
+        attempts = 0
+        while attempts < 10000:
+            x = random.randint(0, SIZE - 1)
+            y = random.randint(0, SIZE - 1)
             
-for i in range(len(map)):
-    for j in range(len(map[0])):
-        if map[i][j] == "plains":
-            x_text = random.randint(1,9)
-            map[i][j] = f"plains_{x_text}"
-            
-for i in range(len(map)):
-    for j in range(len(map[0])):
-        if map[i][j] == "beach":
-            x_text = random.randint(1,9)
-            map[i][j] = f"beach_{x_text}"
+            if biome_map[y][x] != "ocean":
+                coord_vil.append([x, y])
+                break
+            attempts += 1
+
+    return coord_vil
 
 
+# ==============================================================================
+# RENDU
+# ==============================================================================
 
+def render_overworld_map(biome_map, village_coords=None):
+    """Génère l'image de surface."""
+    colors = {
+        "ocean": [0.0, 0.3, 1.0],
+        "beach": [1.0, 0.9, 0.6],
+        "jungle": [0.1, 0.5, 0.1],
+        "forest": [0.05, 0.3, 0.05],
+        "plains": [0.5, 0.8, 0.2],
+        "mountains": [0.5, 0.5, 0.5],
+        "snow_peak": [1.0, 1.0, 1.0],
+    }
+
+    img = np.zeros((SIZE, SIZE, 3))
+    for y in range(SIZE):
+        for x in range(SIZE):
+            img[y][x] = colors[biome_map[y][x]]
+
+    if village_coords:
+        for x, y in village_coords:
+            if 0 <= y < SIZE and 0 <= x < SIZE:
+                img[y][x] = [1.0, 0.0, 0.0]
+
+    return img
+
+
+def render_cave_map(cave_biomes):
+    """Génère l'image souterraine."""
+    colors = {
+        "rock": [0.1, 0.1, 0.1],
+        "cave_normal": [0.5, 0.5, 0.5],
+        "cave_mushroom": [0.6, 0.1, 0.6],
+        "cave_crystal": [0.2, 0.8, 1.0],
+        "cave_lava": [1.0, 0.3, 0.0],
+        "cave_ice": [0.6, 0.8, 1.0],
+    }
+
+    img = np.zeros((SIZE, SIZE, 3))
+    for y in range(SIZE):
+        for x in range(SIZE):
+            img[y][x] = colors[cave_biomes[y][x]]
+
+    return img
+
+
+# ==============================================================================
+# MAIN
+# ==============================================================================
+
+def main():
+    print("Génération du monde...")
+    heightmap, humiditymap, temperaturemap = generate_overworld()
+    biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
+    
+    print("Villages...")
+    villages = generate_villages(biome_map)
+    print(f"→ {len(villages)} villages")
+    
+    print("Grottes...")
+    cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
+    
+    print("Rendu...")
+    img_over = render_overworld_map(biome_map, villages)
+    img_cave = render_cave_map(cave_biomes)
+    
+    fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+    axes[0].imshow(img_over)
+    axes[0].set_title("Surface (villages en rouge)")
+    axes[0].axis("off")
+    
+    axes[1].imshow(img_cave)
+    axes[1].set_title("Souterrain")
+    axes[1].axis("off")
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return biome_map, villages, cave_biomes
+
+
+if __name__ == "__main__":
+    main()
