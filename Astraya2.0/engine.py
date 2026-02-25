@@ -30,11 +30,10 @@ resolution_minimap = 4
 scale_minimap = int((scale_map[1]*16*SCALE) // resolution_minimap - 10)
 
 grottes_coords = map.coord_grottes
+current_world = "overworld"   # ou "cave" ou nether si on en fait un
 
 
 nbr_poulet = 1000
-
-
 
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -202,7 +201,7 @@ last_map_tile = (None, None)
 
 #afficher le viewport principal
 def draw_map(x, y, scalex, scaley, player_position, map_to_show):
-    global last_map_tile, TILE_COLORS
+    global last_map_tile, TILE_COLORS, current_world 
     posx, posy = player_position  
 
     # tile centrale
@@ -253,11 +252,17 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             pygame.draw.rect(screen, "pink", (int(gx), int(gy), 16*SCALE, 16*SCALE))
             pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
 
+        # --- Détection de collision joueur / entrée de grotte ---
+        if (posx >= grotte_x*16*SCALE and posx <= grotte_x + 16*SCALE) and (posy >= grotte_y*16*SCALE and posy <= grotte_y + 16*SCALE) :
+            if current_world == "overworld":
+                current_world = "cave"
 
-    for name_entity in entity_list:
-        for entity in entity_list[name_entity]:
-            px = x + (entity.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
-            py = y + (entity.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
+            else:
+                current_world = "overworld"
+            
+    for poulet in tab_poulet:
+        px = x + (poulet.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
+        py = y + (poulet.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
 
             if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
                 screen.blit(texture_chicken[entity.texture_index], (px, py))
@@ -311,9 +316,11 @@ while running:
     screen.fill("white")
     
     scalemapx, scalemapy = scale_map
-    
-    draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player.get_pos(), map.map)
-    
+    if current_world == "overworld":
+        draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player.get_pos(), map.map)
+    else:
+        draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player.get_pos(), map.cave)
+
     
     drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
