@@ -257,12 +257,10 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             if current_world == "overworld":
                 current_world = "cave"
 
-            else:
-                current_world = "overworld"
-            
-    for poulet in tab_poulet:
-        px = x + (poulet.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
-        py = y + (poulet.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
+    for name_entity in entity_list:
+        for entity in entity_list[name_entity]:
+            px = x + (entity.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
+            py = y + (entity.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
 
             if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
                 screen.blit(texture_chicken[entity.texture_index], (px, py))
