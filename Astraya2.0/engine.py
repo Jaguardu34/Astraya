@@ -31,12 +31,8 @@ scale_minimap = int((scale_map[1]*16*SCALE) // resolution_minimap - 10)
 
 grottes_coords = map.coord_grottes
 
-<<<<<<< HEAD
 
 nbr_poulet = 1000
-=======
-nbr_poulet = 10000
->>>>>>> 43250310f09990482f14834a93307d0deaf374d8
 
 
 
