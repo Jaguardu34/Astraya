@@ -27,9 +27,9 @@ scale_map = int(WINDOW_SCALE[0] // (16*SCALE)) - 1, int(WINDOW_SCALE[1] // (16*S
 resolution_minimap = 4
 scale_minimap = int((scale_map[1]*16*SCALE) // resolution_minimap - 10)
 
+grottes_coords = map.coord_grottes
 
-
-nbr_poulet = 100
+nbr_poulet = 10000
 
 
 
@@ -377,6 +377,20 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
                     pygame.draw.rect(screen, "white", (draw_x, draw_y, 16*SCALE, 16*SCALE))
                 elif map_to_show[map_j][map_i] == "forest":
                     pygame.draw.rect(screen, "darkgreen", (draw_x, draw_y, 16*SCALE, 16*SCALE))
+
+    # ===== 2. DESSINER LES GROTTES =====
+    for grotte_x, grotte_y in grottes_coords:
+        # Position de la grotte par rapport à la caméra
+        gx = x + (grotte_x * 16 - (tile_cx - scalex//2) * 16) * SCALE - offset_x
+        gy = y + (grotte_y * 16 - (tile_cy - scaley//2) * 16) * SCALE - offset_y
+
+        # Ne dessiner que si visible à l'écran
+        if -16*SCALE <= gx < (scalex+1)*16*SCALE and -16*SCALE <= gy < (scaley+1)*16*SCALE:
+            
+            # Rectangle temporaire (jaune pour les voir facilement)
+            pygame.draw.rect(screen, "pink", (int(gx), int(gy), 16*SCALE, 16*SCALE))
+            pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
+
 
     for poulet in tab_poulet:
         px = x + (poulet.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
