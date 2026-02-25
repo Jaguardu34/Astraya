@@ -86,7 +86,7 @@ texture_sand_upscaled = create_texture_with_rotation(0, 16, 4)
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
 
-print(create_texture_mirrored(0, 48, 3))
+
 
 
 class Chunk:
@@ -118,9 +118,10 @@ class Chunk:
 
     
     
-tab_poulet = []
+entity_list = {"mob" : []}
+
 for i in range(nbr_poulet):
-    tab_poulet.append(ent.Chicken(random.randint(0, 3000), random.randint(0,3000)))
+    entity_list["mob"].append(ent.Chicken(random.randint(1300, 1600), random.randint(1300, 1600)))
 
 #joueur    
 player = ent.Player()
@@ -175,22 +176,23 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
 
     screen.blit(minimap_surface, (x, y))
     
-    for poulet in tab_poulet:
-        if abs(player.x - poulet.x) < distance_de_vue and abs(player.y - poulet.y) < distance_de_vue:
-            # position du poulet en tiles
-            ptile_x = int(poulet.x // 16)
-            ptile_y = int(poulet.y // 16)
-            
-            rel_x = ptile_x - tile_cx + scale // 2
-            rel_y = ptile_y - tile_cy + scale // 2
-            
-            px = x + int(rel_x * resolution_minimap)
-            py = y + int(rel_y * resolution_minimap)
-            
-            if (ptile_x, ptile_y) in map_decouverte:
-                if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
-                    texture = texture_poulet_minimap[poulet.texture_index]
-                    screen.blit(texture, (px-8, py-8))
+    for name_entity in entity_list:
+        for entity in entity_list[name_entity]:
+            if abs(entity.x - entity.x) < distance_de_vue and abs(entity.y - entity.y) < distance_de_vue:
+                # position du poulet en tiles
+                ptile_x = int(entity.x // 16)
+                ptile_y = int(entity.y // 16)
+                
+                rel_x = ptile_x - tile_cx + scale // 2
+                rel_y = ptile_y - tile_cy + scale // 2
+                
+                px = x + int(rel_x * resolution_minimap)
+                py = y + int(rel_y * resolution_minimap)
+                
+                if (ptile_x, ptile_y) in map_decouverte:
+                    if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
+                        texture = texture_poulet_minimap[entity.texture_index]
+                        screen.blit(texture, (px-8, py-8))
 
     pygame.draw.rect(screen, "orange", (x + (scale//2 * resolution_minimap), y + (scale//2 * resolution_minimap), 4, 4))
 
@@ -252,12 +254,13 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
 
 
-    for poulet in tab_poulet:
-        px = x + (poulet.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
-        py = y + (poulet.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
+    for name_entity in entity_list:
+        for entity in entity_list[name_entity]:
+            px = x + (entity.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
+            py = y + (entity.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
 
-        if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
-            screen.blit(texture_chicken[poulet.texture_index], (px, py))
+            if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
+                screen.blit(texture_chicken[entity.texture_index], (px, py))
 
     # bords sur screen, avec coordonnées écran
     pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, scalex*16*SCALE + 32*SCALE, 16*SCALE))
@@ -318,15 +321,17 @@ while running:
     
     draw_fps(8*SCALE, 16*SCALE)
 
-    for poulet in tab_poulet:
-        dist = abs(player.x - poulet.x) + abs(player.y - poulet.y)  # manhattan, plus rapide que sqrt
-        if dist < RENDER_DISTANCE:
-            poulet.update(dt, chunk_grid)
+    for entity_name in entity_list:
+        for entity in entity_list[entity_name]:
+            dist = abs(player.x - entity.x) + abs(player.y - entity.y)  # manhattan, plus rapide que sqrt
+            if dist < RENDER_DISTANCE:
+                entity.update(dt, chunk_grid)
     
     chunk_grid.clear()
     chunk_grid.insert(player)
-    for p in tab_poulet:
-        chunk_grid.insert(p)
+    for entity_name in entity_list:
+        for entity in entity_list[entity_name]:
+            chunk_grid.insert(entity)
     
     player.update()
         
