@@ -223,12 +223,6 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
                     else:
                         pygame.draw.rect(map_cache, "blue", (draw_x, draw_y, 16*SCALE, 16*SCALE))
 
-<<<<<<< HEAD
-    
-    screen.blit(map_cache, (x - offset_x, y - offset_y))
-    
-    #poulets         
-=======
     # ===== 2. DESSINER LES GROTTES =====
     for grotte_x, grotte_y in grottes_coords:
         # Position de la grotte par rapport à la caméra
@@ -243,7 +237,6 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
 
 
->>>>>>> 43250310f09990482f14834a93307d0deaf374d8
     for poulet in tab_poulet:
         px = x + (poulet.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
         py = y + (poulet.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
