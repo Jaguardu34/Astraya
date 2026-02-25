@@ -80,7 +80,7 @@ minimap_surface = pygame.Surface((scale_minimap * resolution_minimap, scale_mini
 last_minimap_tile = (None, None)
     
     
-TILE_COLORS = {"ocean": (0, 0, 255), "jungle": (144, 238, 144),"mountains": (128, 128, 128),"snow_peak": (255, 255, 255),"forest": (0, 100, 0), "collide" : (255, 0 ,0), "beach" : (237, 201, 88), "plains" : (34, 139, 34)}
+TILE_COLORS = {"ocean": (0, 0, 255), "jungle": (144, 238, 144),"mountains": (128, 128, 128),"snow_peak": (255, 255, 255),"forest": (0, 100, 0), "collide" : (255, 0 ,0), "beach" : (237, 201, 88), "plains" : (34, 139, 34), "rock": (50, 50, 50), "cave_normal": (120, 120, 120), "cave_mushroom": (150, 0, 150), "cave_crystal": (0, 200, 255), "cave_lava": (255, 80, 0), "cave_ice": (180, 220, 255),}
 TILE_TEXTURE = {"plains" : texture.texture_herbe_upscaled, "beach" : texture.texture_sand_upscaled}
 #afficher la minimap (appeler dans draw_map())    
 
@@ -254,7 +254,7 @@ while running:
     if current_world == "overworld":
         draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.map)
     else:
-        draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.cave)
+        draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.cave_biomes)
 
     
     drawcoeurs(10, scalemapy*16*settings.SCALE + 16, 10)
