@@ -193,23 +193,47 @@ def generate_villages(biome_map, nb_villages=NB_VILLAGES):
 
     for _ in range(nb_villages):
         attempts = 0
-        while attempts < 10000:
+        trouve = False
+        while attempts < 10000 and not trouve:
             x = random.randint(0, SIZE - 1)
             y = random.randint(0, SIZE - 1)
             
             if biome_map[y][x] != "ocean":
                 coord_vil.append([x, y])
-                break
+                trouve = True
             attempts += 1
 
     return coord_vil
 
 
 # ==============================================================================
+# Grottes
+# ==============================================================================
+
+def generate_grottes(biome_map, nb_grottes=NB_VILLAGES):
+    """Place des villages en évitant l'océan."""
+    coord_grottes = [[1500, 1501]]
+
+    for _ in range(nb_grottes):
+        attempts = 0
+        trouve = False
+        while attempts < 10000 and not trouve:
+            x = random.randint(0, SIZE - 1)
+            y = random.randint(0, SIZE - 1)
+            
+            if biome_map[y][x] != "ocean":
+                coord_grottes.append([x, y])
+                trouve = True
+            attempts += 1
+
+    return coord_grottes
+
+
+# ==============================================================================
 # RENDU
 # ==============================================================================
 
-def render_overworld_map(biome_map, village_coords=None):
+def render_overworld_map(biome_map, village_coords=None, grottes_coords=None):
     """Génère l'image de surface."""
     colors = {
         "ocean": [0.0, 0.3, 1.0],
@@ -230,6 +254,11 @@ def render_overworld_map(biome_map, village_coords=None):
         for x, y in village_coords:
             if 0 <= y < SIZE and 0 <= x < SIZE:
                 img[y][x] = [1.0, 0.0, 0.0]
+
+    if grottes_coords:
+        for x, y in grottes_coords:
+            if 0 <= y < SIZE and 0 <= x < SIZE:
+                img[y][x] = [0,6, 1.0, 1.0]
 
     return img
 
@@ -254,7 +283,7 @@ def render_cave_map(cave_biomes):
 
 
 # ==============================================================================
-# MAIN
+# MAIN Juste pour generer que les map, hors code
 # ==============================================================================
 
 def main():
@@ -264,13 +293,14 @@ def main():
     
     print("Villages...")
     villages = generate_villages(biome_map)
+    grottes = generate_grottes(biome_map)
     print(f"→ {len(villages)} villages")
     
     print("Grottes...")
     cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
     
     print("Rendu...")
-    img_over = render_overworld_map(biome_map, villages)
+    img_over = render_overworld_map(biome_map, villages, grottes)
     img_cave = render_cave_map(cave_biomes)
     
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
@@ -287,7 +317,6 @@ def main():
     
     return biome_map, villages, cave_biomes
 
-
 if __name__ == "__main__":
     main()
     
@@ -299,12 +328,14 @@ print("Génération du monde...")
 heightmap, humiditymap, temperaturemap = generate_overworld()
 map = compute_biomes(heightmap, humiditymap, temperaturemap)
 coord_vil = generate_villages(map)
+coord_grottes = generate_grottes(map)
 
 # Tiles sur lesquelles on ne peut pas marcher
 collide_tiles = ["ocean", "collide"]
 
 print(f"Monde généré : {SIZE}x{SIZE}")
 print(f"{len(coord_vil)} villages placés")
+print(coord_grottes)
 
 
 for i in range(len(map)):
