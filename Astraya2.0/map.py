@@ -211,21 +211,22 @@ def generate_villages(biome_map, nb_villages=NB_VILLAGES):
 # ==============================================================================
 
 def generate_grottes(biome_map, nb_grottes=NB_VILLAGES):
-    """Place des villages en évitant l'océan."""
-    coord_grottes = [[1500, 1501]]
-
+    """Place des grottes en évitant l'océan."""
+    coord_grottes = [(1500, 1501)]  # Tuple au lieu de liste
+    
     for _ in range(nb_grottes):
         attempts = 0
         trouve = False
+        
         while attempts < 10000 and not trouve:
             x = random.randint(0, SIZE - 1)
             y = random.randint(0, SIZE - 1)
             
             if biome_map[y][x] != "ocean":
-                coord_grottes.append([x, y])
+                coord_grottes.append((x, y))  # Tuple au lieu de liste
                 trouve = True
             attempts += 1
-
+    
     return coord_grottes
 
 
@@ -332,7 +333,7 @@ coord_vil = generate_villages(map)
 coord_grottes = generate_grottes(map)
 
 # Tiles sur lesquelles on ne peut pas marcher
-collide_tiles = ["ocean", "collide"]
+collide_tiles = ["ocean", "collide", "grotte"]
 
 print(f"Monde généré : {SIZE}x{SIZE}")
 print(f"{len(coord_vil)} villages placés")

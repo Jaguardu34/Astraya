@@ -2,15 +2,18 @@ import random
 import pygame
 import map
 
+def get_rect(x, y, size=12):
+    return pygame.Rect(x - size//2, y - size//2, size, size)
+
 def check_collision_entites(ax, ay, bx, by, size=12):
-    return abs(ax - bx) < size and abs(ay - by) < size
+    return get_rect(ax, ay, size).colliderect(get_rect(bx, by, size))
 
 #verif collisions                   
 def veriftile(x, y):
     if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
-        return False
+        return "ocean"
     elif map.map[y][x] in map.collide_tiles:
-        return False
+        return map.map[y][x]
     else:
         return True
 
@@ -25,18 +28,68 @@ def veriftile_pixel(px, py, size=12):
         (cx_center + half, cy_center + half),  # bas droite
     ]
     for cx, cy in corners:
-        if not veriftile(int(cx // 16), int(cy // 16)):
-            return False
+        result = veriftile(int(cx // 16), int(cy // 16))
+        if result is not True:
+            return result
 
     return True
 
 
 #class du poulet
-class Animal:
-    def __init__(self, x=1500, y=1500, speed=10):
+class Entity(pygame.sprite.Sprite):
+    def __init__(self, sprite, x=1500, y=1500):
+        super().__init__()
         self.x = float(x * 16)
         self.y = float(y * 16)
+        self.sprite = sprite
+        self.sprite_minimap = []
         self.texture_index = 0
+        self.image = self.sprite[self.texture_index]
+        self.rect = self.image.get_rect(topleft=(x * 16, y * 16))
+        self.generate_minimap_sprite()
+
+
+    def update(self):
+        self.image = self.sprite[self.texture_index]
+        pass
+
+    def generate_minimap_sprite(self):
+        for i in range(len(self.sprite)):
+            self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
+            
+    
+    def draw(self, x, y, scalex, scaley, screen, scale, posx, posy):
+        tile_cx = int(posx // 16)
+        tile_cy = int(posy // 16)
+
+        offset_x = int(posx % 16) * scale
+        offset_y = int(posy % 16) * scale
+        px = x + (self.x - (tile_cx - scalex//2) * 16) * scale - offset_x
+        py = y + (self.y - (tile_cy - scaley//2) * 16) * scale - offset_y
+
+        if 0 <= px < scalex*16*scale and 0 <= py < scaley*16*scale:
+            screen.blit(self.sprite[self.texture_index], (px, py))
+    
+    def draw_minimap(self, x, y, resolution_minimap, screen, scale, tile_cx, tile_cy, map_decouverte):
+        # position du poulet en tiles
+        ptile_x = int(self.x // 16)
+        ptile_y = int(self.y // 16)
+        
+        rel_x = ptile_x - tile_cx + scale // 2
+        rel_y = ptile_y - tile_cy + scale // 2
+        
+        px = x + int(rel_x * resolution_minimap)
+        py = y + int(rel_y * resolution_minimap)
+        
+        if (ptile_x, ptile_y) in map_decouverte:
+            if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
+                texture = self.sprite_minimap[self.texture_index]
+                screen.blit(texture, (px-8, py-8))
+            
+
+class Animal(Entity):
+    def __init__(self, sprite, x, y, speed=10):
+        super().__init__(sprite, x, y)
         self.last_animation = 0
         self.state = "walking"
         self.emoting_start = 0
@@ -51,13 +104,12 @@ class Animal:
         self.vy = 0
         self.random_cible()
 
-
-
     def random_cible(self):
         self.cible_x = random.randint(int(self.x-100), int(self.x+100))
         self.cible_y = random.randint(int(self.y-100), int(self.y+100))
 
-    def update(self, dt, chunk_grid):
+    def update(self, dt, chunk_grid, player_x=0, player_y=0):
+        super().update()
         now = pygame.time.get_ticks()
         if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
             if veriftile_pixel(self.x + self.vx, self.y):
@@ -66,7 +118,6 @@ class Animal:
                 self.y += self.vy
             self.vx *= 0.8  # friction
             self.vy *= 0.8
-        now = pygame.time.get_ticks()
         self.animate_action(now)
         if self.state == "emoting":
             if now - self.emoting_start >= self.emote_duration:
@@ -98,17 +149,19 @@ class Animal:
             collider = self.can_move(new_x, self.y, nearby)
             if collider is None:
                 self.x = new_x
-            elif veriftile_pixel(collider.x + dx, collider.y):
-                collider.vx += dx * 1.05
-                self.x = new_x
+            elif not isinstance(collider, Object):
+                if veriftile_pixel(collider.x + dx, collider.y):
+                    collider.vx += dx * 1.05
+                    self.x = new_x
 
         if veriftile_pixel(self.x, new_y):
             collider = self.can_move(self.x, new_y, nearby)
             if collider is None:
                 self.y = new_y
-            elif veriftile_pixel(collider.x, collider.y + dy):
-                collider.vy += dy * 1.05
-                self.y = new_y
+            elif not isinstance(collider, Object):    
+                if veriftile_pixel(collider.x, collider.y + dy):
+                    collider.vy += dy * 1.05
+                    self.y = new_y
 
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
         expected_dist = (dx**2 + dy**2) ** 0.5
@@ -135,8 +188,8 @@ class Animal:
 
     def can_move(self, x, y, nearby):
         collider = next((p for p in nearby if p is not self and check_collision_entites(x, y, p.x, p.y)), None)
-        return collider
-                
+        return collider            
+    
 class Chicken(Animal):
     def animate_action(self, now):
         if self.state != "emoting":
@@ -166,8 +219,9 @@ class Chicken(Animal):
 
 
 #class du joueur
-class Player:
-    def __init__(self, x=1500, y=1500, speed=100):
+class Player(Entity):
+    def __init__(self, sprite, x=1500, y=1500, speed=100):
+        super().__init__(sprite, x, y)
         self.x = float(x * 16)  # position en pixels monde
         self.y = float(y * 16)
         self.speed = speed # pixels par seconde
@@ -176,6 +230,7 @@ class Player:
         
         
     def update(self):
+        super().update()
         if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
             if veriftile_pixel(self.x + self.vx, self.y):
                 self.x += self.vx
@@ -185,7 +240,6 @@ class Player:
             self.vy *= 0.8
         
     def move(self, dx, dy, chunk_grid):
-        
         new_x = self.x + dx
         new_y = self.y + dy
         nearby = chunk_grid.get_nearby(new_x, new_y)
@@ -193,15 +247,17 @@ class Player:
             collider = next((p for p in nearby if p is not self and check_collision_entites(new_x, self.y, p.x, p.y)), None)
             if collider is None:
                 self.x = new_x
-            elif veriftile_pixel(collider.x + dx, collider.y):
-                collider.vx += dx * 1.05
+            elif not isinstance(collider, Object):
+                if veriftile_pixel(collider.x + dx, collider.y):
+                    collider.vx += dx * 1.05
 
         if veriftile_pixel(self.x, new_y):
             collider = next((p for p in nearby if p is not self and check_collision_entites(self.x, new_y, p.x, p.y)), None)
             if collider is None:
                 self.y = new_y
-            elif veriftile_pixel(collider.x, collider.y + dy):
-                collider.vy += dy * 1.05
+            elif not isinstance(collider, Object):
+                if veriftile_pixel(collider.x, collider.y + dy):
+                    collider.vy += dy * 1.05
 
     def input(self, keys, dt, chunk_grid):
         if keys[pygame.K_z] or keys[pygame.K_UP]:
@@ -321,4 +377,23 @@ class Ennemy():
     def can_move(self, x, y, nearby):
         collider = next((p for p in nearby if p is not self and check_collision_entites(x, y, p.x, p.y)), None)
         return collider
+    
+
+class Object(Entity):
+    def update(self, dt, chunk_grid, player_x=0, player_y=0):
+        super().update()
+        if check_collision_entites(self.x, self.y, player_x, player_y, size=24):
+            self.collision()
+
+    def check_collision(self, player_x, player_y):
+        if check_collision_entites(self.x, self.y, player_x, player_y, size=24):
+            return True
+        
+    def collision(self):
+        pass
+        
+class Grotte(Object):
+    
+    def collision(self):
+        pass
     

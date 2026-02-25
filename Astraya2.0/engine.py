@@ -80,12 +80,11 @@ def create_texture_with_rotation(posx, posy, nbr):
         
     return tab_upscaled
 
+
 texture_herbe_upscaled = create_texture_with_rotation(0, 0, 4)
 texture_sand_upscaled = create_texture_with_rotation(0, 16, 4)
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
-
-
 
 
 class Chunk:
@@ -117,13 +116,20 @@ class Chunk:
 
     
     
-entity_list = {"mob" : []}
+all_sprites = pygame.sprite.Group()
+
+
+player = ent.Player(texture_chicken, 1500, 1500)
+
+grotte = ent.Grotte(texture_sand_upscaled, 1510, 1510)
 
 for i in range(nbr_poulet):
-    entity_list["mob"].append(ent.Chicken(random.randint(1300, 1600), random.randint(1300, 1600)))
-
+    all_sprites.add(ent.Chicken(texture_chicken, random.randint(1300, 1600), random.randint(1300, 1600)))
+    
+all_sprites.add(player)
+all_sprites.add(grotte)
 #joueur    
-player = ent.Player()
+
 
 minimap_surface = pygame.Surface((scale_minimap * resolution_minimap, scale_minimap * resolution_minimap))
 last_minimap_tile = (None, None)
@@ -135,9 +141,17 @@ TILE_TEXTURE = {"plains" : texture_herbe_upscaled, "beach" : texture_sand_upscal
 
 map_decouverte = set()
 
-texture_poulet_minimap = []
-for i in range(len(texture_chicken)):
-    texture_poulet_minimap.append(pygame.transform.scale(texture_chicken[i], (texture_chicken[i].get_width() * 0.5, texture_chicken[i].get_height() * 0.5)))
+last_map_change = pygame.time.get_ticks()
+
+def change_map():
+    global current_world, last_map_change
+    change_cooldown = 2000
+    now = pygame.time.get_ticks()
+    if now - last_map_change >= change_cooldown:
+        if current_world == "overworld":
+            current_world = "cave"
+        else: current_world = "overworld"
+        last_map_change = now
 
 def draw_minimap(x, y, scale, player_position, map_to_show):
     global last_minimap_tile
@@ -175,23 +189,9 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
 
     screen.blit(minimap_surface, (x, y))
     
-    for name_entity in entity_list:
-        for entity in entity_list[name_entity]:
-            if abs(entity.x - entity.x) < distance_de_vue and abs(entity.y - entity.y) < distance_de_vue:
-                # position du poulet en tiles
-                ptile_x = int(entity.x // 16)
-                ptile_y = int(entity.y // 16)
-                
-                rel_x = ptile_x - tile_cx + scale // 2
-                rel_y = ptile_y - tile_cy + scale // 2
-                
-                px = x + int(rel_x * resolution_minimap)
-                py = y + int(rel_y * resolution_minimap)
-                
-                if (ptile_x, ptile_y) in map_decouverte:
-                    if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
-                        texture = texture_poulet_minimap[entity.texture_index]
-                        screen.blit(texture, (px-8, py-8))
+    for sprite in all_sprites:
+        if abs(player.x - sprite.x) < distance_de_vue and abs(player.y - sprite.y) < distance_de_vue:
+            sprite.draw_minimap(x, y, resolution_minimap, screen, scale, tile_cx, tile_cy, map_decouverte)
 
     pygame.draw.rect(screen, "orange", (x + (scale//2 * resolution_minimap), y + (scale//2 * resolution_minimap), 4, 4))
 
@@ -201,7 +201,7 @@ last_map_tile = (None, None)
 
 #afficher le viewport principal
 def draw_map(x, y, scalex, scaley, player_position, map_to_show):
-    global last_map_tile, TILE_COLORS, current_world 
+    global last_map_tile, TILE_COLORS
     posx, posy = player_position  
 
     # tile centrale
@@ -252,26 +252,18 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             pygame.draw.rect(screen, "pink", (int(gx), int(gy), 16*SCALE, 16*SCALE))
             pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
 
-        # --- Détection de collision joueur / entrée de grotte ---
-        if int(posx // 16) == grotte_x and int(posy // 16) == grotte_y:
-            if current_world == "overworld":
-                current_world = "cave"
 
-    for name_entity in entity_list:
-        for entity in entity_list[name_entity]:
-            px = x + (entity.x - (tile_cx - scalex//2) * 16) * SCALE - offset_x
-            py = y + (entity.y - (tile_cy - scaley//2) * 16) * SCALE - offset_y
-
-            if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
-                screen.blit(texture_chicken[entity.texture_index], (px, py))
+    for sprite in all_sprites:
+        if sprite is not player:
+            sprite.draw(x, y, scalex, scaley, screen, SCALE, posx, posy)
 
     # bords sur screen, avec coordonnées écran
     pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, scalex*16*SCALE + 32*SCALE, 16*SCALE))
     pygame.draw.rect(screen, "white", (x-16*SCALE, y+scaley*16*SCALE -16*SCALE, scalex*16*SCALE + 32*SCALE, 32*SCALE))
     pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, 16*SCALE, scalex*16*SCALE))
     pygame.draw.rect(screen, "white", (x+scalex*16*SCALE -16*SCALE, y-16*SCALE, 32*SCALE, scalex*16*SCALE))
-    #player
-    pygame.draw.rect(screen, "orange", (x + (scalex//2 * 16 * SCALE), y + (scaley//2 * 16 * SCALE), 16*SCALE, 16*SCALE))
+
+    screen.blit(player.sprite[player.texture_index], (x + scalex//2 * 16 * SCALE, y + scaley//2 * 16 * SCALE))
     
 
 texture_coeur = get_sprite(textures, 0, 241, 16, 16)
@@ -325,18 +317,17 @@ while running:
     draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
     
     draw_fps(8*SCALE, 16*SCALE)
-
-    for entity_name in entity_list:
-        for entity in entity_list[entity_name]:
-            dist = abs(player.x - entity.x) + abs(player.y - entity.y)  # manhattan, plus rapide que sqrt
+    
+    for sprite in all_sprites:
+        if sprite is not player:
+            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)  # manhattan, plus rapide que sqrt
             if dist < RENDER_DISTANCE:
-                entity.update(dt, chunk_grid)
+                sprite.update(dt, chunk_grid, player.x, player.y) 
     
     chunk_grid.clear()
     chunk_grid.insert(player)
-    for entity_name in entity_list:
-        for entity in entity_list[entity_name]:
-            chunk_grid.insert(entity)
+    for sprite in all_sprites:
+        chunk_grid.insert(sprite)
     
     player.update()
         
@@ -345,8 +336,11 @@ while running:
         draw_minimap(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*SCALE)+ (scalemapy*16*SCALE) // 2 - (scale_minimap*resolution_minimap)//2, scale_minimap, player.get_pos(), map.map)
     player.input(keys, dt, chunk_grid)
 
-    
-    
+    for sprite in all_sprites:
+        if isinstance(sprite, ent.Object):
+            if sprite.check_collision(player.x, player.y):
+                change_map()
+
     
     # flip() the display to put your work on screen
     pygame.display.flip()
