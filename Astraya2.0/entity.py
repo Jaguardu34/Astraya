@@ -143,7 +143,7 @@ class Chicken(Animal):
 
         if now - self.last_animation >= self.anim_change_frame:
             if self.texture_index == 0:
-                self.texture_index = 3
+                self.texture_index = 2
             else: 
                 self.texture_index = 0 
             self.last_animation = now
@@ -156,9 +156,9 @@ class Chicken(Animal):
                     self.texture_index = 1
                 else: self.texture_index = 0
             elif dx < 0:
-                if self.texture_index != 7:
-                    self.texture_index = 7
-                else: self.texture_index = 6
+                if self.texture_index != 4:
+                    self.texture_index = 4
+                else: self.texture_index = 3
             self.last_walking_animation = now
 
 
