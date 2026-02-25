@@ -222,7 +222,7 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
                         pygame.draw.rect(map_cache, TILE_COLORS[tile], (draw_x, draw_y, 16*SCALE, 16*SCALE))
                     else:
                         pygame.draw.rect(map_cache, "blue", (draw_x, draw_y, 16*SCALE, 16*SCALE))
-
+    screen.blit(map_cache, (x - offset_x, y - offset_y))
     # ===== 2. DESSINER LES GROTTES =====
     for grotte_x, grotte_y in grottes_coords:
         # Position de la grotte par rapport à la caméra
