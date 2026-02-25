@@ -1,18 +1,19 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-
+from settings import SEED
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
 SIZE = 2000
 NB_VILLAGES = 80
 
+
 # ==============================================================================
 # GÉNÉRATION DE BRUIT PERLIN
 # ==============================================================================
 
-def perlin(width, height, scale=10, seed=0):
+def perlin(width, height, scale=10, seed=SEED):
     """Génère un bruit de Perlin vectorisé."""
     rng = np.random.default_rng(seed)
 

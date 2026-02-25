@@ -1,4 +1,4 @@
-"""
+""" //c'est plus trop vrai//
 pour créer un joueur de manière précise: 
 player = Player(x=1500, y=1500)  # position initiale en pixels (1500, 1500) correspond à (93, 93) en tiles
 player.x = 1600  # déplacer le joueur à x=1600 pixels (100 tiles)
@@ -18,27 +18,52 @@ player.inventory.add_item(epee)
 
 
 
+from turtle import pos
+
 import pygame
 import random
 import engine
 from inventory import Inventory
-class Entity:
-    def __init__(self, x=1500, y=1500):
-        self.x = float(x * 16)
-        self.y = float(y * 16)
+import settings
+
+class Entity(pygame.sprite.Sprite):
+    def __init__(self,pos, groups):
+        super().__init__(groups)
+        self.direction = pygame.math.Vector2() # vecteur de direction (x, y) pour le mouvement
+        self.animation_speed = 0.15
         self.speed = 0
         self.texture_index = 0
+        
+        
 
-    def move(self, dx, dy):
-        new_x = self.x + dx
-        new_y = self.y + dy
-        if engine.veriftile_pixel(new_x, new_y):
-            self._on_valid_move(new_x, new_y)
+    #stats
+    
+    def move(self,speed):
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
 
-    def _on_valid_move(self, new_x, new_y):
-        """À surcharger dans les sous-classes pour ajouter des conditions. c'est ##super()._on_valid_move(new_x, new_y)## pour faire le mouvement."""
-        self.x = new_x
-        self.y = new_y
+        self.hitbox.x += self.direction.x * speed
+        self.collision('horizontal')
+        self.hitbox.y += self.direction.y * speed
+        self.collision('vertical')
+        self.rect.center = self.hitbox.center
+
+    def collision(self,direction):
+        if direction == 'horizontal':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0: # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0: # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
+        if direction == 'vertical':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0: # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0: # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
 
     def get_pos(self):
         return (self.x, self.y)
@@ -47,100 +72,7 @@ class Entity:
         pass
 
 
-class Chicken(Entity):
-    def __init__(self, x=1500, y=1500):
-        super().__init__(x, y)
-        self.speed = 10
-        self.last_animation = 0
-        self.emoting_state = False
-        self.emoting_start = 0
-        self.last_emoting = 0
-        self.emoting_duration = 0
-        self.last_walking_animation = 0
-        self.cible_x = 0
-        self.cible_y = 0
-        self.random_cible()
-
-    def random_cible(self):
-        self.cible_x = random.randint(int(self.x - 50), int(self.x + 50))
-        self.cible_y = random.randint(int(self.y - 50), int(self.y + 50))
-
-    def _on_valid_move(self, new_x, new_y):
-        if not any(engine.check_collision_entites(new_x, new_y, p.x, p.y) for p in engine.tab_poulet if p is not self):
-            if not engine.check_collision_entites(new_x, new_y, engine.player.x, engine.player.y):
-                self.x = new_x
-                self.y = new_y
-
-    def update(self, dt):
-        self.animate()
-        now = pygame.time.get_ticks()
-
-        if self.emoting_state:
-            if now - self.last_emoting >= self.emoting_duration:
-                self.emoting_state = False
-        else:
-            dist_x = self.cible_x - self.x
-            dist_y = self.cible_y - self.y
-            dist = (dist_x ** 2 + dist_y ** 2) ** 0.5
-
-            if dist > 1:
-                self._walk(dist_x, dist_y, dist, dt)
-            else:
-                self.random_cible()
-                self.emoting_state = True
-                self.emoting_start = now
-                self.last_emoting = now
-                self.emoting_duration = random.randint(5000, 8000)
-
-    def _walk(self, dist_x, dist_y, dist, dt):
-        now = pygame.time.get_ticks()
-        dx = (dist_x / dist) * self.speed * dt
-        dy = (dist_y / dist) * self.speed * dt
-        self.move(dx, dy)
-
-        if now - self.last_walking_animation >= 500:
-            if dx > 0:
-                self.texture_index = 1 if self.texture_index == 0 else 0
-            elif dx < 0:
-                self.texture_index = 7 if self.texture_index == 6 else 6
-            self.last_walking_animation = now
-
-    def animate(self):
-        now = pygame.time.get_ticks()
-        if self.emoting_state:
-            if now - self.last_animation >= self.emoting_duration // 2:
-                self.texture_index = 3 if self.texture_index == 0 else 0
-                self.last_animation = now
 
 
 
-class Player(Entity):
-    def __init__(self, x=1500, y=1500):
-        super().__init__(x, y)
-        self.speed = 100
-        self.hp = 100
-        self.max_hp = 100
-        self.inventory = Inventory(size=20, hotbar_size=5)
 
-    def input(self, keys, dt):
-        if keys[pygame.K_z] or keys[pygame.K_UP]:
-            self.move(0, -self.speed * dt)
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.move(0, self.speed * dt)
-        if keys[pygame.K_q] or keys[pygame.K_LEFT]:
-            self.move(-self.speed * dt, 0)
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.move(self.speed * dt, 0)
-
-    def handle_event(self, event):
-        # scroll molette → changer slot hotbar
-        if event.type == pygame.MOUSEWHEEL:
-            self.inventory.scroll_hotbar(-event.y)
-        # clic gauche → utiliser item
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            self.inventory.use_selected(self)
-        # touches 1-5 → sélectionner hotbar
-        if event.type == pygame.KEYDOWN:
-            for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
-                if event.key == key:
-                    self.inventory.select_hotbar(i)
