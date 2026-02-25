@@ -116,6 +116,8 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
 
             if h < 0.25:
                 biome = "ocean"
+            elif h < 0.28:
+                biome = "wet_beach"
             elif h < 0.32:
                 biome = "beach"
             elif h < 0.65:
@@ -239,6 +241,7 @@ def render_overworld_map(biome_map, village_coords=None, grottes_coords=None):
     """Génère l'image de surface."""
     colors = {
         "ocean": [0.0, 0.3, 1.0],
+        "wet_beach": [0.0,0.0,0.0],
         "beach": [1.0, 0.9, 0.6],
         "jungle": [0.1, 0.5, 0.1],
         "forest": [0.05, 0.3, 0.05],
