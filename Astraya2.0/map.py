@@ -311,13 +311,13 @@ for i in range(len(map)):
     for j in range(len(map[i])):
         if map[j][i] == "plains":
             x = random.randint(0, 15)
-            map[j][i] = f"plains_{x}"
+            map[j][i] = f"plains*{x}"
             
 for i in range(len(map)):
     for j in range(len(map[i])):
         if map[j][i] == "beach":
             x = random.randint(0, 15)
-            map[j][i] = f"beach_{x}"
+            map[j][i] = f"beach*{x}"
 
 
 map[1510][1510] = "collide"
