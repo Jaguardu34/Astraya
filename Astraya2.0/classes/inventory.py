@@ -24,6 +24,7 @@ class Inventory:
         self.slots = [Slot() for _ in range(size)]
         self.hotbar_size = hotbar_size
         self.selected_hotbar = 0       # index du slot actif dans la hotbar
+        
     # ex : print(player.inventory.hotbar)  # accès rapide à la hotbar ; le @property fak(fait que) player.inventory.hotbar() devient player.inventory.hotbar
     @property
     def hotbar(self):

@@ -6,8 +6,15 @@ import map
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
 
-def check_collision_entites(ax, ay, bx, by, size=12):
-    return get_rect(ax, ay, size).colliderect(get_rect(bx, by, size))
+def check_collision_entites(ax, ay, bx, by, size=16):
+    return pygame.Rect(ax, ay, size, size).colliderect(pygame.Rect(bx, by, size, size))
+
+def check_box_collide(box1, box2):
+    for r1 in box1:          # itère sur box1 aussi
+        for r2 in box2:
+            if r1.colliderect(r2):
+                return True
+    return False
 
 #verif collisions                   
 def veriftile(x, y):
@@ -18,21 +25,20 @@ def veriftile(x, y):
     else:
         return True
 
-def veriftile_pixel(px, py, size=12):
-    cx_center = px + 8  
-    cy_center = py + 8
+def veriftile_pixel(px, py, size=16):
     half = size // 2
+    center_x = px + half  # centre du sprite depuis son topleft
+    center_y = py + half
     corners = [
-        (cx_center - half, cy_center - half),  # haut gauche
-        (cx_center + half, cy_center - half),  # haut droite
-        (cx_center - half, cy_center + half),  # bas gauche
-        (cx_center + half, cy_center + half),  # bas droite
+        (center_x - half + 1, center_y - half + 1),  # haut gauche
+        (center_x + half - 1, center_y - half + 1),  # haut droite
+        (center_x - half + 1, center_y + half - 1),  # bas gauche
+        (center_x + half - 1, center_y + half - 1),  # bas droite
     ]
     for cx, cy in corners:
         result = veriftile(int(cx // 16), int(cy // 16))
         if result is not True:
             return result
-
     return True
 
 
@@ -104,6 +110,8 @@ class Animal(Entity):
         self.vx = 0
         self.vy = 0
         self.random_cible()
+        self.collide_box = [pygame.Rect(self.x, self.y, 16, 16)]
+        self.hitbox = 14
 
     def random_cible(self):
         self.cible_x = random.randint(int(self.x-100), int(self.x+100))
@@ -139,30 +147,51 @@ class Animal(Entity):
                 self.emote_duration = random.randint(5000, 8000)
                 self.state = "emoting"
                 self.emoting_start = now
+        
+        self.collide_box[0].x = self.x
+        self.collide_box[0].y = self.y
                     
     def move(self, dx, dy, now, chunk_grid):
         new_x = self.x + dx
         new_y = self.y + dy
         nearby = chunk_grid.get_nearby(new_x, new_y)
         prev_x, prev_y = self.x, self.y
+        
+        entity_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
+        entity_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
 
         if veriftile_pixel(new_x, self.y):
-            collider = self.can_move(new_x, self.y, nearby)
-            if collider is None:
+            blocked = False
+            for p in nearby:
+                if p is self:
+                    continue
+                if isinstance(p, Object):
+                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_x):
+                        blocked = True
+                        break
+                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_x):  
+                    if veriftile_pixel(p.x + dx, p.y):
+                        p.vx += dx * 1.05
+                    break
+            if not blocked:
                 self.x = new_x
-            elif not isinstance(collider, Object):
-                if veriftile_pixel(collider.x + dx, collider.y):
-                    collider.vx += dx * 1.05
-                    self.x = new_x
 
         if veriftile_pixel(self.x, new_y):
-            collider = self.can_move(self.x, new_y, nearby)
-            if collider is None:
+            blocked = False
+            for p in nearby:
+                if p is self:
+                    continue
+                if isinstance(p, Object):
+                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_y):
+                        blocked = True
+                        break
+                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_y):  
+                    if veriftile_pixel(p.x, p.y + dy):
+                        p.vy += dy * 1.05
+                    break
+            if not blocked:
                 self.y = new_y
-            elif not isinstance(collider, Object):    
-                if veriftile_pixel(collider.x, collider.y + dy):
-                    collider.vy += dy * 1.05
-                    self.y = new_y
+
 
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
         expected_dist = (dx**2 + dy**2) ** 0.5
@@ -186,12 +215,12 @@ class Animal(Entity):
         
     def animate_on_move(self, dx, dy, now):
         pass
-
-    def can_move(self, x, y, nearby):
-        collider = next((p for p in nearby if p is not self and check_collision_entites(x, y, p.x, p.y)), None)
-        return collider            
+        
     
 class Chicken(Animal):
+
+        
+        
     def animate_action(self, now):
         if self.state != "emoting":
             return
@@ -228,6 +257,8 @@ class Player(Entity):
         self.speed = speed # pixels par seconde
         self.vx = 0
         self.vy = 0
+        self.collide_box = [pygame.Rect(self.x, self.y, 16, 16)]
+        self.hitbox = 14
         
         
     def update(self):
@@ -240,25 +271,49 @@ class Player(Entity):
             self.vx *= 0.8  # friction
             self.vy *= 0.8
         
+        self.collide_box[0].x = self.x
+        self.collide_box[0].y = self.y
+
+        
     def move(self, dx, dy, chunk_grid):
         new_x = self.x + dx
         new_y = self.y + dy
         nearby = chunk_grid.get_nearby(new_x, new_y)
+        
+        player_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
+        player_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
+    
         if veriftile_pixel(new_x, self.y):
-            collider = next((p for p in nearby if p is not self and check_collision_entites(new_x, self.y, p.x, p.y)), None)
-            if collider is None:
+            blocked = False
+            for p in nearby:
+                if p is self:
+                    continue
+                if isinstance(p, Object):
+                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):
+                        blocked = True
+                        break
+                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):  
+                    if veriftile_pixel(p.x + dx, p.y):
+                        p.vx += dx * 1.05
+                    break
+            if not blocked:
                 self.x = new_x
-            elif not isinstance(collider, Object):
-                if veriftile_pixel(collider.x + dx, collider.y):
-                    collider.vx += dx * 1.05
 
         if veriftile_pixel(self.x, new_y):
-            collider = next((p for p in nearby if p is not self and check_collision_entites(self.x, new_y, p.x, p.y)), None)
-            if collider is None:
+            blocked = False
+            for p in nearby:
+                if p is self:
+                    continue
+                if isinstance(p, Object):
+                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):
+                        blocked = True
+                        break
+                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):  
+                    if veriftile_pixel(p.x, p.y + dy):
+                        p.vy += dy * 1.05
+                    break
+            if not blocked:
                 self.y = new_y
-            elif not isinstance(collider, Object):
-                if veriftile_pixel(collider.x, collider.y + dy):
-                    collider.vy += dy * 1.05
 
     def input(self, keys, dt, chunk_grid):
         if keys[pygame.K_z] or keys[pygame.K_UP]:
@@ -381,6 +436,9 @@ class Ennemy():
     
 
 class Object(Entity):
+    def __init__(self, sprite, x, y, speed=10):
+        super().__init__(sprite, x, y)
+
     def update(self, dt, chunk_grid, player_x=0, player_y=0):
         super().update()
         if check_collision_entites(self.x, self.y, player_x, player_y, size=24):
@@ -394,7 +452,20 @@ class Object(Entity):
         pass
         
 class Grotte(Object):
+    def __init__(self, sprite, x, y, speed=10):
+        super().__init__(sprite, x, y)
+        self.collide_box = [
+            pygame.Rect(self.x + 0,  self.y + 0,  48, 5),  # bord haut
+            pygame.Rect(self.x + 0,  self.y + 15, 15, 45),
+            pygame.Rect(self.x + 43, self.y + 0, 5, 40)# bord gauche  # bord droit
+        ]
     
-    def collision(self):
-        pass
+    def update(self, dt, chunk_grid, player_x=0, player_y=0):
+        super().update(dt, chunk_grid, player_x, player_y)
+        self.collide_box[0].topleft = (self.x + 0,  self.y + 0)
+        self.collide_box[1].topleft = (self.x + 0,  self.y + 15)
+    
+    def collides_with(self, player_rect):
+        return check_box_collide(self.collide_box, player_rect)
+    
     

@@ -28,7 +28,7 @@ grottes_coords = map.coord_grottes
 current_world = "overworld"   # ou "cave" ou nether si on en fait un
 
 
-nbr_poulet = 1000
+nbr_poulet = 100
 
 
 
@@ -281,7 +281,7 @@ while running:
 
     for sprite in all_sprites:
         if isinstance(sprite, ent.Object):
-            if sprite.check_collision(player.x, player.y):
+            if sprite.collides_with(player.collide_box):
                 change_map()
 
     
