@@ -55,3 +55,4 @@ texture_herbe_upscaled = create_texture_with_rotation(0, 0, 4)
 texture_sand_upscaled = create_texture_with_rotation(0, 16, 4)
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
+texture_player  
