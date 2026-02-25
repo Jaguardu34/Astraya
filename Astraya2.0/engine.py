@@ -51,6 +51,21 @@ def create_texture_basic(posx, posy, nbr):
         
     return tab_upscaled
 
+def create_texture_mirrored(posx, posy, nbr):
+    tab = []
+    for i in range(nbr):
+        tab.append(get_sprite(textures, posx + (i * 16), posy, 16, 16))
+    
+    tab_upscaled = []
+    for i in range(len(tab)):
+        tab_upscaled.append(pygame.transform.scale(tab[i], (tab[i].get_width() * SCALE, tab[i].get_height()*SCALE)))
+        
+    for i in range(len(tab)):
+        tab_upscaled.append(pygame.transform.flip(tab_upscaled[i], True, False))
+        
+    return tab_upscaled
+        
+
 def create_texture_with_rotation(posx, posy, nbr):
     tab = []
     for i in range(nbr):
@@ -68,9 +83,9 @@ def create_texture_with_rotation(posx, posy, nbr):
 texture_herbe_upscaled = create_texture_with_rotation(0, 0, 4)
 texture_sand_upscaled = create_texture_with_rotation(0, 16, 4)
 
-texture_chicken = create_texture_basic(0, 48, 12)
+texture_chicken = create_texture_mirrored(0, 48, 3)
 
-
+print(create_texture_mirrored(0, 48, 3))
 
 
 class Chunk:
