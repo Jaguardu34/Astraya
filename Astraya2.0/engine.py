@@ -64,9 +64,9 @@ class Chunk:
 all_sprites = pygame.sprite.Group()
 
 
-player = ent.Player(texture.texture_chicken, 1500, 1500)
+player = ent.Player(texture.texture_player, 1500, 1500)
 
-grotte = ent.Grotte(texture.texture_sand_upscaled, 1510, 1510)
+grotte = ent.Grotte(texture.texture_grotte, 1530, 1530)
 
 for i in range(nbr_poulet):
     all_sprites.add(ent.Chicken(texture.texture_chicken, random.randint(1300, 1600), random.randint(1300, 1600)))
@@ -211,12 +211,11 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
     screen.blit(player.sprite[player.texture_index], (x + scalex//2 * 16 * settings.SCALE, y + scaley//2 * 16 * settings.SCALE))
     
 
-texture_coeur = get_sprite(textures, 0, 241, 16, 16)
-texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*settings.SCALE, texture_coeur.get_height()*settings.SCALE))    
+  
 #afficher les coeurs
 def drawcoeurs(x, y, nbcoeurs):
     for i in range(nbcoeurs):
-        screen.blit(texture_coeur_upscaled, (x + (i*(texture_coeur_upscaled.get_width()+8)), y))
+        screen.blit(texture.texture_coeur_upscaled, (x + (i*(texture.texture_coeur_upscaled.get_width()+8)), y))
                     
 
 font_to_write = pygame.font.SysFont(None, 24)
@@ -239,7 +238,6 @@ for j, row in enumerate(map.map):
         if "*" in tile:
             tile_index_cache[(i, j)] = int(tile.split("*")[1])
 
-RENDER_DISTANCE = 1000
 #boucle de jeu
 while running:
     #quitter le jeu
@@ -266,7 +264,7 @@ while running:
     for sprite in all_sprites:
         if sprite is not player:
             dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)  # manhattan, plus rapide que sqrt
-            if dist < RENDER_DISTANCE:
+            if dist < settings.RENDER_DISTANCE:
                 sprite.update(dt, chunk_grid, player.x, player.y) 
     
     chunk_grid.clear()
