@@ -2,6 +2,7 @@ import random
 import pygame
 import map
 
+
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
 
