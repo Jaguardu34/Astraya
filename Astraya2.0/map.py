@@ -181,7 +181,7 @@ def generate_cave_system():
             else:
                 cave_biomes[y][x] = "cave_lava"
 
-    return cave_map, cave_noise, cave_biomes, biome_noise
+    return cave_biomes
 
 
 # ==============================================================================
@@ -328,6 +328,7 @@ if __name__ == "__main__":
 print("Génération du monde...")
 heightmap, humiditymap, temperaturemap = generate_overworld()
 map = compute_biomes(heightmap, humiditymap, temperaturemap)
+cave = generate_cave_system()
 coord_vil = generate_villages(map)
 coord_grottes = generate_grottes(map)
 
