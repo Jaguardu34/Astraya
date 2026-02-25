@@ -253,7 +253,7 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
             pygame.draw.circle(screen, "black", (int(gx + 8*SCALE), int(gy + 8*SCALE)), 4*SCALE)
 
         # --- Détection de collision joueur / entrée de grotte ---
-        if (posx >= grotte_x*16*SCALE and posx <= grotte_x + 16*SCALE) and (posy >= grotte_y*16*SCALE and posy <= grotte_y + 16*SCALE) :
+        if int(posx // 16) == grotte_x and int(posy // 16) == grotte_y:
             if current_world == "overworld":
                 current_world = "cave"
 
