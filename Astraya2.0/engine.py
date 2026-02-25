@@ -3,8 +3,7 @@ import map
 import random
 import os
 
-GAME_W = 640 
-GAME_H = 480
+
 SCALE = 2
 
 # pygame setup
@@ -12,7 +11,8 @@ pygame.init()
 pygame.font.init()
 pygame.display.set_caption("Astraya 2.0")
 info = pygame.display.Info()
-screen = pygame.display.set_mode((info.current_w - 0.1*info.current_w, info.current_h - 0.1*info.current_h),pygame.RESIZABLE)
+WINDOW_SCALE = info.current_w - 0.1*info.current_w, info.current_h - 0.1*info.current_h
+screen = pygame.display.set_mode(WINDOW_SCALE, pygame.RESIZABLE)
 #screen = pygame.display.set_mode((GAME_W * SCALE, GAME_H * SCALE), pygame.RESIZABLE)
 
 #Chargement des textures
@@ -22,10 +22,10 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-scale_map = 39, 19
+scale_map = int(WINDOW_SCALE[0] // (16*SCALE)) - 1, int(WINDOW_SCALE[1] // (16*SCALE)) - 1
 
 resolution_minimap = 4
-scale_minimap = 65
+scale_minimap = int((scale_map[1]*16*SCALE) // resolution_minimap - 10)
 
 
 
@@ -139,19 +139,21 @@ class Chicken:
         self.cible_y = 0
         self.last_walking_animation = 0
         self.duree_anim = random.randint(1000, 3000)
+        self.emote_duration = random.randint(5000, 8000)
         self.random_cible()
 
 
+
     def random_cible(self):
-        self.cible_x = random.randint(int(self.x-50), int(self.x+50))
-        self.cible_y = random.randint(int(self.y-50), int(self.y+50))
+        self.cible_x = random.randint(int(self.x-100), int(self.x+100))
+        self.cible_y = random.randint(int(self.y-100), int(self.y+100))
 
     def update(self, dt):
         self.animate()
         now = pygame.time.get_ticks()
         
         if self.emoting_state:
-            if now - self.last_emoting >= random.randint(5000, 8000):
+            if now - self.last_emoting >= self.emote_duration:
                 self.emoting_state = False
                 self.move_count = 0
         else:
@@ -172,24 +174,26 @@ class Chicken:
         new_x = self.x + dx
         new_y = self.y + dy
         nearby = chunk_grid.get_nearby(new_x, new_y)
-        if veriftile_pixel(new_x, self.y):
-            if not any(check_collision_entites(new_x, self.y, p.x, p.y) for p in nearby if p is not self):
-                self.x = new_x
-        if veriftile_pixel(self.x, new_y):
-            if not any(check_collision_entites(self.x, new_y, p.x, p.y) for p in nearby if p is not self):
-                self.y = new_y
-                
-        if now-self.last_walking_animation >= 500:  
+
+        moved_x = self.can_move(new_x, self.y, nearby)
+        moved_y = self.can_move(self.x, new_y, nearby)
+
+        if moved_x:
+            self.x = new_x
+        if moved_y:
+            self.y = new_y
+
+        if (moved_x or moved_y) and now-self.last_walking_animation >= 500:  
             if dx > 0:
-                if self.texture_index < 1 :
-                    self.texture_index += 1
+                if self.texture_index != 1 :
+                    self.texture_index = 1
                 else: self.texture_index = 0
             elif dx < 0:
-                if self.texture_index < 7 and self.texture_index >= 6:
-                    self.texture_index += 1
+                if self.texture_index != 7:
+                    self.texture_index = 7
                 else: self.texture_index = 6
             self.last_walking_animation = now
-        
+   
                 
     def animate(self,):
         now = pygame.time.get_ticks()
@@ -201,6 +205,9 @@ class Chicken:
                     self.texture_index = 0 
                 self.last_animation = now
 
+    def can_move(self, x, y, nearby):
+        return (veriftile_pixel(x, y) and not any(check_collision_entites(x, y, p.x, p.y) for p in nearby if p is not self))
+
                 
 
 #class du joueur
@@ -208,10 +215,10 @@ class Player:
     def __init__(self, x=1500, y=1500):
         self.x = float(x * 16)  # position en pixels monde
         self.y = float(y * 16)
-        self.speed = 500 # pixels par seconde
+        self.speed = 100 # pixels par seconde
     
     def move(self, dx, dy):
-        steps = max(1, int(max(abs(dx), abs(dy)) // 6) + 1)
+        steps = max(1, int(max(abs(dx), abs(dy)) // 8) + 1)
         step_x = dx / steps
         step_y = dy / steps
         
@@ -222,8 +229,7 @@ class Player:
             if veriftile_pixel(new_x, self.y):
                 if not any(check_collision_entites(new_x, self.y, p.x, p.y) for p in nearby if p is not player):
                     self.x = new_x
-            
-            # essaye y séparément
+
             if veriftile_pixel(self.x, new_y):
                 if not any(check_collision_entites(self.x, new_y, p.x, p.y) for p in nearby if p is not player):
                     self.y = new_y
@@ -254,6 +260,8 @@ last_minimap_tile = (None, None)
     
 #afficher la minimap (appeler dans draw_map())    
 
+map_decouverte = set()
+
 def draw_minimap(x, y, scale, player_position, map_to_show):
     global last_minimap_tile
     
@@ -263,34 +271,39 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
     tile_cx = int(posx // 16)
     tile_cy = int(posy // 16)
     
-    # on redessine seulement si le joueur a changé de tile
+
     if (tile_cx, tile_cy) != last_minimap_tile:
         last_minimap_tile = (tile_cx, tile_cy)
-        minimap_surface.fill((0, 0, 255))  # fond océan par défaut
+        minimap_surface.fill((0, 0, 255)) 
         
         for i in range(scale):
             for j in range(scale):
                 map_i = tile_cx - scale//2 + i
                 map_j = tile_cy - scale//2 + j
                 
+
                 if 0 <= map_j < len(map_to_show) and 0 <= map_i < len(map_to_show[map_j]):
-                    tile = map_to_show[map_j][map_i]
-                    if tile == "ocean":
-                        color = "blue"
-                    elif tile.startswith("beach"):
-                        color = "yellow"
-                    elif tile == "jungle":
-                        color = "lightgreen"
-                    elif tile.startswith("plains"):
-                        color = "green"
-                    elif tile == "mountains":
-                        color = "gray"
-                    elif tile == "snow_peak":
-                        color = "white"
-                    elif tile == "forest":
-                        color = "darkgreen"
+                    if (map_i, map_j) in map_decouverte:
+                        tile = map_to_show[map_j][map_i]
+                        if tile == "ocean":
+                            color = "blue"
+                        elif tile.startswith("beach"):
+                            color = "yellow"
+                        elif tile == "jungle":
+                            color = "lightgreen"
+                        elif tile.startswith("plains"):
+                            color = "green"
+                        elif tile == "mountains":
+                            color = "gray"
+                        elif tile == "snow_peak":
+                            color = "white"
+                        elif tile == "forest":
+                            color = "darkgreen"
+                        else:
+                            color = "blue"
+                    
                     else:
-                        color = "blue"
+                        color = "black"
                     pygame.draw.rect(minimap_surface, color, (i * resolution_minimap, j * resolution_minimap, resolution_minimap, resolution_minimap))
                     
             
@@ -305,44 +318,45 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
     for poulet in tab_poulet:
         if abs(player.x - poulet.x) < distance_de_vue and abs(player.y - poulet.y) < distance_de_vue:
             # position du poulet en tiles
-            ptile_x = poulet.x / 16
-            ptile_y = poulet.y / 16
+            ptile_x = int(poulet.x // 16)
+            ptile_y = int(poulet.y // 16)
             
-            # position relative au centre de la minimap
+
             rel_x = ptile_x - tile_cx + scale // 2
             rel_y = ptile_y - tile_cy + scale // 2
             
-            # en pixels sur la minimap
+
             px = x + int(rel_x * resolution_minimap)
             py = y + int(rel_y * resolution_minimap)
             
-            # on vérifie que c'est dans la minimap
-            if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
-                texture = texture_chicken[poulet.texture_index]
-                screen.blit(pygame.transform.scale(texture, (texture.get_width() * 0.5, texture.get_height() * 0.5)), (px-8, py-8))
+            if (ptile_x, ptile_y) in map_decouverte:
+                if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
+                    texture = texture_chicken[poulet.texture_index]
+                    screen.blit(pygame.transform.scale(texture, (texture.get_width() * 0.5, texture.get_height() * 0.5)), (px-8, py-8))
 
     pygame.draw.rect(screen, "orange", (x + (scale//2 * resolution_minimap), y + (scale//2 * resolution_minimap), 4, 4))
 
 #afficher le viewport principal
 def draw_map(x, y, scalex, scaley, player_position, map_to_show):
-    posx, posy = player_position  # maintenant en pixels monde
+    posx, posy = player_position  
 
     # Tile centrale
     tile_cx = int(posx // 16)
     tile_cy = int(posy // 16)
 
-    # Décalage sub-tile (pour le smooth scrolling)
     offset_x = int(posx % 16) * SCALE
     offset_y = int(posy % 16) * SCALE
 
-    for i in range(scalex + 1):  # +1 pour couvrir le décalage
+    for i in range(scalex + 1):
         for j in range(scaley + 1):
             map_i = tile_cx - scalex//2 + i
             map_j = tile_cy - scaley//2 + j
 
-            # Position à l'écran avec le décalage appliqué
             draw_x = x + (i * 16 * SCALE) - offset_x
             draw_y = y + (j * 16 * SCALE) - offset_y
+
+            if abs(tile_cx - map_i) < 15 and abs(tile_cy - map_j) < 15:
+                map_decouverte.add((map_i, map_j))
 
             if map_i < 0 or map_j < 0 or map_j >= len(map_to_show) or map_i >= len(map_to_show[map_j]):
                 pygame.draw.rect(screen, "blue", (draw_x, draw_y, 16*SCALE, 16*SCALE))
@@ -371,7 +385,7 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
         if 0 <= px < scalex*16*SCALE and 0 <= py < scaley*16*SCALE:
             screen.blit(texture_chicken[poulet.texture_index], (px, py))
 
-    # Le joueur reste toujours au centre de l'écran
+
     pygame.draw.rect(screen, "orange", (x + (scalex//2 * 16 * SCALE), y + (scaley//2 * 16 * SCALE), 16*SCALE, 16*SCALE))
     
     #bords
@@ -380,7 +394,7 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
     pygame.draw.rect(screen, "white", (x-16*SCALE, y-16*SCALE, 16*SCALE, scalex*16*SCALE))
     pygame.draw.rect(screen, "white", (x+scalex*16*SCALE, y-16*SCALE, 16*SCALE, scalex*16*SCALE))
 
-    draw_minimap(x + scalex*16*SCALE - resolution_minimap*scale_minimap - resolution_minimap, y + resolution_minimap, scale_minimap, player_position, map_to_show)
+    
     
     
 
@@ -398,7 +412,8 @@ def draw_coordinates(x, y, pos):
     font_to_write = pygame.font.SysFont(None, 24)
     text = font_to_write.render(f"Coordinates: (x: {int(pos[0])//16}, y: {int(pos[1])//16})", True, "red")
     screen.blit(text, (x, y))
-    
+
+#afficher fps   
 def draw_fps(x, y):
     font_to_write = pygame.font.SysFont(None, 24)
     fps = clock.get_fps()
@@ -421,11 +436,15 @@ while running:
     
     draw_map(4*SCALE, 4*SCALE, scalemapx, scalemapy, player.get_pos(), map.map)
     
+    
     drawcoeurs(10, scalemapy*16*SCALE + 16, 10)
     
     draw_coordinates(8*SCALE, 8*SCALE, player.get_pos())
     
     draw_fps(8*SCALE, 16*SCALE)
+
+    for i in range(len(tab_poulet)):
+        tab_poulet[i].update(dt)
     
     chunk_grid.clear()
     chunk_grid.insert(player)
@@ -433,11 +452,13 @@ while running:
         chunk_grid.insert(p)
         
     keys = pygame.key.get_pressed()
-    player.input(keys, dt)
+    if keys[pygame.K_TAB]:
+        draw_minimap(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*SCALE)+ (scalemapy*16*SCALE) // 2 - (scale_minimap*resolution_minimap)//2, scale_minimap, player.get_pos(), map.map)
+    else:
+        player.input(keys, dt)
 
     
-    for i in range(len(tab_poulet)):
-        tab_poulet[i].update(dt)
+    
     
     # flip() the display to put your work on screen
     pygame.display.flip()
