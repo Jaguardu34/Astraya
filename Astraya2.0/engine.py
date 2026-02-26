@@ -157,7 +157,7 @@ while running:
     draw_fps(8*  SCALE, 16*  SCALE)
 
     if keys[pygame.K_TAB]:
-        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*  SCALE)+ (scalemapy*16*  SCALE) // 2 - (scale_minimap*resolution_minimap)//2, player.get_pos(), map)
+        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*  SCALE)+ (scalemapy*16*  SCALE) // 2 - (scale_minimap*resolution_minimap)//2, player.get_pos(), game_map)
 
     
     pygame.display.flip()

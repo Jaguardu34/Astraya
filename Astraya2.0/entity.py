@@ -71,7 +71,7 @@ class Entity(pygame.sprite.Sprite):
 
 
     def update(self, actual_map):
-        self.image = self.sprite[self.texture_index]
+        self.texture_index = self.texture_index % len(self.sprite)
         self.actual_map = actual_map
         pass
 
