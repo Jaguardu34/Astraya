@@ -65,19 +65,18 @@ class Entity(pygame.sprite.Sprite):
             self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
             
     
-    def draw(self, x, y, scalex, scaley, screen, scale, posx, posy):
+    def draw(self, scalex, scaley, screen, scale, posx, posy):
         tile_cx = int(posx // 16)
         tile_cy = int(posy // 16)
 
-        offset_x = int(posx % 16) * scale
-        offset_y = int(posy % 16) * scale
-        px = x + (self.x - (tile_cx - scalex//2) * 16) * scale - offset_x
-        py = y + (self.y - (tile_cy - scaley//2) * 16) * scale - offset_y
+
+        px = (self.x - (tile_cx - scalex//2) * 16) * scale
+        py = (self.y - (tile_cy - scaley//2) * 16) * scale 
 
         if 0 <= px < scalex*16*scale and 0 <= py < scaley*16*scale:
             screen.blit(self.sprite[self.texture_index], (px, py))
     
-    def draw_minimap(self, x, y, resolution_minimap, screen, scale, tile_cx, tile_cy, map_decouverte):
+    def draw_minimap(self, resolution_minimap, screen, scale, tile_cx, tile_cy):
         # position du poulet en tiles
         ptile_x = int(self.x // 16)
         ptile_y = int(self.y // 16)
@@ -85,13 +84,11 @@ class Entity(pygame.sprite.Sprite):
         rel_x = ptile_x - tile_cx + scale // 2
         rel_y = ptile_y - tile_cy + scale // 2
         
-        px = x + int(rel_x * resolution_minimap)
-        py = y + int(rel_y * resolution_minimap)
+        px = int(rel_x * resolution_minimap)
+        py = int(rel_y * resolution_minimap)
         
-        if (ptile_x, ptile_y) in map_decouverte:
-            if x <= px < x + scale * resolution_minimap and y <= py < y + scale * resolution_minimap:
-                texture = self.sprite_minimap[self.texture_index]
-                screen.blit(texture, (px-8, py-8))
+        texture = self.sprite_minimap[self.texture_index]
+        screen.blit(texture, (px, py))
             
 
 class Animal(Entity):
@@ -160,7 +157,7 @@ class Animal(Entity):
         entity_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
         entity_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
 
-        if veriftile_pixel(new_x, self.y):
+        if veriftile_pixel(new_x, self.y) is True:
             blocked = False
             for p in nearby:
                 if p is self:
@@ -176,7 +173,7 @@ class Animal(Entity):
             if not blocked:
                 self.x = new_x
 
-        if veriftile_pixel(self.x, new_y):
+        if veriftile_pixel(self.x, new_y) is True:
             blocked = False
             for p in nearby:
                 if p is self:
@@ -218,8 +215,9 @@ class Animal(Entity):
         
     
 class Chicken(Animal):
-
-        
+    def __init__(self, sprite, x, y, speed=10):
+        super().__init__(sprite, x, y)
+        self.show_on_minimap = True
         
     def animate_action(self, now):
         if self.state != "emoting":
@@ -259,6 +257,7 @@ class Player(Entity):
         self.vy = 0
         self.collide_box = [pygame.Rect(self.x, self.y, 16, 16)]
         self.hitbox = 14
+        self.show_on_minimap = True
         
         
     def update(self):
@@ -283,7 +282,7 @@ class Player(Entity):
         player_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
         player_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
     
-        if veriftile_pixel(new_x, self.y):
+        if veriftile_pixel(new_x, self.y) is True:
             blocked = False
             for p in nearby:
                 if p is self:
@@ -299,7 +298,7 @@ class Player(Entity):
             if not blocked:
                 self.x = new_x
 
-        if veriftile_pixel(self.x, new_y):
+        if veriftile_pixel(self.x, new_y) is True:
             blocked = False
             for p in nearby:
                 if p is self:
@@ -455,17 +454,29 @@ class Grotte(Object):
     def __init__(self, sprite, x, y, speed=10):
         super().__init__(sprite, x, y)
         self.collide_box = [
-            pygame.Rect(self.x + 0,  self.y + 0,  48, 5),  # bord haut
-            pygame.Rect(self.x + 0,  self.y + 15, 15, 45),
-            pygame.Rect(self.x + 43, self.y + 0, 5, 40)# bord gauche  # bord droit
+            pygame.Rect(self.x + 0,  self.y + 0,  48, 10),  # bord haut
+            pygame.Rect(self.x + 0,  self.y + 0, 10, 20),
+            pygame.Rect(self.x + 38, self.y + 0, 10, 40)# bord gauche 
         ]
+        self.collide_action= [pygame.Rect(self.x + 5,  self.y + 5,  38, 20)]
+        self.show_on_minimap = False
     
     def update(self, dt, chunk_grid, player_x=0, player_y=0):
         super().update(dt, chunk_grid, player_x, player_y)
         self.collide_box[0].topleft = (self.x + 0,  self.y + 0)
-        self.collide_box[1].topleft = (self.x + 0,  self.y + 15)
+        self.collide_box[1].topleft = (self.x + 0,  self.y + 0)
+        self.collide_box[2].topleft = (self.x + 38,  self.y + 0)
+        self.collide_action[0].topleft = (self.x + 5, self.y + 5)
+    
     
     def collides_with(self, player_rect):
-        return check_box_collide(self.collide_box, player_rect)
+        return check_box_collide(self.collide_action, player_rect)
     
-    
+    #pr fausse perspective mais marche pas
+    # def draw(self, scalex, scaley, screen, scale, posx, posy):
+    #     super().draw(scalex, scaley, screen, scale, posx, posy)
+    #     tile_cx = int(posx // 16)
+    #     tile_cy = int(posy // 16)
+    #     px = (self.x - (tile_cx - scalex//2) * 16) * scale
+    #     py = (self.y - (tile_cy - scaley//2) * 16) * scale
+    #     screen.blit(self.sprite[self.texture_index + 1], (px, py))  

@@ -70,4 +70,5 @@ texture_player  = create_texture_basic(0, 80, 1)
 texture_coeur = get_sprite(sprite_sheet, 0, 241, 16, 16)
 texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*settings.SCALE, texture_coeur.get_height()*settings.SCALE))  
 
-texture_grotte = create_signle_texture_by_coords(0, 201, 48, 40)
+texture_grotte = create_signle_texture_by_coords(0, 201, 47, 40)
+texture_grotte.append(get_sprite(sprite_sheet, 97, 234, 34, 46))
