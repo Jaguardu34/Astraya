@@ -1,6 +1,6 @@
 import random
 import pygame
-import map
+from generate_map import *
 
 
 def get_rect(x, y, size=12):
@@ -18,10 +18,10 @@ def check_box_collide(box1, box2):
 
 #verif collisions                   
 def veriftile(x, y):
-    if x < 0 or y < 0 or y >= len(map.map) or x >= len(map.map[y]) or x == None or y == None:
+    if x < 0 or y < 0 or y >= len(map) or x >= len(map[y]) or x == None or y == None:
         return "ocean"
-    elif map.map[y][x] in map.collide_tiles:
-        return map.map[y][x]
+    elif map[y][x] in collide_tiles:
+        return map[y][x]
     else:
         return True
 
@@ -89,10 +89,65 @@ class Entity(pygame.sprite.Sprite):
         
         texture = self.sprite_minimap[self.texture_index]
         screen.blit(texture, (px, py))
+    
+    def get_pos(self):
+        return (self.x, self.y)  # en pixels
             
 
-class Animal(Entity):
-    def __init__(self, sprite, x, y, speed=10):
+class Entity_That_Move(Entity):
+    def update(self, chunk_grid):
+        if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
+            new_x = self.x + self.vx
+            new_y = self.y + self.vy
+
+            nearby = chunk_grid.get_nearby(new_x, new_y)
+            player_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
+            player_rect_y = [pygame.Rect(self.x + 1, new_y + 1, self.hitbox, self.hitbox)]
+
+            if veriftile_pixel(new_x, self.y) is True:
+                blocked = False
+                for p in nearby:
+                    if p is self: continue
+                    if isinstance(p, Object):
+                        if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):
+                            blocked = True
+                            break
+                    elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):
+                        if veriftile_pixel(p.x + self.vx, p.y) is True:
+                            p.vx += self.vx * 1.05
+                        blocked = True
+                        break
+                if not blocked:
+                    self.x = new_x
+
+            if veriftile_pixel(self.x, new_y) is True:
+                blocked = False
+                for p in nearby:
+                    if p is self: continue
+                    if isinstance(p, Object):
+                        if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):
+                            blocked = True
+                            break
+                    elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):
+                        if veriftile_pixel(p.x, p.y + self.vy) is True:
+                            p.vy += self.vy * 1.05
+                        blocked = True
+                        break
+                if not blocked:
+                    self.y = new_y
+
+            self.vx *= 0.8
+            self.vy *= 0.8
+
+        super().update()
+
+        
+    def move(self, dx, dy):
+        self.vx += dx
+        self.vy += dy
+
+class Animal(Entity_That_Move):  # ← Entity_That_Move, pas Entity
+    def __init__(self, sprite, x, y, speed=2):
         super().__init__(sprite, x, y)
         self.last_animation = 0
         self.state = "walking"
@@ -103,7 +158,7 @@ class Animal(Entity):
         self.last_walking_animation = 0
         self.anim_change_frame = random.randint(1000, 3000)
         self.emote_duration = random.randint(5000, 8000)
-        self.blocked_move= 0
+        self.blocked_move = 0
         self.vx = 0
         self.vy = 0
         self.random_cible()
@@ -111,85 +166,45 @@ class Animal(Entity):
         self.hitbox = 14
 
     def random_cible(self):
-        self.cible_x = random.randint(int(self.x-100), int(self.x+100))
-        self.cible_y = random.randint(int(self.y-100), int(self.y+100))
+        self.cible_x = random.randint(int(self.x - 100), int(self.x + 100))
+        self.cible_y = random.randint(int(self.y - 100), int(self.y + 100))
 
-    def update(self, dt, chunk_grid, player_x=0, player_y=0):
-        super().update()
+    def update(self, dt, chunk_grid):
         now = pygame.time.get_ticks()
-        if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
-            if veriftile_pixel(self.x + self.vx, self.y):
-                self.x += self.vx
-            if veriftile_pixel(self.x, self.y + self.vy):
-                self.y += self.vy
-            self.vx *= 0.8  # friction
-            self.vy *= 0.8
-        self.animate_action(now)
-        if self.state == "emoting":
-            if now - self.emoting_start >= self.emote_duration:
-                self.state = "walking"
-                self.last_animation = now
-        elif self.state == "walking":
+        
+        if self.state == "walking":
             dist_x = self.cible_x - self.x
             dist_y = self.cible_y - self.y
             dist = (dist_x**2 + dist_y**2) ** 0.5
 
-            if dist > 1:
-                if dist < 200:
-                    self.move((dist_x / dist) * self.speed * dt, (dist_y / dist) * self.speed * dt, now, chunk_grid)
-                else: self.random_cible()
+            if dist > 1 and dist < 200:
+                dx = (dist_x / dist) * self.speed * dt
+                dy = (dist_y / dist) * self.speed * dt
+                prev_x, prev_y = self.x, self.y
+                self.move(dx, dy)
+                super().update(chunk_grid)
+                self.check_blocked(dx, dy, prev_x, prev_y)
+                self.animate_on_move(dx, dy, now)
+                self.collide_box[0].x = self.x   # ← ici aussi !
+                self.collide_box[0].y = self.y
+                return
             else:
                 self.random_cible()
                 self.anim_change_frame = random.randint(1000, 3000)
                 self.emote_duration = random.randint(5000, 8000)
                 self.state = "emoting"
                 self.emoting_start = now
-        
+
+        elif self.state == "emoting":          # ← le elif manquait !
+            if now - self.emoting_start >= self.emote_duration:
+                self.state = "walking"
+            self.animate_action(now)           # ← animation idle
+
+        super().update(chunk_grid)
         self.collide_box[0].x = self.x
         self.collide_box[0].y = self.y
-                    
-    def move(self, dx, dy, now, chunk_grid):
-        new_x = self.x + dx
-        new_y = self.y + dy
-        nearby = chunk_grid.get_nearby(new_x, new_y)
-        prev_x, prev_y = self.x, self.y
-        
-        entity_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
-        entity_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
 
-        if veriftile_pixel(new_x, self.y) is True:
-            blocked = False
-            for p in nearby:
-                if p is self:
-                    continue
-                if isinstance(p, Object):
-                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_x):
-                        blocked = True
-                        break
-                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_x):  
-                    if veriftile_pixel(p.x + dx, p.y):
-                        p.vx += dx * 1.05
-                    break
-            if not blocked:
-                self.x = new_x
-
-        if veriftile_pixel(self.x, new_y) is True:
-            blocked = False
-            for p in nearby:
-                if p is self:
-                    continue
-                if isinstance(p, Object):
-                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_y):
-                        blocked = True
-                        break
-                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, entity_rect_y):  
-                    if veriftile_pixel(p.x, p.y + dy):
-                        p.vy += dy * 1.05
-                    break
-            if not blocked:
-                self.y = new_y
-
-
+    def check_blocked(self, dx, dy, prev_x, prev_y):
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
         expected_dist = (dx**2 + dy**2) ** 0.5
 
@@ -203,14 +218,11 @@ class Animal(Entity):
             self.cible_y = self.y + random.randint(-100, 100) - dy * 50
             self.blocked_move = 0
 
-        if self.x != prev_x or self.y != prev_y:
-            self.animate_on_move(dx, dy, now)
-   
-                
     def animate_action(self, now):
         pass
-        
+
     def animate_on_move(self, dx, dy, now):
+        pass
         pass
         
     
@@ -246,86 +258,37 @@ class Chicken(Animal):
 
 
 
-#class du joueur
-class Player(Entity):
-    def __init__(self, sprite, x=1500, y=1500, speed=100):
+class Player(Entity_That_Move): 
+    def __init__(self, sprite, x=1500, y=1500, speed=40):
         super().__init__(sprite, x, y)
-        self.x = float(x * 16)  # position en pixels monde
+        self.x = float(x * 16)
         self.y = float(y * 16)
-        self.speed = speed # pixels par seconde
+        self.speed = speed
         self.vx = 0
         self.vy = 0
         self.collide_box = [pygame.Rect(self.x, self.y, 16, 16)]
         self.hitbox = 14
         self.show_on_minimap = True
-        
-        
-    def update(self):
-        super().update()
-        if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
-            if veriftile_pixel(self.x + self.vx, self.y):
-                self.x += self.vx
-            if veriftile_pixel(self.x, self.y + self.vy):
-                self.y += self.vy
-            self.vx *= 0.8  # friction
-            self.vy *= 0.8
-        
+
+    def update(self, chunk_grid):
+        super().update(chunk_grid)  # collisions + friction
         self.collide_box[0].x = self.x
         self.collide_box[0].y = self.y
 
-        
-    def move(self, dx, dy, chunk_grid):
-        new_x = self.x + dx
-        new_y = self.y + dy
-        nearby = chunk_grid.get_nearby(new_x, new_y)
-        
-        player_rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox, self.hitbox)]
-        player_rect_y = [pygame.Rect(self.x + 1, new_y + 1 , self.hitbox, self.hitbox)]
-    
-        if veriftile_pixel(new_x, self.y) is True:
-            blocked = False
-            for p in nearby:
-                if p is self:
-                    continue
-                if isinstance(p, Object):
-                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):
-                        blocked = True
-                        break
-                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_x):  
-                    if veriftile_pixel(p.x + dx, p.y):
-                        p.vx += dx * 1.05
-                    break
-            if not blocked:
-                self.x = new_x
+    def input(self, keys, dt):
+        dx, dy = 0, 0
+        if keys[pygame.K_z] or keys[pygame.K_UP]:    dy -= 1
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]:  dy += 1
+        if keys[pygame.K_q] or keys[pygame.K_LEFT]:  dx -= 1
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: dx += 1
 
-        if veriftile_pixel(self.x, new_y) is True:
-            blocked = False
-            for p in nearby:
-                if p is self:
-                    continue
-                if isinstance(p, Object):
-                    if hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):
-                        blocked = True
-                        break
-                elif hasattr(p, 'collide_box') and check_box_collide(p.collide_box, player_rect_y):  
-                    if veriftile_pixel(p.x, p.y + dy):
-                        p.vy += dy * 1.05
-                    break
-            if not blocked:
-                self.y = new_y
+        if dx != 0 and dy != 0:
+            length = (dx**2 + dy**2) ** 0.5
+            dx /= length
+            dy /= length
 
-    def input(self, keys, dt, chunk_grid):
-        if keys[pygame.K_z] or keys[pygame.K_UP]:
-            self.move(0, -self.speed * dt, chunk_grid)
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            self.move(0, self.speed * dt, chunk_grid)
-        if keys[pygame.K_q] or keys[pygame.K_LEFT]:
-            self.move(-self.speed * dt, 0, chunk_grid)
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            self.move(self.speed * dt, 0, chunk_grid)
+        self.move(dx * self.speed * dt, dy * self.speed * dt)
 
-    def get_pos(self):
-        return (self.x, self.y)  # en pixels
     
     
 class Ennemy():
