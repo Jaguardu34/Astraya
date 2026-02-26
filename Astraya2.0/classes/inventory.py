@@ -28,7 +28,7 @@ class Inventory:
     @property
     def hotbar(self):
         return self.slots[:self.hotbar_size]
-
+    
     @property
     def selected_item(self):
         slot = self.slots[self.selected_hotbar]
