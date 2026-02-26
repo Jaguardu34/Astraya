@@ -20,11 +20,10 @@ class Minimap():
 
         
         posx, posy = player_position
+        
         tile_cx = int(posx // 16)
         tile_cy = int(posy // 16)
         
-
-
         if now-self.last_update_minimap >= update_minimap_cooldown:
             self.last_update_minimap = now
             self.minimap_surface.fill((0, 0, 255)) 
@@ -42,19 +41,20 @@ class Minimap():
                         pygame.draw.rect(self.minimap_surface, color, (i * self.resolution, j * self.resolution, self.resolution, self.resolution))
 
             for sprite in self.sprite_group:
-                if sprite.show_on_minimap:
-                    if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
-                        ptile_x = int(sprite.x // 16)
-                        ptile_y = int(sprite.y // 16)
-                        
-                        rel_x = ptile_x - tile_cx + self.scale // 2
-                        rel_y = ptile_y - tile_cy + self.scale // 2
-                        
-                        px = int(rel_x * self.resolution)
-                        py = int(rel_y * self.resolution)
+                if sprite.game_map is map_to_show:
+                    if sprite.show_on_minimap:
+                        if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
+                            ptile_x = int(sprite.x // 16)
+                            ptile_y = int(sprite.y // 16)
+                            
+                            rel_x = ptile_x - tile_cx + self.scale // 2
+                            rel_y = ptile_y - tile_cy + self.scale // 2
+                            
+                            px = int(rel_x * self.resolution)
+                            py = int(rel_y * self.resolution)
 
-                        if 0 <= px < self.scale * self.resolution and 0 <= py < self.scale * self.resolution:
-                            sprite.draw_minimap(self.resolution, self.minimap_surface, self.scale, tile_cx, tile_cy)
+                            if 0 <= px < self.scale * self.resolution and 0 <= py < self.scale * self.resolution:
+                                sprite.draw_minimap(self.resolution, self.minimap_surface, self.scale, tile_cx, tile_cy)
 
         pygame.draw.rect(self.screen, "orange", (x- self.resolution,  y- self.resolution, 
                             self.scale * self.resolution + self.resolution*2, 
@@ -113,10 +113,10 @@ class Map():
 
         for sprite in self.sprite_group:
             if sprite is not player:
-                if sprite.map is map_to_show:
-                    sprite.draw(self.scale_x, self.scale_y, self.map_cache,   SCALE, posx, posy)
+                if sprite.game_map is map_to_show:
+                    sprite.draw(self.scale_x, self.scale_y, self.map_cache, SCALE, posx, posy)
 
-            
+
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
 
         # bords sur screen
