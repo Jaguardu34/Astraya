@@ -18,7 +18,7 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) - 1, int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
+scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) , int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
 
 resolution_minimap = 4
 scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
