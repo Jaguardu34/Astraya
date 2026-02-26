@@ -113,7 +113,8 @@ class Map():
 
         for sprite in self.sprite_group:
             if sprite is not player:
-                sprite.draw(self.scale_x, self.scale_y, self.map_cache,   SCALE, posx, posy)
+                if sprite.map is map_to_show:
+                    sprite.draw(self.scale_x, self.scale_y, self.map_cache,   SCALE, posx, posy)
 
             
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))

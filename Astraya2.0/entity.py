@@ -44,7 +44,7 @@ def veriftile_pixel(px, py, size=16):
 
 #class du poulet
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, sprite, x=1500, y=1500):
+    def __init__(self, sprite, map, x=1500, y=1500):
         super().__init__()
         self.x = float(x * 16)
         self.y = float(y * 16)
@@ -54,6 +54,7 @@ class Entity(pygame.sprite.Sprite):
         self.image = self.sprite[self.texture_index]
         self.rect = self.image.get_rect(topleft=(x * 16, y * 16))
         self.generate_minimap_sprite()
+        self.map = map
 
 
     def update(self):
@@ -147,8 +148,8 @@ class Entity_That_Move(Entity):
         self.vy += dy
 
 class Animal(Entity_That_Move):  # ← Entity_That_Move, pas Entity
-    def __init__(self, sprite, x, y, speed=2):
-        super().__init__(sprite, x, y)
+    def __init__(self, sprite, map, x, y, speed=2):
+        super().__init__(sprite, map, x, y)
         self.last_animation = 0
         self.state = "walking"
         self.emoting_start = 0
@@ -227,8 +228,8 @@ class Animal(Entity_That_Move):  # ← Entity_That_Move, pas Entity
         
     
 class Chicken(Animal):
-    def __init__(self, sprite, x, y, speed=10):
-        super().__init__(sprite, x, y)
+    def __init__(self, sprite, map, x, y, speed=10):
+        super().__init__(sprite, map, x, y)
         self.show_on_minimap = True
         
     def animate_action(self, now):
@@ -259,8 +260,8 @@ class Chicken(Animal):
 
 
 class Player(Entity_That_Move): 
-    def __init__(self, sprite, x=1500, y=1500, speed=40):
-        super().__init__(sprite, x, y)
+    def __init__(self, sprite, map, x=1500, y=1500, speed=40):
+        super().__init__(sprite, map, x, y)
         self.x = float(x * 16)
         self.y = float(y * 16)
         self.speed = speed
@@ -414,8 +415,8 @@ class Object(Entity):
         pass
         
 class Grotte(Object):
-    def __init__(self, sprite, x, y, speed=10):
-        super().__init__(sprite, x, y)
+    def __init__(self, sprite, map, x, y, speed=10):
+        super().__init__(sprite, map,  x, y)
         self.collide_box = [
             pygame.Rect(self.x + 0,  self.y + 0,  48, 10),  # bord haut
             pygame.Rect(self.x + 0,  self.y + 0, 10, 20),

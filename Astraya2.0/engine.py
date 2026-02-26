@@ -57,11 +57,11 @@ class Chunk:
 
 all_sprites = pygame.sprite.Group()
 
-player = ent.Player(texture.texture_player, 1500, 1500)
-grotte = ent.Grotte(texture.texture_grotte, 1520, 1520)
+player = ent.Player(texture.texture_player, map, x=1500, y=1500)
+grotte = ent.Grotte(texture.texture_grotte, map, x=1520, y=1520)
 
 for i in range(nbr_poulet):
-    all_sprites.add(ent.Chicken(texture.texture_chicken, random.randint(1300, 1600), random.randint(1300, 1600)))
+    all_sprites.add(ent.Chicken(texture.texture_chicken, map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
     
 all_sprites.add(player)
 all_sprites.add(grotte)
