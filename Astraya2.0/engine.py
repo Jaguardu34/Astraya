@@ -13,7 +13,6 @@ pygame.display.set_caption("Astraya 2.0")
 info = pygame.display.Info()
 WINDOW_SCALE = info.current_w - 0.1*info.current_w, info.current_h - 0.1*info.current_h
 screen = pygame.display.set_mode(WINDOW_SCALE, pygame.RESIZABLE)
-#screen = pygame.display.set_mode((GAME_W * SCALE, GAME_H * SCALE), pygame.RESIZABLE)
 
 clock = pygame.time.Clock()
 running = True
@@ -25,12 +24,9 @@ resolution_minimap = 4
 scale_minimap = int((scale_map[1]*16*settings.SCALE) // resolution_minimap - 10)
 
 grottes_coords = map.coord_grottes
-current_world = "overworld"   # ou "cave" ou nether si on en fait un
-
+current_world = "overworld"
 
 nbr_poulet = 100
-
-
 
 class Chunk:
     def __init__(self, chunk_size=32):
@@ -59,13 +55,9 @@ class Chunk:
                     nearby.extend(self.grid[chunk])
         return nearby
 
-    
-    
 all_sprites = pygame.sprite.Group()
 
-
 player = ent.Player(texture.texture_player, 1500, 1500)
-
 grotte = ent.Grotte(texture.texture_grotte, 1520, 1520)
 
 for i in range(nbr_poulet):
@@ -73,7 +65,6 @@ for i in range(nbr_poulet):
     
 all_sprites.add(player)
 all_sprites.add(grotte)
-#joueur    
 
 last_map_change = pygame.time.get_ticks()
 def change_map():
@@ -85,9 +76,28 @@ def change_map():
             current_world = "cave"
         else: current_world = "overworld"
         last_map_change = now
-    
-TILE_COLORS = {"ocean": (0, 0, 255), "jungle": (144, 238, 144),"mountains": (128, 128, 128),"snow_peak": (255, 255, 255),"forest": (0, 100, 0), "collide" : (255, 0 ,0), "beach" : (237, 201, 88), "plains" : (34, 139, 34), "rock": (50, 50, 50), "cave_normal": (120, 120, 120), "cave_mushroom": (150, 0, 150), "cave_crystal": (0, 200, 255), "cave_lava": (255, 80, 0), "cave_ice": (180, 220, 255),}
-TILE_TEXTURE = {"plains" : texture.texture_herbe_upscaled, "beach" : texture.texture_sand_upscaled}
+
+# CHANGEMENT : Utilisation d'IDs numériques au lieu de strings pour correspondre à map.BIOME_IDS
+TILE_COLORS = {
+    0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
+    3: (144, 238, 144),   # jungle - ID 3 au lieu de "jungle"
+    4: (0, 100, 0),       # forest - ID 4 au lieu de "forest"
+    5: (128, 128, 128),   # mountains - ID 5 au lieu de "mountains"
+    6: (255, 255, 255),   # snow_peak - ID 6 au lieu de "snow_peak"
+    7: (255, 0, 0),       # collide - ID 7 au lieu de "collide"
+    10: (50, 50, 50),     # rock - ID 10 au lieu de "rock"
+    11: (180, 220, 255),  # cave_ice - ID 11 au lieu de "cave_ice"
+    12: (150, 0, 150),    # cave_mushroom - ID 12 au lieu de "cave_mushroom"
+    13: (120, 120, 120),  # cave_normal - ID 13 au lieu de "cave_normal"
+    14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
+    15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
+}
+
+# CHANGEMENT : IDs numériques pour les textures
+TILE_TEXTURE = {
+    2: texture.texture_herbe_upscaled,  # plains - ID 2 au lieu de "plains"
+    1: texture.texture_sand_upscaled    # beach - ID 1 au lieu de "beach"
+}
 
 map_decouverte = set()
 
@@ -113,17 +123,16 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
                 map_i = tile_cx - scale//2 + i
                 map_j = tile_cy - scale//2 + j
                 
-
-                if 0 <= map_j < len(map_to_show) and 0 <= map_i < len(map_to_show[map_j]):
+                # CHANGEMENT : map.SIZE au lieu de len(map_to_show)
+                if 0 <= map_j < map.SIZE and 0 <= map_i < map.SIZE:  # Utilise map.SIZE (constante) au lieu de len()
                     if (map_i, map_j) in map_decouverte:
-                        tile = map_to_show[map_j][map_i]
-                        tile_base = tile.split("*")[0]
-                        color = TILE_COLORS[tile_base]
+                        # CHANGEMENT : Accès NumPy [y, x] au lieu de [y][x]
+                        biome_id = map_to_show[map_j, map_i]  # NumPy array : virgule au lieu de double crochet
+                        color = TILE_COLORS.get(biome_id, (0, 0, 255))  # Récupère la couleur selon l'ID
                     else:
                         color = (189, 189, 189)
                     pygame.draw.rect(minimap_surface, color, (i * resolution_minimap, j * resolution_minimap, resolution_minimap, resolution_minimap))
 
-        
         for sprite in all_sprites:
             if sprite.show_on_minimap:
                 if abs(player.x - sprite.x) < distance_de_vue and abs(player.y - sprite.y) < distance_de_vue:
@@ -148,12 +157,10 @@ def draw_minimap(x, y, scale, player_position, map_to_show):
 
 map_cache = pygame.Surface ((scale_map[0] * 16* settings.SCALE, scale_map[1]  * 16 * settings.SCALE))
 
-#afficher le viewport principal
 def draw_map(x, y, scalex, scaley, player_position, map_to_show):
     global TILE_COLORS
     posx, posy = player_position  
 
-    # tile centrale
     tile_cx = int(posx // 16)
     tile_cy = int(posy // 16)
 
@@ -171,18 +178,21 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
 
             if (tile_cx - map_i)**2 + (tile_cy - map_j)**2 < 20**2:
                 map_decouverte.add((map_i, map_j))
-                
-
-            if map_i < 0 or map_j < 0 or map_j >= len(map_to_show) or map_i >= len(map_to_show[map_j]):
+            
+            # CHANGEMENT : map.SIZE au lieu de len(map_to_show)
+            if map_i < 0 or map_j < 0 or map_j >= map.SIZE or map_i >= map.SIZE:  # Utilise map.SIZE
                 pygame.draw.rect(map_cache, "blue", (draw_x, draw_y, 16*settings.SCALE, 16*settings.SCALE))
             else:
-                tile = map_to_show[map_j][map_i]
-                tile_base = tile.split("*")[0]
-                if tile_base in TILE_TEXTURE:
-                    index = tile_index_cache.get((map_i, map_j), 0)
-                    map_cache.blit(TILE_TEXTURE[tile_base][index], (draw_x, draw_y))
-                elif tile in TILE_COLORS:
-                    pygame.draw.rect(map_cache, TILE_COLORS[tile], (draw_x, draw_y, 16*settings.SCALE, 16*settings.SCALE))
+                # CHANGEMENT : Accès NumPy [y, x] et récupération de l'ID biome + variant
+                biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
+                
+                # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
+                if biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
+                    # CHANGEMENT : Récupération du variant depuis map.texture_variants
+                    variant = map.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
+                    map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
+                elif biome_id in TILE_COLORS:  # Vérifie l'ID numérique
+                    pygame.draw.rect(map_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 16*settings.SCALE, 16*settings.SCALE))
                 else:
                     pygame.draw.rect(map_cache, "blue", (draw_x, draw_y, 16*settings.SCALE, 16*settings.SCALE))
 
@@ -192,31 +202,24 @@ def draw_map(x, y, scalex, scaley, player_position, map_to_show):
         
     screen.blit(map_cache, (x - offset_x, y - offset_y))
 
-    
-
-    # bords sur screen, avec coordonnées écran
+    # bords sur screen
     pygame.draw.rect(screen, "white", (x-16*settings.SCALE, y-16*settings.SCALE, scalex*16*settings.SCALE + 32*settings.SCALE, 16*settings.SCALE))
     pygame.draw.rect(screen, "white", (x-16*settings.SCALE, y+scaley*16*settings.SCALE -16*settings.SCALE, scalex*16*settings.SCALE + 32*settings.SCALE, 32*settings.SCALE))
     pygame.draw.rect(screen, "white", (x-16*settings.SCALE, y-16*settings.SCALE, 16*settings.SCALE, scalex*16*settings.SCALE))
     pygame.draw.rect(screen, "white", (x+scalex*16*settings.SCALE -16*settings.SCALE, y-16*settings.SCALE, 32*settings.SCALE, scalex*16*settings.SCALE))
 
     screen.blit(player.sprite[player.texture_index], (x + scalex//2 * 16 * settings.SCALE, y + scaley//2 * 16 * settings.SCALE))
-    
 
-  
-#afficher les coeurs
 def drawcoeurs(x, y, nbcoeurs):
     for i in range(nbcoeurs):
         screen.blit(texture.texture_coeur_upscaled, (x + (i*(texture.texture_coeur_upscaled.get_width()+8)), y))
-                    
 
 font_to_write = pygame.font.SysFont(None, 24)
-#afficher les coordonés (peut etre temp)
+
 def draw_coordinates(x, y, pos):
     text = font_to_write.render(f"Coordinates: (x: {int(pos[0])//16}, y: {int(pos[1])//16})", True, "red")
     screen.blit(text, (x, y))
 
-#afficher fps   
 def draw_fps(x, y):
     fps = clock.get_fps()
     text = font_to_write.render(f"FPS: ({fps:.2f})", True, "red")
@@ -224,28 +227,30 @@ def draw_fps(x, y):
         
 chunk_grid = Chunk(chunk_size=64)
 
-tile_index_cache = {}
-for j, row in enumerate(map.map):
-    for i, tile in enumerate(row):
-        if "*" in tile:
-            tile_index_cache[(i, j)] = int(tile.split("*")[1])
+# CHANGEMENT : SUPPRESSION DU tile_index_cache car remplacé par map.texture_variants
+# Plus besoin de parcourir toute la map pour extraire les variants, ils sont déjà dans un array NumPy
 
+# ANCIEN CODE AVANT CHANGEMENT :
+# tile_index_cache = {}
+# for j, row in enumerate(map.map):
+#     for i, tile in enumerate(row):
+#         if "*" in tile:
+#             tile_index_cache[(i, j)] = int(tile.split("*")[1])
 
+# RAISON : map.texture_variants contient déjà tous les variants (0-15) pour chaque tile
 
-#boucle de jeu
+# boucle de jeu
 while running:
     now = pygame.time.get_ticks()
-    #quitter le jeu
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # fill the screen with a color to wipe away anything from last frame
     screen.fill("white")
 
     for sprite in all_sprites:
         if sprite is not player:
-            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)  # manhattan, plus rapide que sqrt
+            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
             if dist < settings.RENDER_DISTANCE:
                 sprite.update(dt, chunk_grid, player.x, player.y) 
     
@@ -257,7 +262,6 @@ while running:
     player.update()
         
     keys = pygame.key.get_pressed()
-
     player.input(keys, dt, chunk_grid)
 
     for sprite in all_sprites:
@@ -265,31 +269,22 @@ while running:
             if sprite.collides_with(player.collide_box):
                 change_map()
 
-    
     scalemapx, scalemapy = scale_map
+    
+    # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
     if current_world == "overworld":
         draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.map)
     else:
-        draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.cave_biomes)
+        draw_map(4*settings.SCALE, 4*settings.SCALE, scalemapx, scalemapy, player.get_pos(), map.cave)  # map.cave au lieu de map.cave_biomes
 
-    
     drawcoeurs(10, scalemapy*16*settings.SCALE + 16, 10)
-    
     draw_coordinates(8*settings.SCALE, 8*settings.SCALE, player.get_pos())
-    
     draw_fps(8*settings.SCALE, 16*settings.SCALE)
 
     if keys[pygame.K_TAB]:
         draw_minimap(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*settings.SCALE)+ (scalemapy*16*settings.SCALE) // 2 - (scale_minimap*resolution_minimap)//2, scale_minimap, player.get_pos(), map.map)
     
-    
-    # flip() the display to put your work on screen
     pygame.display.flip()
-
-    # limits FPS to 60
-    # dt is delta time in seconds since last frame, used for framerate-
-    # independent physics.
     dt = clock.tick(60) / 1000
 
 pygame.quit()
-

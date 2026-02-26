@@ -1,12 +1,38 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import pickle
+import os
 from settings import SEED
+
 # ==============================================================================
 # CONFIGURATION
 # ==============================================================================
 SIZE = 2000
 NB_VILLAGES = 80
+
+# Encodage des biomes en IDs numériques pour NumPy
+BIOME_IDS = {
+    "ocean": 0,
+    "beach": 1,
+    "plains": 2,
+    "jungle": 3,
+    "forest": 4,
+    "mountains": 5,
+    "snow_peak": 6,
+    "collide": 7,
+    # Grottes
+    "rock": 10,
+    "cave_ice": 11,
+    "cave_mushroom": 12,
+    "cave_normal": 13,
+    "cave_crystal": 14,
+    "cave_lava": 15,
+    "air": 16
+}
+
+# Reverse mapping pour retrouver les noms
+ID_TO_BIOME = {v: k for k, v in BIOME_IDS.items()}
 
 
 # ==============================================================================
@@ -58,27 +84,14 @@ def norm(a):
 # ==============================================================================
 
 def create_island_mask(size, falloff=0.4):
-    """
-    Crée un masque radial pour forcer les bords à être de l'océan.
-    
-    Args:
-        size: Taille de la carte
-        falloff: Contrôle la douceur de la transition (0.1 = bords durs, 0.5 = doux)
-    
-    Returns:
-        Masque normalisé entre 0 (bords) et 1 (centre)
-    """
-    # Créer une grille de coordonnées centrées
+    """Crée un masque radial pour forcer les bords à être de l'océan."""
     y, x = np.ogrid[0:size, 0:size]
     center = size / 2
     
-    # Distance normalisée au centre (0 au centre, 1 aux coins)
     dx = (x - center) / center
     dy = (y - center) / center
     distance = np.sqrt(dx**2 + dy**2)
     
-    # Appliquer une fonction smooth pour la transition
-    # Plus falloff est petit, plus la transition est abrupte
     mask = np.clip(1 - (distance - (1 - falloff)) / falloff, 0, 1)
     
     return mask
@@ -94,46 +107,38 @@ def generate_overworld():
     humiditymap = fractal_noise(scale=500, seed=2)
     temperaturemap = fractal_noise(scale=500, seed=3)
     
-    # Créer le masque d'île
     island_mask = create_island_mask(SIZE, falloff=0.4)
     
-    # Appliquer le masque à la heightmap pour créer l'île
     heightmap = norm(heightmap)
-    heightmap = heightmap * island_mask  # Multiplie par le masque (0 aux bords)
+    heightmap = heightmap * island_mask
     
     return heightmap, norm(humiditymap), norm(temperaturemap)
 
 
-def compute_biomes(heightmap, humiditymap, temperaturemap):
-    """Calcule les biomes."""
-    biomes = [["" for _ in range(SIZE)] for _ in range(SIZE)]
-
-    for y in range(SIZE):
-        for x in range(SIZE):
-            h = heightmap[y][x]
-            hum = humiditymap[y][x]
-            temp = temperaturemap[y][x]
-
-            if h < 0.25:
-                biome = "ocean"
-            elif h < 0.28:
-                biome = "wet_beach"
-            elif h < 0.32:
-                biome = "beach"
-            elif h < 0.65:
-                if hum > 0.6 and temp > 0.5:
-                    biome = "jungle"
-                elif hum > 0.4 and temp > 0.3:
-                    biome = "forest"
-                else:
-                    biome = "plains"
-            elif h < 0.80:
-                biome = "mountains"
-            else:
-                biome = "snow_peak"
-
-            biomes[y][x] = biome
-
+def compute_biomes_vectorized(heightmap, humiditymap, temperaturemap):
+    """Calcule les biomes avec NumPy (100% vectorisé) - ULTRA RAPIDE."""
+    biomes = np.zeros((SIZE, SIZE), dtype=np.uint8)
+    
+    # Masques booléens pour chaque biome
+    ocean_mask = heightmap < 0.25
+    beach_mask = (heightmap >= 0.25) & (heightmap < 0.32)
+    
+    jungle_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.6) & (temperaturemap > 0.5)
+    forest_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.4) & (temperaturemap > 0.3) & ~jungle_mask
+    plains_mask = (heightmap >= 0.32) & (heightmap < 0.65) & ~jungle_mask & ~forest_mask
+    
+    mountains_mask = (heightmap >= 0.65) & (heightmap < 0.80)
+    snow_mask = heightmap >= 0.80
+    
+    # Attribution en une seule opération vectorisée
+    biomes[ocean_mask] = BIOME_IDS["ocean"]
+    biomes[beach_mask] = BIOME_IDS["beach"]
+    biomes[plains_mask] = BIOME_IDS["plains"]
+    biomes[jungle_mask] = BIOME_IDS["jungle"]
+    biomes[forest_mask] = BIOME_IDS["forest"]
+    biomes[mountains_mask] = BIOME_IDS["mountains"]
+    biomes[snow_mask] = BIOME_IDS["snow_peak"]
+    
     return biomes
 
 
@@ -142,7 +147,7 @@ def compute_biomes(heightmap, humiditymap, temperaturemap):
 # ==============================================================================
 
 def generate_cave_system():
-    """Génère le système de grottes."""
+    """Génère le système de grottes avec NumPy."""
     cave_noise = (
         perlin(SIZE, SIZE, scale=80, seed=100) * 0.6 +
         perlin(SIZE, SIZE, scale=40, seed=101) * 0.3 +
@@ -150,11 +155,8 @@ def generate_cave_system():
     )
     cave_noise = norm(cave_noise)
 
-    cave_map = [
-        ["air" if cave_noise[y][x] < 0.50 else "rock"
-         for x in range(SIZE)]
-        for y in range(SIZE)
-    ]
+    # Carte air/roche (vectorisée)
+    cave_map = np.where(cave_noise < 0.50, BIOME_IDS["air"], BIOME_IDS["rock"])
 
     biome_noise = (
         perlin(SIZE, SIZE, scale=120, seed=300) * 0.6 +
@@ -163,25 +165,18 @@ def generate_cave_system():
     )
     biome_noise = norm(biome_noise)
 
-    cave_biomes = [["" for _ in range(SIZE)] for _ in range(SIZE)]
-
-    for y in range(SIZE):
-        for x in range(SIZE):
-            if cave_map[y][x] == "rock":
-                cave_biomes[y][x] = "rock"
-                continue
-
-            n = biome_noise[y][x]
-            if n < 0.20:
-                cave_biomes[y][x] = "cave_ice"
-            elif n < 0.40:
-                cave_biomes[y][x] = "cave_mushroom"
-            elif n < 0.60:
-                cave_biomes[y][x] = "cave_normal"
-            elif n < 0.80:
-                cave_biomes[y][x] = "cave_crystal"
-            else:
-                cave_biomes[y][x] = "cave_lava"
+    # Cave biomes (vectorisé)
+    cave_biomes = np.copy(cave_map)
+    
+    # Masque pour les zones d'air uniquement
+    air_mask = cave_map == BIOME_IDS["air"]
+    
+    # Attribution des biomes souterrains (vectorisé)
+    cave_biomes[air_mask & (biome_noise < 0.20)] = BIOME_IDS["cave_ice"]
+    cave_biomes[air_mask & (biome_noise >= 0.20) & (biome_noise < 0.40)] = BIOME_IDS["cave_mushroom"]
+    cave_biomes[air_mask & (biome_noise >= 0.40) & (biome_noise < 0.60)] = BIOME_IDS["cave_normal"]
+    cave_biomes[air_mask & (biome_noise >= 0.60) & (biome_noise < 0.80)] = BIOME_IDS["cave_crystal"]
+    cave_biomes[air_mask & (biome_noise >= 0.80)] = BIOME_IDS["cave_lava"]
 
     return cave_map, cave_noise, cave_biomes, biome_noise
 
@@ -193,6 +188,7 @@ def generate_cave_system():
 def generate_villages(biome_map, nb_villages=NB_VILLAGES):
     """Place des villages en évitant l'océan."""
     coord_vil = []
+    ocean_id = BIOME_IDS["ocean"]
 
     for _ in range(nb_villages):
         attempts = 0
@@ -201,7 +197,7 @@ def generate_villages(biome_map, nb_villages=NB_VILLAGES):
             x = random.randint(0, SIZE - 1)
             y = random.randint(0, SIZE - 1)
             
-            if biome_map[y][x] != "ocean":
+            if biome_map[y][x] != ocean_id:
                 coord_vil.append([x, y])
                 trouve = True
             attempts += 1
@@ -210,60 +206,105 @@ def generate_villages(biome_map, nb_villages=NB_VILLAGES):
 
 
 # ==============================================================================
-# Grottes
+# GROTTES (ENTRÉES)
 # ==============================================================================
 
 def generate_grottes(biome_map, nb_grottes=NB_VILLAGES):
-    """Place des grottes en évitant l'océan."""
-    coord_grottes = [(1500, 1501)]  # Tuple au lieu de liste
-    
+    """Place des entrées de grottes en évitant l'océan."""
+    coord_grottes = [[1500, 1501]]
+    ocean_id = BIOME_IDS["ocean"]
+
     for _ in range(nb_grottes):
         attempts = 0
         trouve = False
-        
         while attempts < 10000 and not trouve:
             x = random.randint(0, SIZE - 1)
             y = random.randint(0, SIZE - 1)
             
-            if biome_map[y][x] != "ocean":
-                coord_grottes.append((x, y))  # Tuple au lieu de liste
+            if biome_map[y][x] != ocean_id:
+                coord_grottes.append([x, y])
                 trouve = True
             attempts += 1
-    
+
     return coord_grottes
 
 
 # ==============================================================================
-# RENDU
+# VARIATIONS DE TEXTURES
+# ==============================================================================
+
+def add_texture_variants(biome_map):
+    """Ajoute des variations de textures pour beach et plains."""
+    # Créer un array de variations (0-15 pour chaque tile)
+    texture_variants = np.random.randint(0, 16, size=(SIZE, SIZE), dtype=np.uint8)
+    
+    # Retourner les deux arrays séparément
+    return biome_map, texture_variants
+
+
+# ==============================================================================
+# SAUVEGARDE / CHARGEMENT
+# ==============================================================================
+
+def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes):
+    """Sauvegarde le monde généré."""
+    data = {
+        'biome_map': biome_map,
+        'texture_variants': texture_variants,
+        'cave_biomes': cave_biomes,
+        'coord_vil': coord_vil,
+        'coord_grottes': coord_grottes,
+        'size': SIZE
+    }
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f"✅ Monde sauvegardé : {filename}")
+
+
+def load_world(filename):
+    """Charge un monde sauvegardé."""
+    if not os.path.exists(filename):
+        return None
+    
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+    
+    print(f" Monde chargé depuis : {filename}")
+    return (data['biome_map'], data['texture_variants'], data['cave_biomes'], 
+            data['coord_vil'], data['coord_grottes'])
+
+
+# ==============================================================================
+# RENDU (pour visualisation)
 # ==============================================================================
 
 def render_overworld_map(biome_map, village_coords=None, grottes_coords=None):
     """Génère l'image de surface."""
     colors = {
-        "ocean": [0.0, 0.3, 1.0],
-        "wet_beach": [0.0,0.0,0.0],
-        "beach": [1.0, 0.9, 0.6],
-        "jungle": [0.1, 0.5, 0.1],
-        "forest": [0.05, 0.3, 0.05],
-        "plains": [0.5, 0.8, 0.2],
-        "mountains": [0.5, 0.5, 0.5],
-        "snow_peak": [1.0, 1.0, 1.0],
+        0: [0.0, 0.3, 1.0],    # ocean
+        1: [1.0, 0.9, 0.6],    # beach
+        2: [0.5, 0.8, 0.2],    # plains
+        3: [0.1, 0.5, 0.1],    # jungle
+        4: [0.05, 0.3, 0.05],  # forest
+        5: [0.5, 0.5, 0.5],    # mountains
+        6: [1.0, 1.0, 1.0],    # snow_peak
+        7: [1.0, 0.0, 1.0],    # collide
     }
 
     img = np.zeros((SIZE, SIZE, 3))
-    for y in range(SIZE):
-        for x in range(SIZE):
-            img[y][x] = colors[biome_map[y][x]]
+    for biome_id, color in colors.items():
+        mask = biome_map == biome_id
+        img[mask] = color
 
     if village_coords:
         for x, y in village_coords:
             if 0 <= y < SIZE and 0 <= x < SIZE:
-                img[y][x] = [1.0, 0.0, 0.0]
+                img[y, x] = [1.0, 0.0, 0.0]  # Rouge
 
     if grottes_coords:
         for x, y in grottes_coords:
             if 0 <= y < SIZE and 0 <= x < SIZE:
-                img[y][x] = [0.6, 1.0, 1.0]
+                img[y, x] = [0.6, 1.0, 1.0]  # Cyan
 
     return img
 
@@ -271,46 +312,48 @@ def render_overworld_map(biome_map, village_coords=None, grottes_coords=None):
 def render_cave_map(cave_biomes):
     """Génère l'image souterraine."""
     colors = {
-        "rock": [0.1, 0.1, 0.1],
-        "cave_normal": [0.5, 0.5, 0.5],
-        "cave_mushroom": [0.6, 0.1, 0.6],
-        "cave_crystal": [0.2, 0.8, 1.0],
-        "cave_lava": [1.0, 0.3, 0.0],
-        "cave_ice": [0.6, 0.8, 1.0],
+        10: [0.1, 0.1, 0.1],   # rock
+        11: [0.6, 0.8, 1.0],   # cave_ice
+        12: [0.6, 0.1, 0.6],   # cave_mushroom
+        13: [0.5, 0.5, 0.5],   # cave_normal
+        14: [0.2, 0.8, 1.0],   # cave_crystal
+        15: [1.0, 0.3, 0.0],   # cave_lava
+        16: [0.0, 0.0, 0.0],   # air
     }
 
     img = np.zeros((SIZE, SIZE, 3))
-    for y in range(SIZE):
-        for x in range(SIZE):
-            img[y][x] = colors[cave_biomes[y][x]]
+    for biome_id, color in colors.items():
+        mask = cave_biomes == biome_id
+        img[mask] = color
 
     return img
 
 
 # ==============================================================================
-# MAIN Juste pour generer que les map, hors code
+# MAIN (pour visualisation)
 # ==============================================================================
 
 def main():
-    print("Génération du monde...")
+    print("🌍 Génération du monde...")
     heightmap, humiditymap, temperaturemap = generate_overworld()
-    biome_map = compute_biomes(heightmap, humiditymap, temperaturemap)
+    biome_map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
     
-    print("Villages...")
+    print("🏘️ Villages et grottes...")
     villages = generate_villages(biome_map)
     grottes = generate_grottes(biome_map)
-    print(f"→ {len(villages)} villages")
+    print(f"   → {len(villages)} villages")
+    print(f"   → {len(grottes)} grottes")
     
-    print("Grottes...")
+    print("🕳️ Système souterrain...")
     cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
     
-    print("Rendu...")
+    print("🎨 Rendu...")
     img_over = render_overworld_map(biome_map, villages, grottes)
     img_cave = render_cave_map(cave_biomes)
     
     fig, axes = plt.subplots(1, 2, figsize=(20, 10))
     axes[0].imshow(img_over)
-    axes[0].set_title("Surface (villages en rouge)")
+    axes[0].set_title("Surface (villages=rouge, grottes=cyan)")
     axes[0].axis("off")
     
     axes[1].imshow(img_cave)
@@ -319,42 +362,41 @@ def main():
     
     plt.tight_layout()
     plt.show()
+
+
+# ==============================================================================
+# GÉNÉRATION POUR LE JEU
+# ==============================================================================
+
+WORLD_FILE = "world_data.pkl"
+
+# Essayer de charger, sinon générer
+loaded = load_world(WORLD_FILE)
+
+if loaded:
+    map, texture_variants, cave, coord_vil, coord_grottes = loaded
+    print(f" Monde prêt : {SIZE}x{SIZE}")
+else:
+    print(" Génération du monde (première fois) ")
+    heightmap, humiditymap, temperaturemap = generate_overworld()
+    map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
+    map, texture_variants = add_texture_variants(map)
+    cave = generate_cave_system()[2]  # Seulement cave_biomes
+    coord_vil = generate_villages(map)
+    coord_grottes = generate_grottes(map)
     
-    return biome_map, villages, cave_biomes
+    # Marquer une position spéciale
+    map[1510, 1510] = BIOME_IDS["collide"]
+    
+    # Sauvegarder pour les prochains lancements
+    save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes)
+    print(f"🎮 Monde prêt : {SIZE}x{SIZE}")
+
+# Tiles sur lesquelles on ne peut pas marcher
+collide_tiles = [BIOME_IDS["ocean"], BIOME_IDS["collide"]]
+
+print(f"   {len(coord_vil)} villages placés")
+print(f"   {len(coord_grottes)} grottes placées")
 
 if __name__ == "__main__":
     main()
-    
-    
-#map de test (j'en ai besoin)
-
-
-print("Génération du monde...")
-heightmap, humiditymap, temperaturemap = generate_overworld()
-map = compute_biomes(heightmap, humiditymap, temperaturemap)
-cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
-coord_vil = generate_villages(map)
-coord_grottes = generate_grottes(map)
-
-# Tiles sur lesquelles on ne peut pas marcher
-collide_tiles = ["ocean", "collide", "grotte"]
-
-print(f"Monde généré : {SIZE}x{SIZE}")
-print(f"{len(coord_vil)} villages placés")
-print(coord_grottes)
-
-
-for i in range(len(map)):
-    for j in range(len(map[i])):
-        if map[j][i] == "plains":
-            x = random.randint(0, 15)
-            map[j][i] = f"plains*{x}"
-            
-for i in range(len(map)):
-    for j in range(len(map[i])):
-        if map[j][i] == "beach":
-            x = random.randint(0, 15)
-            map[j][i] = f"beach*{x}"
-
-
-map[1510][1510] = "collide"
