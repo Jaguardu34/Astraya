@@ -207,7 +207,7 @@ class Animal(Entity_That_Move_And_Has_Collision):
         self.vx = 0
         self.vy = 0
         self.random_cible()
-        self.hitbox = [pygame.Rect(self.x, self.y, 16, 16)]
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.has_hitbox = True
 
     def random_cible(self):
@@ -249,14 +249,18 @@ class Animal(Entity_That_Move_And_Has_Collision):
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
         expected_dist = (dx**2 + dy**2) ** 0.5
 
-        if expected_dist > 0 and real_dist < expected_dist * 0.3:
+        # Ignorer si le mouvement attendu est trop petit (near target ou dt minuscule)
+        if expected_dist < 0.1:
+            return
+
+        if real_dist < expected_dist * 0.3:
             self.blocked_move += 1
         else:
             self.blocked_move = 0
 
         if self.blocked_move >= 20:
-            self.cible_x = self.x + random.randint(-100, 100) - dx * 50
-            self.cible_y = self.y + random.randint(-100, 100) - dy * 50
+            self.cible_x = self.x + random.randint(-100, 100)
+            self.cible_y = self.y + random.randint(-100, 100)
             self.blocked_move = 0
 
     def animate_action(self, now):
@@ -265,10 +269,11 @@ class Animal(Entity_That_Move_And_Has_Collision):
     def animate_on_move(self, dx, dy, now):
         pass
 
+
     
 class Chicken(Animal):
-    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):  # ✅ Ajouter altitude_map
-        super().__init__(sprite, game_map, altitude_map, x, y)  # ✅ Passer altitude_map
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed = 2):  # ✅ Ajouter altitude_map
+        super().__init__(sprite, game_map, altitude_map, x, y, speed)  # ✅ Passer altitude_map
         self.show_on_minimap = True
         
     def animate_action(self, now):

@@ -53,7 +53,6 @@ texture_herbe = create_texture_with_rotation(0, 0, 4)
 texture_sand = create_texture_with_rotation(0, 64, 4)
 texture_wet_wand = create_texture_with_rotation(128, 64, 4)
 
-texture_chicken = create_texture_mirrored(0, 128, 3)
 texture_player  = create_texture_basic(0, 80, 1)
 
 
@@ -61,3 +60,12 @@ texture_coeur = get_sprite(sprite_sheet, 0, 241, 16, 16)
 texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*  SCALE, texture_coeur.get_height()*  SCALE))  
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
+
+texture_chicken_base = [get_sprite(sprite_sheet, 0, 112, 16, 16), get_sprite(sprite_sheet, 0, 96, 16, 16), get_sprite(sprite_sheet, 16, 96, 16, 16), 
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 112, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 96, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 96, 16, 16), True, False)]
+
+texture_chicken = []
+for i in range(len(texture_chicken_base)):
+    texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))

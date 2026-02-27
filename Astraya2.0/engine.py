@@ -113,16 +113,18 @@ while running:
 
     screen.fill("white")
 
-    for sprite in all_sprites:
-        if sprite is not player:
-            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
-            if dist <   RENDER_DISTANCE:
-                sprite.update(dt, chunk_grid, current_map) 
+    
     
     chunk_grid.clear()
     chunk_grid.insert(player)
     for sprite in all_sprites:
         chunk_grid.insert(sprite)
+        
+    for sprite in all_sprites:
+        if sprite is not player:
+            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
+            if dist <   RENDER_DISTANCE:
+                sprite.update(dt, chunk_grid, current_map) 
     
     player.update(chunk_grid, current_map)
         
