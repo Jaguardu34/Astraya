@@ -6,6 +6,7 @@ import texture
 from settings import *
 import map_render
 
+
 # pygame setup
 pygame.init()
 pygame.font.init()
@@ -20,7 +21,7 @@ dt = 0
 
 scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) , int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
 
-resolution_minimap = 4
+resolution_minimap = 8
 scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
 
 grottes_coords = coord_grottes
@@ -103,7 +104,8 @@ def draw_fps(x, y):
 chunk_grid = Chunk(chunk_size=64)
 
 main_map = map_render.Map(scale_map, screen, all_sprites)
-minimap = map_render.Minimap(scale_minimap, resolution_minimap, screen, all_sprites)
+minimap = map_render.Minimap(WINDOW_SCALE[1]- 200, 1000, screen, all_sprites)
+minimap_left_corner = map_render.Minimap(240, 200, screen, all_sprites)
 
 while running:
     now = pygame.time.get_ticks()
@@ -119,7 +121,6 @@ while running:
     chunk_grid.insert(player)
     for sprite in all_sprites:
         chunk_grid.insert(sprite)
-        
     for sprite in all_sprites:
         if sprite is not player:
             dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
@@ -141,6 +142,7 @@ while running:
     # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
     main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), current_map, player, cliff_edges)
+    minimap_left_corner.draw(4*SCALE, 4*SCALE, player.get_pos(), current_map)
 
 
     drawcoeurs(10, scalemapy*16*  SCALE + 16, 10)

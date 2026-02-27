@@ -118,8 +118,8 @@ class Entity(pygame.sprite.Sprite):
         ptile_x = int(self.x // 16)
         ptile_y = int(self.y // 16)
         
-        rel_x = ptile_x - tile_cx + scale // 2
-        rel_y = ptile_y - tile_cy + scale // 2
+        rel_x = ptile_x - tile_cx + scale / 2
+        rel_y = ptile_y - tile_cy + scale / 2
         
         px = int(rel_x * resolution_minimap)
         py = int(rel_y * resolution_minimap)
