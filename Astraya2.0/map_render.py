@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 from generate_map import *
+from generate_map import *
 
 
 class Minimap():
@@ -30,7 +31,7 @@ class Minimap():
             self.minimap_surface.fill((0, 0, 255)) 
             
             for i in range(self.scale):
-                for j in range(self. scale):
+                for j in range(self.scale):
                     map_i = tile_cx - self.scale//2 + i
                     map_j = tile_cy - self.scale//2 + j
                     
@@ -60,8 +61,6 @@ class Minimap():
                             self.scale * self.resolution + self.resolution*2, 
                             self.scale * self.resolution + self.resolution*2))
 
-        self.screen.blit(self.minimap_surface, (x, y))
-
 
 class Map():
     def __init__(self, scale, screen, sprite_group):
@@ -72,7 +71,7 @@ class Map():
         self.sprite_group = sprite_group
 
 
-    def draw(self, x, y, player_position, map_to_show, player):
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
         global TILE_COLORS
         
         posx, posy = player_position  
@@ -111,10 +110,19 @@ class Map():
                     else:
                         pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
 
+                # Y a-t-il une falaise ici ?
+                if (map_i, map_j) in cliff_edges.keys():
+                    for direction in cliff_edges[(map_i, map_j)]:
+                        # Dessiner le sprite de falaise correspondant
+                        pygame.draw.rect(self.map_cache, "pink", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+
+        #self.screen.blit(self.minimap_surface, (x, y))
+
+
         for sprite in self.sprite_group:
             if sprite is not player:
                 if sprite.map is map_to_show:
-                    sprite.draw(self.scale_x, self.scale_y, self.map_cache,   SCALE, posx, posy)
+                    sprite.draw(self.scale_x, self.scale_y, self.map_cache, SCALE, posx, posy)
 
             
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))

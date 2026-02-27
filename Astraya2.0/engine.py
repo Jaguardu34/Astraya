@@ -26,6 +26,9 @@ scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
 grottes_coords = coord_grottes
 current_world = "overworld"
 
+grottes_coords = coord_grottes  
+altitude_map = altitude_map     
+cliff_edges = cliff_edges       
 nbr_poulet = 100
 
 class Chunk:
@@ -95,20 +98,6 @@ def draw_fps(x, y):
         
 chunk_grid = Chunk(chunk_size=64)
 
-# CHANGEMENT : SUPPRESSION DU tile_index_cache car remplacé par map.texture_variants
-# Plus besoin de parcourir toute la map pour extraire les variants, ils sont déjà dans un array NumPy
-
-# ANCIEN CODE AVANT CHANGEMENT :
-# tile_index_cache = {}
-# for j, row in enumerate(map.map):
-#     for i, tile in enumerate(row):
-#         if "*" in tile:
-#             tile_index_cache[(i, j)] = int(tile.split("*")[1])
-
-# RAISON : map.texture_variants contient déjà tous les variants (0-15) pour chaque tile
-
-# boucle de jeu
-
 main_map = map_render.Map(scale_map, screen, all_sprites)
 minimap = map_render.Minimap(scale_minimap, resolution_minimap, screen, all_sprites)
 
@@ -145,9 +134,9 @@ while running:
     
     # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
     if current_world == "overworld":
-        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), map, player)
+        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), map, player, cliff_edges)  # map.cave au lieu de map.cave_biomes
     else:
-        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), cave, player)  # map.cave au lieu de map.cave_biomes
+        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), cave, player, {})  # map.cave au lieu de map.cave_biomes
 
     drawcoeurs(10, scalemapy*16*  SCALE + 16, 10)
     draw_coordinates(8*  SCALE, 8*  SCALE, player.get_pos())

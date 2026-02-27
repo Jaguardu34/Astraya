@@ -33,5 +33,27 @@ SIZE = 2000
 NB_VILLAGES = 80
 SEED = 0
 
+# Encodage des biomes en IDs numériques pour NumPy
+BIOME_IDS = {
+    "ocean": 0,
+    "beach": 1,
+    "plains": 2,
+    "jungle": 3,
+    "forest": 4,
+    "mountains": 5,
+    "snow_peak": 6,
+    "collide": 7,
+    # Grottes
+    "rock": 10,
+    "cave_ice": 11,
+    "cave_mushroom": 12,
+    "cave_normal": 13,
+    "cave_crystal": 14,
+    "cave_lava": 15,
+    "air": 16
+}
+
+COLLIDE_TILES = [0, 5, 7, 10, 15]  # ocean, mountains, snow_peak, collide
+
 # textures
 TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')

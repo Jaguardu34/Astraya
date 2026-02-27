@@ -12,29 +12,7 @@ import texture
 SIZE = 2000
 NB_VILLAGES = 80
 
-# Encodage des biomes en IDs numériques pour NumPy
-BIOME_IDS = {
-    "ocean": 0,
-    "beach": 1,
-    "plains": 2,
-    "jungle": 3,
-    "forest": 4,
-    "mountains": 5,
-    "snow_peak": 6,
-    "collide": 7,
-    # Grottes
-    "rock": 10,
-    "cave_ice": 11,
-    "cave_mushroom": 12,
-    "cave_normal": 13,
-    "cave_crystal": 14,
-    "cave_lava": 15,
-    "air": 16
-}
-
-# Reverse mapping pour retrouver les noms
 ID_TO_BIOME = {v: k for k, v in BIOME_IDS.items()}
-
 
 # ==============================================================================
 # GÉNÉRATION DE BRUIT PERLIN
@@ -105,6 +83,7 @@ def create_island_mask(size, falloff=0.4):
 def generate_overworld():
     """Génère les cartes de hauteur, humidité et température avec masque d'île."""
     heightmap = fractal_noise(scale=300, seed=1)
+    altitude_map = np.zeros((SIZE, SIZE), dtype=np.int8) # On a des niveaux d'altitude
     humiditymap = fractal_noise(scale=500, seed=2)
     temperaturemap = fractal_noise(scale=500, seed=3)
     
@@ -112,8 +91,42 @@ def generate_overworld():
     
     heightmap = norm(heightmap)
     heightmap = heightmap * island_mask
+
+    altitude_map[heightmap < 0.25] = 0  # Plaines
+    altitude_map[(heightmap >= 0.25) & (heightmap < 0.32)] = 1  # Niveau 1 
+    altitude_map[(heightmap >= 0.32) & (heightmap < 0.65)] = 2  # Niveau 2 (plaines, jungle, forêt selon humidité/température)
+    altitude_map[(heightmap >= 0.65) & (heightmap < 0.80)] = 3  # Montagnes
+    altitude_map[heightmap >= 0.80] = 4  # Pics enneigés
     
-    return heightmap, norm(humiditymap), norm(temperaturemap)
+    return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map  
+
+def detect_cliff_edges(altitude_map):
+    """Détecte les bords de falaises pour ajouter des textures de cliff."""
+    
+    cliffs_edges = {}  # {(x, y): ['N', 'S', 'E', 'W']}
+    
+    for y in range(SIZE): 
+        for x in range(SIZE):
+            current_alt = altitude_map[y, x]
+            edges = []
+            
+            # Vérifier les 4 directions
+            if y > 0 and altitude_map[y-1, x] < current_alt:  # ✅ y-1 pour Nord
+                edges.append('N')
+            if y < SIZE-1 and altitude_map[y+1, x] < current_alt:  # ✅ y+1 pour Sud
+                edges.append('S')
+            if x > 0 and altitude_map[y, x-1] < current_alt:  # ✅ x-1 pour Ouest
+                edges.append('W')
+            if x < SIZE-1 and altitude_map[y, x+1] < current_alt:  # ✅ x+1 pour Est
+                edges.append('E')
+            
+            if edges:
+                cliffs_edges[(x, y)] = edges
+    
+    print(f"Détecté {len(cliffs_edges)} tiles avec falaises")  # ✅ Print une seule fois
+    return cliffs_edges
+
+
 
 
 def compute_biomes_vectorized(heightmap, humiditymap, temperaturemap):
@@ -247,7 +260,9 @@ def add_texture_variants(biome_map):
 # SAUVEGARDE / CHARGEMENT
 # ==============================================================================
 
-def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes):
+# Dans generate_map.py (à la fin du fichier)
+
+def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes, altitude_map):
     """Sauvegarde le monde généré."""
     data = {
         'biome_map': biome_map,
@@ -255,6 +270,7 @@ def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, co
         'cave_biomes': cave_biomes,
         'coord_vil': coord_vil,
         'coord_grottes': coord_grottes,
+        'altitude_map': altitude_map, 
         'size': SIZE
     }
     with open(filename, 'wb') as f:
@@ -272,7 +288,7 @@ def load_world(filename):
     
     print(f" Monde chargé depuis : {filename}")
     return (data['biome_map'], data['texture_variants'], data['cave_biomes'], 
-            data['coord_vil'], data['coord_grottes'])
+            data['coord_vil'], data['coord_grottes'], data.get('altitude_map'))
 
 
 # ==============================================================================
@@ -368,36 +384,42 @@ def main():
 # ==============================================================================
 # GÉNÉRATION POUR LE JEU
 # ==============================================================================
-
+    
 WORLD_FILE = "world_data.pkl"
 
-# Essayer de charger, sinon générer
 loaded = load_world(WORLD_FILE)
 
 if loaded:
-    map, texture_variants, cave, coord_vil, coord_grottes = loaded
-    print(f" Monde prêt : {SIZE}x{SIZE}")
+    map, texture_variants, cave, coord_vil, coord_grottes, altitude_map = loaded
+    print(f"🎮 Monde prêt : {SIZE}x{SIZE}")
 else:
-    print(" Génération du monde (première fois) ")
-    heightmap, humiditymap, temperaturemap = generate_overworld()
+    print("🌍 Génération du monde (première fois, ~5-10 secondes)...")
+    heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()  # ✅ Récupère altitude
     map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
     map, texture_variants = add_texture_variants(map)
-    cave = generate_cave_system()[2]  # Seulement cave_biomes
+    cave = generate_cave_system()[2]
     coord_vil = generate_villages(map)
     coord_grottes = generate_grottes(map)
     
-    # Marquer une position spéciale
     map[1510, 1510] = BIOME_IDS["collide"]
     
-    # Sauvegarder pour les prochains lancements
-    save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes)
+    # Sauvegarder AVEC l'altitude
+    save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
     print(f"🎮 Monde prêt : {SIZE}x{SIZE}")
 
-# Tiles sur lesquelles on ne peut pas marcher
-collide_tiles = [BIOME_IDS["ocean"], BIOME_IDS["collide"]]
+# Gérer le cas où altitude_map n'existe pas dans les anciennes sauvegardes
+if altitude_map is None:
+    print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
+    altitude_map = generate_overworld()[3]
+    # Re-sauvegarder avec l'altitude
+    save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
+
+# Export des variables
+cliff_edges = detect_cliff_edges(altitude_map)
 
 print(f"   {len(coord_vil)} villages placés")
 print(f"   {len(coord_grottes)} grottes placées")
+print(f"   {len(cliff_edges)} falaises détectées")
 
 if __name__ == "__main__":
     main()

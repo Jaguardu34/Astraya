@@ -1,7 +1,7 @@
 import random
 import pygame
 from generate_map import *
-
+from settings import SIZE, COLLIDE_TILES
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
@@ -20,7 +20,7 @@ def check_box_collide(box1, box2):
 def veriftile(x, y):
     if x < 0 or y < 0 or y >= len(map) or x >= len(map[y]) or x == None or y == None:
         return "ocean"
-    elif map[y][x] in collide_tiles:
+    elif map[y][x] in COLLIDE_TILES:
         return map[y][x]
     else:
         return True
