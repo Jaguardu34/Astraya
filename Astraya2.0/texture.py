@@ -50,7 +50,7 @@ def create_single_texture_by_coords(x, y, w, h):
 
 
 texture_herbe = create_texture_with_rotation(0, 0, 4)
-texture_sand = create_texture_with_rotation(0, 32, 4)
+texture_sand = create_texture_with_rotation(0, 64, 4)
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
 texture_player  = create_texture_basic(0, 80, 1)
