@@ -37,6 +37,7 @@ SEED = 0
 BIOME_IDS = {
     "ocean": 0,
     "beach": 1,
+    "wet sand" : 101,
     "plains": 2,
     "jungle": 3,
     "forest": 4,
