@@ -1,10 +1,11 @@
 import pygame
-import generate_map
+from generate_map import *
 import random
 import entity as ent
 import texture
 from settings import *
 import map_render
+
 
 # pygame setup
 pygame.init()
@@ -20,15 +21,18 @@ dt = 0
 
 scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) , int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
 
-resolution_minimap = 4
+resolution_minimap = 8
 scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
 
-grottes_coords = generate_map.coord_grottes
+grottes_coords = coord_grottes
 
 
+grottes_coords = coord_grottes  
+altitude_map = altitude_map     
+cliff_edges = cliff_edges       
 nbr_poulet = 100
 
-game_map = generate_map.map
+game_map = map
 
 current_map = game_map
 
@@ -61,11 +65,11 @@ class Chunk:
 
 all_sprites = pygame.sprite.Group()
 
-player = ent.Player(texture.texture_player, game_map, x=1500, y=1500)
-grotte = ent.Grotte(texture.texture_grotte, game_map, x=1520, y=1520)
+player = ent.Player(texture.texture_player, game_map, altitude_map, x=1500, y=1500)
+grotte = ent.Grotte(texture.texture_grotte, game_map, altitude_map, x=1520, y=1520)
 
 for i in range(nbr_poulet):
-    all_sprites.add(ent.Chicken(texture.texture_chicken, game_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
+    all_sprites.add(ent.Chicken(texture.texture_chicken, game_map, altitude_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
     
 all_sprites.add(player)
 all_sprites.add(grotte)
@@ -77,7 +81,7 @@ def change_map():
     now = pygame.time.get_ticks()
     if now - last_map_change >= change_cooldown:
         if current_map is game_map:
-            current_map = generate_map.cave
+            current_map = cave
         else: current_map = game_map
         last_map_change = now
 
@@ -99,22 +103,9 @@ def draw_fps(x, y):
         
 chunk_grid = Chunk(chunk_size=64)
 
-# CHANGEMENT : SUPPRESSION DU tile_index_cache car remplacé par map.texture_variants
-# Plus besoin de parcourir toute la map pour extraire les variants, ils sont déjà dans un array NumPy
-
-# ANCIEN CODE AVANT CHANGEMENT :
-# tile_index_cache = {}
-# for j, row in enumerate(map.map):
-#     for i, tile in enumerate(row):
-#         if "*" in tile:
-#             tile_index_cache[(i, j)] = int(tile.split("*")[1])
-
-# RAISON : map.texture_variants contient déjà tous les variants (0-15) pour chaque tile
-
-# boucle de jeu
-
 main_map = map_render.Map(scale_map, screen, all_sprites)
-minimap = map_render.Minimap(scale_minimap, resolution_minimap, screen, all_sprites)
+minimap = map_render.Minimap(WINDOW_SCALE[1]- 200, 1000, screen, all_sprites)
+minimap_left_corner = map_render.Minimap(240, 200, screen, all_sprites)
 
 while running:
     now = pygame.time.get_ticks()
@@ -124,16 +115,17 @@ while running:
 
     screen.fill("white")
 
-    for sprite in all_sprites:
-        if sprite is not player:
-            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
-            if dist <   RENDER_DISTANCE:
-                sprite.update(dt, chunk_grid, current_map) 
+    
     
     chunk_grid.clear()
     chunk_grid.insert(player)
     for sprite in all_sprites:
         chunk_grid.insert(sprite)
+    for sprite in all_sprites:
+        if sprite is not player:
+            dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
+            if dist <   RENDER_DISTANCE:
+                sprite.update(dt, chunk_grid, current_map) 
     
     player.update(chunk_grid, current_map)
         
@@ -149,7 +141,8 @@ while running:
     
     # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-    main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), current_map, player)
+    main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), current_map, player, cliff_edges)
+    minimap_left_corner.draw(4*SCALE, 4*SCALE, player.get_pos(), current_map)
 
 
     drawcoeurs(10, scalemapy*16*  SCALE + 16, 10)

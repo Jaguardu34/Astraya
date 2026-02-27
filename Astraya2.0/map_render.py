@@ -1,67 +1,44 @@
 import pygame
 from settings import *
 from generate_map import *
+from texture import *
+import render_minimap
 
 
 class Minimap():
-    def __init__(self, scale, resolution, screen, sprite_group):
-        self.scale = scale
-        self.resolution = resolution
+    def __init__(self, scale, zoom, screen, sprite_group):
+        self.scale = scale        
+        self.zoom = zoom         
         self.screen = screen
         self.sprite_group = sprite_group
-        self.minimap_surface = pygame.Surface((self.scale * self.resolution, self.scale * self.resolution))
-        self.last_update_minimap = 0
+        self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
+        self.minimap_image = pygame.image.load(TEXTURE_MINIMAP_PATH)
 
+    def get_minimap_croped(self, tile_cx, tile_cy):
+        src_x = tile_cx - self.zoom // 2
+        src_y = tile_cy - self.zoom // 2
+        minimap_croped = pygame.Surface((self.zoom, self.zoom), pygame.SRCALPHA)
+        minimap_croped.blit(self.minimap_image, (0, 0), (src_x, src_y, self.zoom, self.zoom))
+        minimap_croped_upscaled = pygame.transform.scale(minimap_croped, (self.scale, self.scale))
+        return minimap_croped_upscaled
 
     def draw(self, x, y, player_position, map_to_show):
-        update_minimap_cooldown = 1000
-        now = pygame.time.get_ticks()
-
-        
         posx, posy = player_position
-        
         tile_cx = int(posx // 16)
         tile_cy = int(posy // 16)
         
-        if now-self.last_update_minimap >= update_minimap_cooldown:
-            self.last_update_minimap = now
-            self.minimap_surface.fill((0, 0, 255)) 
-            
-            for i in range(self.scale):
-                for j in range(self. scale):
-                    map_i = tile_cx - self.scale//2 + i
-                    map_j = tile_cy - self.scale//2 + j
-                    
-                    # CHANGEMENT : map.SIZE au lieu de len(map_to_show)
-                    if 0 <= map_j < SIZE and 0 <= map_i < SIZE:  # Utilise map.SIZE (constante) au lieu de len()
-                            # CHANGEMENT : Accès NumPy [y, x] au lieu de [y][x]
-                        biome_id = map_to_show[map_j, map_i]  # NumPy array : virgule au lieu de double crochet
-                        color = TILE_COLORS.get(biome_id, (0, 0, 255))  # Récupère la couleur selon l'ID
-                        pygame.draw.rect(self.minimap_surface, color, (i * self.resolution, j * self.resolution, self.resolution, self.resolution))
 
-            for sprite in self.sprite_group:
-                if sprite.game_map is map_to_show:
-                    if sprite.show_on_minimap:
-                        if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
-                            ptile_x = int(sprite.x // 16)
-                            ptile_y = int(sprite.y // 16)
-                            
-                            rel_x = ptile_x - tile_cx + self.scale // 2
-                            rel_y = ptile_y - tile_cy + self.scale // 2
-                            
-                            px = int(rel_x * self.resolution)
-                            py = int(rel_y * self.resolution)
+        self.minimap_surface.blit(self.get_minimap_croped(tile_cx, tile_cy), (0, 0))
 
-                            if 0 <= px < self.scale * self.resolution and 0 <= py < self.scale * self.resolution:
-                                sprite.draw_minimap(self.resolution, self.minimap_surface, self.scale, tile_cx, tile_cy)
+        for sprite in self.sprite_group:
+            if sprite.game_map is map_to_show:
+                if sprite.show_on_minimap:
+                    if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
+                        sprite.draw_minimap(self.scale / self.zoom, self.minimap_surface, self.zoom, tile_cx, tile_cy)
 
-        pygame.draw.rect(self.screen, "orange", (x- self.resolution,  y- self.resolution, 
-                            self.scale * self.resolution + self.resolution*2, 
-                            self.scale * self.resolution + self.resolution*2))
-
-        self.screen.blit(self.minimap_surface, (x, y))
-
+        pygame.draw.rect(self.screen, "orange", (x, y, self.scale + 20, self.scale + 20))
+        self.screen.blit(self.minimap_surface, (x + 10, y + 10))
 
 class Map():
     def __init__(self, scale, screen, sprite_group):
@@ -70,10 +47,16 @@ class Map():
         self.map_cache = pygame.Surface ((self.scale_x * 16*   SCALE, self.scale_y  * 16 *   SCALE))
         self.screen = screen
         self.sprite_group = sprite_group
+        self.anim_timer = 0
+        self.anim_frame = 0
+        self.anim_speed = 300
 
 
-    def draw(self, x, y, player_position, map_to_show, player):
-        global TILE_COLORS
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
+        now = pygame.time.get_ticks()
+        if now - self.anim_timer >= self.anim_speed:
+            self.anim_frame += 1
+            self.anim_timer = now
         
         posx, posy = player_position  
 
@@ -99,9 +82,13 @@ class Map():
                 else:
                     # CHANGEMENT : Accès NumPy [y, x] et récupération de l'ID biome + variant
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
-                    
+                    if biome_id in TILE_ANIMATED:
+                        frames = TILE_ANIMATED[biome_id]
+                        offset = texture_variants[map_j, map_i] 
+                        frame = (self.anim_frame + offset) % len(frames)
+                        self.map_cache.blit(frames[frame], (draw_x, draw_y))
                     # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
-                    if biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
+                    elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
                         # CHANGEMENT : Récupération du variant depuis map.texture_variants
                         variant = texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
                         self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
@@ -110,6 +97,15 @@ class Map():
                         pygame.draw.rect(self.map_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
                     else:
                         pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+
+                # Y a-t-il une falaise ici ?
+                if (map_i, map_j) in cliff_edges.keys():
+                    for direction in cliff_edges[(map_i, map_j)]:
+                        # Dessiner le sprite de falaise correspondant
+                        pygame.draw.rect(self.map_cache, "pink", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+
+        #self.screen.blit(self.minimap_surface, (x, y))
+
 
         for sprite in self.sprite_group:
             if sprite is not player:

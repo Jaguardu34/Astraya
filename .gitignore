@@ -14,3 +14,6 @@ venv/
 
 # Vscode
 .vscode/
+
+minimap.png
+world_data.pkl
