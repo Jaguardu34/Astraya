@@ -1,5 +1,5 @@
 import pygame
-from generate_map import *
+import generate_map
 import random
 import entity as ent
 import texture
@@ -18,18 +18,22 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) - 1, int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
+scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) , int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
 
 resolution_minimap = 4
 scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
 
-grottes_coords = coord_grottes
-current_world = "overworld"
+grottes_coords = generate_map.coord_grottes
+
 
 grottes_coords = coord_grottes  
 altitude_map = altitude_map     
 cliff_edges = cliff_edges       
 nbr_poulet = 100
+
+game_map = generate_map.map
+
+current_map = game_map
 
 class Chunk:
     def __init__(self, chunk_size=32):
@@ -60,24 +64,24 @@ class Chunk:
 
 all_sprites = pygame.sprite.Group()
 
-player = ent.Player(texture.texture_player, map, x=1500, y=1500)
-grotte = ent.Grotte(texture.texture_grotte, map, x=1520, y=1520)
+player = ent.Player(texture.texture_player, game_map, x=1500, y=1500)
+grotte = ent.Grotte(texture.texture_grotte, game_map, x=1520, y=1520)
 
 for i in range(nbr_poulet):
-    all_sprites.add(ent.Chicken(texture.texture_chicken, map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
+    all_sprites.add(ent.Chicken(texture.texture_chicken, game_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
     
 all_sprites.add(player)
 all_sprites.add(grotte)
 
 last_map_change = pygame.time.get_ticks()
 def change_map():
-    global current_world, last_map_change
+    global current_map, last_map_change
     change_cooldown = 2000
     now = pygame.time.get_ticks()
     if now - last_map_change >= change_cooldown:
-        if current_world == "overworld":
-            current_world = "cave"
-        else: current_world = "overworld"
+        if current_map is game_map:
+            current_map = generate_map.cave
+        else: current_map = game_map
         last_map_change = now
 
 
@@ -113,37 +117,36 @@ while running:
         if sprite is not player:
             dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
             if dist <   RENDER_DISTANCE:
-                sprite.update(dt, chunk_grid) 
+                sprite.update(dt, chunk_grid, current_map) 
     
     chunk_grid.clear()
     chunk_grid.insert(player)
     for sprite in all_sprites:
         chunk_grid.insert(sprite)
     
-    player.update(chunk_grid)
+    player.update(chunk_grid, current_map)
         
     keys = pygame.key.get_pressed()
     player.input(keys, dt)
 
     for sprite in all_sprites:
-        if isinstance(sprite, ent.Object):
-            if sprite.collides_with(player.collide_box):
+        if isinstance(sprite, ent.Grotte):
+            if sprite.collides_with(player.hitbox):
                 change_map()
 
     scalemapx, scalemapy = scale_map
     
     # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
-    if current_world == "overworld":
-        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), map, player, cliff_edges)  # map.cave au lieu de map.cave_biomes
-    else:
-        main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), cave, player, {})  # map.cave au lieu de map.cave_biomes
+
+    main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), current_map, player, cliff_edges)
+
 
     drawcoeurs(10, scalemapy*16*  SCALE + 16, 10)
     draw_coordinates(8*  SCALE, 8*  SCALE, player.get_pos())
     draw_fps(8*  SCALE, 16*  SCALE)
 
     if keys[pygame.K_TAB]:
-        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*  SCALE)+ (scalemapy*16*  SCALE) // 2 - (scale_minimap*resolution_minimap)//2, player.get_pos(), map)
+        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*  SCALE)+ (scalemapy*16*  SCALE) // 2 - (scale_minimap*resolution_minimap)//2, player.get_pos(), game_map)
 
     
     pygame.display.flip()

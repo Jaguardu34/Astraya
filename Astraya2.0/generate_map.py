@@ -443,6 +443,6 @@ TILE_COLORS = {
 
 # CHANGEMENT : IDs numériques pour les textures
 TILE_TEXTURE = {
-    2: texture.texture_herbe_upscaled,  # plains - ID 2 au lieu de "plains"
-    1: texture.texture_sand_upscaled    # beach - ID 1 au lieu de "beach"
+    2: texture.texture_herbe,  # plains - ID 2 au lieu de "plains"
+    1: texture.texture_sand    # beach - ID 1 au lieu de "beach"
 }
