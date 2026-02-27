@@ -84,7 +84,8 @@ class Map():
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
                     if biome_id in TILE_ANIMATED:
                         frames = TILE_ANIMATED[biome_id]
-                        frame = self.anim_frame % len(frames)
+                        offset = texture_variants[map_j, map_i] 
+                        frame = (self.anim_frame + offset) % len(frames)
                         self.map_cache.blit(frames[frame], (draw_x, draw_y))
                     # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
                     elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
