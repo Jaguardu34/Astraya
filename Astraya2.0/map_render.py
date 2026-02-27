@@ -47,10 +47,16 @@ class Map():
         self.map_cache = pygame.Surface ((self.scale_x * 16*   SCALE, self.scale_y  * 16 *   SCALE))
         self.screen = screen
         self.sprite_group = sprite_group
+        self.anim_timer = 0
+        self.anim_frame = 0
+        self.anim_speed = 500
 
 
     def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
-        global TILE_COLORS
+        now = pygame.time.get_ticks()
+        if now - self.anim_timer >= self.anim_speed:
+            self.anim_frame += 1
+            self.anim_timer = now
         
         posx, posy = player_position  
 
@@ -76,9 +82,12 @@ class Map():
                 else:
                     # CHANGEMENT : Accès NumPy [y, x] et récupération de l'ID biome + variant
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
-                    
+                    if biome_id in TILE_ANIMATED:
+                        frames = TILE_ANIMATED[biome_id]
+                        frame = self.anim_frame % len(frames)
+                        self.map_cache.blit(frames[frame], (draw_x, draw_y))
                     # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
-                    if biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
+                    elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
                         # CHANGEMENT : Récupération du variant depuis map.texture_variants
                         variant = texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
                         self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))

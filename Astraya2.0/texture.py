@@ -97,3 +97,10 @@ TILE_TEXTURE = {
     1: texture_sand,    # beach - ID 1 au lieu de "beach"
     101: texture_wet_wand
 }
+
+texture_ocean = create_texture_basic(0, 128, 4)  # 4 frames d'animation ocean par ex
+# (adapte les coords selon ton spritesheet)
+
+TILE_ANIMATED = {
+    0: texture_ocean,   # ocean animé
+}
