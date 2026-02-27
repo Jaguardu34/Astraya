@@ -49,7 +49,7 @@ class Map():
         self.sprite_group = sprite_group
         self.anim_timer = 0
         self.anim_frame = 0
-        self.anim_speed = 500
+        self.anim_speed = 300
 
 
     def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
