@@ -98,8 +98,7 @@ TILE_TEXTURE = {
     101: texture_wet_wand
 }
 
-texture_ocean = create_texture_basic(0, 128, 4)  # 4 frames d'animation ocean par ex
-# (adapte les coords selon ton spritesheet)
+texture_ocean = create_texture_basic(0, 128, 4)  
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé
