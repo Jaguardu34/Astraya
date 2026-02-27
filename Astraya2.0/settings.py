@@ -57,3 +57,105 @@ COLLIDE_TILES = [0, 5, 7, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
 TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')
+
+
+
+# ==============================================================================
+# TYPES DE BÂTIMENTS
+# ==============================================================================
+
+BUILDING_TYPES = {
+    # Habitations
+    "domus_modest": {"size": (3, 3), "rarity": "common"},
+    "domus_rich": {"size": (4, 5), "rarity": "rare"},
+    "villa_rustica": {"size": (6, 6), "rarity": "rare"},
+    "insula": {"size": (4, 6), "rarity": "uncommon"},
+    
+    # Commerce
+    "taberna": {"size": (2, 2), "rarity": "common"},
+    "caupona": {"size": (3, 3), "rarity": "uncommon"},
+    "macellum": {"size": (4, 4), "rarity": "uncommon"},
+    "forum": {"size": (8, 8), "rarity": "very_rare"},
+    
+    # Stockage
+    "horreum_small": {"size": (2, 3), "rarity": "common"},
+    "horreum_large": {"size": (4, 5), "rarity": "uncommon"},
+    
+    # Infrastructure
+    "puteus": {"size": (1, 1), "rarity": "common"},  # Puits
+    "fornax": {"size": (2, 2), "rarity": "uncommon"},  # Forge
+    "balneum": {"size": (4, 4), "rarity": "rare"},  # Bains
+    "thermae": {"size": (6, 6), "rarity": "very_rare"},  # Grands thermes
+    
+    # Religion
+    "sacellum": {"size": (2, 2), "rarity": "uncommon"},  # Petit temple
+    "temple": {"size": (5, 5), "rarity": "rare"},
+    "altar": {"size": (1, 1), "rarity": "common"},  # Autel
+    
+    # Militaire
+    "castra": {"size": (8, 10), "rarity": "very_rare"},  # Caserne
+    
+    # Spectacle
+    "amphitheatre": {"size": (10, 12), "rarity": "very_rare"},
+    
+    # Agricole
+    "barn": {"size": (3, 2), "rarity": "common"},  # Abri agricole
+}
+
+# ==============================================================================
+# TYPES DE VILLAGES
+# ==============================================================================
+
+VILLAGE_TYPES = {
+    "hamlet": {  # Hameau (4-6 maisons)
+        "min_houses": 4,
+        "max_houses": 6,
+        "radius": 30,  # tiles
+        "buildings": [
+            ("domus_modest", 4, 6),  # (type, min, max)
+            ("horreum_small", 1, 1),
+            ("puteus", 1, 1),
+            ("taberna", 0, 1),
+            ("barn", 1, 2),
+            ("altar", 1, 1),
+        ]
+    },
+    
+    "village": {  # Village moyen (10 maisons)
+        "min_houses": 8,
+        "max_houses": 12,
+        "radius": 50,
+        "buildings": [
+            ("domus_modest", 8, 12),
+            ("villa_rustica", 1, 1),
+            ("caupona", 1, 1),
+            ("fornax", 1, 1),
+            ("macellum", 1, 1),
+            ("sacellum", 1, 1),
+            ("horreum_large", 1, 1),
+            ("balneum", 0, 1),
+            ("puteus", 1, 2),
+        ]
+    },
+    
+    "city": {  # Grande ville (20+ maisons)
+        "min_houses": 20,
+        "max_houses": 40,
+        "radius": 80,
+        "buildings": [
+            ("domus_modest", 15, 25),
+            ("domus_rich", 3, 5),
+            ("insula", 5, 10),
+            ("forum", 1, 1),
+            ("basilica", 1, 1),
+            ("thermae", 1, 1),
+            ("temple", 1, 2),
+            ("amphitheatre", 0, 1),
+            ("castra", 1, 1),
+            ("macellum", 2, 3),
+            ("caupona", 3, 5),
+            ("fornax", 2, 3),
+            ("puteus", 3, 5),
+        ]
+    }
+}
