@@ -311,11 +311,33 @@ class Player(Entity_That_Move_And_Has_Collision):
         self.hitbox = [pygame.Rect(self.x, self.y, 16, 16)]
         self.show_on_minimap = True
         self.has_hitbox = True
+        self.anim_timer = 0
+        self.anim_frame = 0
+        self.anim_speed = 400
+        self.last_orientation = "left"
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
-        self.hitbox[0].x = self.x
-        self.hitbox[0].y = self.y
+        now = pygame.time.get_ticks()
+
+        
+        if now - self.anim_timer >= self.anim_speed:
+            if self.anim_frame == 0:
+                self.anim_frame = 1
+            else: self.anim_frame = 0
+            self.anim_timer = now
+        if self.vx > 0.1:
+            self.anim_speed = 200
+            self.texture_index = 2 + self.anim_frame
+        elif self.vx < - 0.1:
+            self.anim_speed = 200
+            self.texture_index = 6 + self.anim_frame
+        else:
+            self.anim_speed = 400
+            if self.last_orientation == "left":
+                self.texture_index = 0 + self.anim_frame
+            elif self.last_orientation == "right":
+                self.texture_index = 4 + self.anim_frame
 
     def input(self, keys, dt):
         dx, dy = 0, 0
@@ -329,6 +351,10 @@ class Player(Entity_That_Move_And_Has_Collision):
             dx /= length
             dy /= length
 
+        if dx > 0.1:
+            self.last_orientation = "left"
+        elif dx < - 0.1:
+            self.last_orientation = "right"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
 
 

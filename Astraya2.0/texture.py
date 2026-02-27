@@ -1,9 +1,11 @@
 import pygame
 from settings import *
+import os
 
 
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
+sprite_sheet_player = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'player_texture.png'))
 
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -54,7 +56,16 @@ texture_herbe = create_texture_with_rotation(0, 0, 4)
 texture_sand = create_texture_with_rotation(0, 64, 4)
 texture_wet_wand = create_texture_with_rotation(128, 64, 4)
 
-texture_player  = create_texture_basic(0, 80, 1)
+texture_chicken = create_texture_mirrored(0, 48, 3)
+texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
+                get_sprite(sprite_sheet_player, 32, 0, 32, 32),
+                get_sprite(sprite_sheet_player, 0, 32, 32, 32),
+                get_sprite(sprite_sheet_player, 32, 32, 32, 32),
+                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 0, 32, 32), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 0, 32, 32), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 32, 32, 32), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
+                ]
 
 
 texture_coeur = get_sprite(sprite_sheet, 0, 241, 16, 16)
