@@ -56,7 +56,7 @@ class Map():
     def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
-            self.anim_frame += 1
+            self.anim_frame = (self.anim_frame + 1) % 256  # reset avant overflow
             self.anim_timer = now
         
         posx, posy = player_position  

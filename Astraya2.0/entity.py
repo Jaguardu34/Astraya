@@ -229,8 +229,18 @@ class Animal(Entity_That_Move_And_Has_Collision):
         self.life_point = 3
 
     def random_cible(self):
-        self.cible_x = random.randint(int(self.x - 100), int(self.x + 100))
-        self.cible_y = random.randint(int(self.y - 100), int(self.y + 100))
+        for _ in range(20):  # max 20 tentatives pour éviter une boucle infinie
+            cx = random.randint(int(self.x - 100), int(self.x + 100))
+            cy = random.randint(int(self.y - 100), int(self.y + 100))
+            tile_x = int(cx // 32)
+            tile_y = int(cy // 32)
+            if veriftile(tile_x, tile_y, self.actual_map, self.altitude_map, self.altitude) is True:
+                self.cible_x = cx
+                self.cible_y = cy
+                return
+        # Si aucune cible valide trouvée, rester sur place
+        self.cible_x = self.x
+        self.cible_y = self.y
 
     def update(self, dt, chunk_grid, actual_map):
         now = pygame.time.get_ticks()
@@ -433,6 +443,10 @@ class Projectile(Entity):
         vx, vy = self.angle_to_vector(self.direction)
         self.x += vx * self.speed
         self.y += vy * self.speed
+        
+        if veriftile_pixel(self.x, self.y, self.actual_map, self.altitude_map, self.altitude) is not True:
+            self.kill()
+            return
 
         if now - self.last_update_hitbox >= self.update_hitbox_cooldown:
             self.last_update_hitbox = now
