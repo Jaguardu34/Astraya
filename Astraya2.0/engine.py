@@ -6,6 +6,7 @@ import texture
 from settings import *
 import map_render
 
+
 # pygame setup
 pygame.init()
 pygame.font.init()
@@ -18,10 +19,10 @@ clock = pygame.time.Clock()
 running = True
 dt = 0
 
-scale_map = int(WINDOW_SCALE[0] // (16*  SCALE)) , int(WINDOW_SCALE[1] // (16*  SCALE)) - 1
+scale_map = int(WINDOW_SCALE[0] // 32) , int(WINDOW_SCALE[1] // 32) - 1
 
-resolution_minimap = 4
-scale_minimap = int((scale_map[1]*16*  SCALE) // resolution_minimap - 10)
+resolution_minimap = 8
+scale_minimap = int((scale_map[1]*32) // resolution_minimap - 10)
 
 grottes_coords = coord_grottes
 
@@ -62,16 +63,16 @@ class Chunk:
                     nearby.extend(self.grid[chunk])
         return nearby
 
-all_sprites = pygame.sprite.Group()
+entity = pygame.sprite.Group()
 
 player = ent.Player(texture.texture_player, game_map, altitude_map, x=1500, y=1500)
 grotte = ent.Grotte(texture.texture_grotte, game_map, altitude_map, x=1520, y=1520)
 
 for i in range(nbr_poulet):
-    all_sprites.add(ent.Chicken(texture.texture_chicken, game_map, altitude_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
+    entity.add(ent.Chicken(texture.texture_chicken, game_map, altitude_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
     
-all_sprites.add(player)
-all_sprites.add(grotte)
+entity.add(player)
+entity.add(grotte)
 
 last_map_change = pygame.time.get_ticks()
 def change_map():
@@ -102,8 +103,9 @@ def draw_fps(x, y):
         
 chunk_grid = Chunk(chunk_size=64)
 
-main_map = map_render.Map(scale_map, screen, all_sprites)
-minimap = map_render.Minimap(scale_minimap, resolution_minimap, screen, all_sprites)
+main_map = map_render.Map(scale_map, screen, [entity])
+minimap = map_render.Minimap(WINDOW_SCALE[1]- 200, 1000, screen, [entity])
+minimap_left_corner = map_render.Minimap(240, 200, screen, [entity])
 
 while running:
     now = pygame.time.get_ticks()
@@ -113,23 +115,24 @@ while running:
 
     screen.fill("white")
 
-    for sprite in all_sprites:
+    
+    
+    chunk_grid.clear()
+    chunk_grid.insert(player)
+    for sprite in entity:
+        chunk_grid.insert(sprite)
+    for sprite in entity:
         if sprite is not player:
             dist = abs(player.x - sprite.x) + abs(player.y - sprite.y)
             if dist <   RENDER_DISTANCE:
                 sprite.update(dt, chunk_grid, current_map) 
-    
-    chunk_grid.clear()
-    chunk_grid.insert(player)
-    for sprite in all_sprites:
-        chunk_grid.insert(sprite)
     
     player.update(chunk_grid, current_map)
         
     keys = pygame.key.get_pressed()
     player.input(keys, dt)
 
-    for sprite in all_sprites:
+    for sprite in entity:
         if isinstance(sprite, ent.Grotte):
             if sprite.collides_with(player.hitbox):
                 change_map()
@@ -138,15 +141,16 @@ while running:
     
     # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-    main_map.draw(4*  SCALE, 4*  SCALE, player.get_pos(), current_map, player, cliff_edges)
+    main_map.draw(8, 8, player.position, current_map, player, cliff_edges)
+    minimap_left_corner.draw(8, 8, player.position, current_map)
 
 
-    drawcoeurs(10, scalemapy*16*  SCALE + 16, 10)
-    draw_coordinates(8*  SCALE, 8*  SCALE, player.get_pos())
-    draw_fps(8*  SCALE, 16*  SCALE)
+    drawcoeurs(10, scalemapy*32 + 16, 10)
+    draw_coordinates(16, 16, player.position)
+    draw_fps(16, 32)
 
     if keys[pygame.K_TAB]:
-        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, (4*  SCALE)+ (scalemapy*16*  SCALE) // 2 - (scale_minimap*resolution_minimap)//2, player.get_pos(), game_map)
+        minimap.draw(WINDOW_SCALE[0] // 2 - (scale_minimap*resolution_minimap)//2, 8+ (scalemapy*32) // 2 - (scale_minimap*resolution_minimap)//2, player.position, game_map)
 
     
     pygame.display.flip()
