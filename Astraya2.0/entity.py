@@ -255,7 +255,10 @@ class Animal(Entity_That_Move_And_Has_Collision):
             dist_y = self.cible_y - self.y
             dist = (dist_x**2 + dist_y**2) ** 0.5
 
-            if dist > 1 and dist < 200:
+            if dist > 200:
+                self.random_cible()
+
+            if dist > 1:
                 dx = (dist_x / dist) * self.speed * dt
                 dy = (dist_y / dist) * self.speed * dt
                 prev_x, prev_y = self.x, self.y

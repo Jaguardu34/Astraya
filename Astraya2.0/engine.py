@@ -47,7 +47,6 @@ class Game():
         self.clock = pygame.time.Clock()
         self.dt = 0   
         self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int(self.WINDOW_SCALE[1] // 32) - 1
-        self.nbr_poulet = 100
         self.game_map = map
         self.current_map = self.game_map
         self.last_map_change = pygame.time.get_ticks()
@@ -70,7 +69,7 @@ class Game():
 
         self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, altitude_map, 1530, 1530)
 
-        for i in range(self.nbr_poulet):
+        for i in range(100):
             self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, altitude_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
             
         self.entity_grp.add(self.player)
