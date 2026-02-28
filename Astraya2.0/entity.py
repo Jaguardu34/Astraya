@@ -65,6 +65,8 @@ def veriftile_pixel(px, py, game_map, altitude_map=None, current_altitude=0, siz
     return True
 
 
+
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500):  # ✅ Ajouter altitude_map
         super().__init__()
@@ -134,6 +136,15 @@ class Entity(pygame.sprite.Sprite):
     @property
     def position(self):
         return (self.x, self.y)
+    
+    def check_collision_with_group(self, group):
+        for entity in group:
+            if entity is self:
+                continue
+            if hasattr(entity, 'hitbox'):
+                if check_box_collide(self.hitbox, entity.hitbox):
+                    return entity
+        return False
 
 
 class Entity_That_Move_And_Has_Collision(Entity):
@@ -251,6 +262,10 @@ class Animal(Entity_That_Move_And_Has_Collision):
         super().update(chunk_grid, actual_map)
         self.hitbox[0].x = self.x
         self.hitbox[0].y = self.y
+        
+        if self.life_point <= 0:
+            self.kill()
+            return
 
     def check_blocked(self, dx, dy, prev_x, prev_y):
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
@@ -401,6 +416,10 @@ class Projectile(Entity):
         self.speed = speed
         self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.has_hitbox = True
+        self.spawn_time = pygame.time.get_ticks()
+        self.lifetime = 20000
+        self.update_hitbox_cooldown = 100
+        self.last_update_hitbox = pygame.time.get_ticks()
         
     def angle_to_vector(self, angle_deg):
         angle_rad = math.radians(angle_deg)
@@ -410,9 +429,18 @@ class Projectile(Entity):
     
     def update(self, actual_map):
         super().update(actual_map)
+        now = pygame.time.get_ticks()
         vx, vy = self.angle_to_vector(self.direction)
         self.x += vx * self.speed
         self.y += vy * self.speed
+
+        if now - self.last_update_hitbox >= self.update_hitbox_cooldown:
+            self.last_update_hitbox = now
+            self.hitbox[0].x = self.x
+            self.hitbox[0].y = self.y
+        if now - self.spawn_time >= self.lifetime:
+            self.kill()
+            return
     
     
         

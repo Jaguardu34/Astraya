@@ -6,6 +6,7 @@ import texture
 from settings import *
 import map_render
 
+
 class Chunk:
     def __init__(self, chunk_size=32):
         self.chunk_size = chunk_size
@@ -66,7 +67,7 @@ class Game():
         self.player = ent.Player(texture.texture_player, self.game_map, altitude_map, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, altitude_map, x=1520, y=1520)
         
-        for i in range(100):
+        for i in range(1000):
             self.projectile_grp.add(ent.Projectile(texture.texture_chicken, self.game_map, direction=random.randint(0, 359), speed=random.randint(10, 50), altitude_map=altitude_map, x=1500, y=1500))
         
         for i in range(self.nbr_poulet):
@@ -119,6 +120,17 @@ class Game():
                         
         for sprite in self.projectile_grp:
             sprite.update(self.current_map)
+            nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
+            for entity in nearby:
+                if entity is sprite: continue
+                if entity is self.player: continue
+                if not hasattr(entity, 'hitbox'): continue
+                if ent.check_box_collide(sprite.hitbox, entity.hitbox):
+                    if hasattr(entity, 'life_point'):
+                        entity.life_point -= 1
+                    sprite.kill()
+                    break
+
         
         self.player.update(self.chunk_grid, self.current_map)
             
