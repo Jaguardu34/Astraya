@@ -37,8 +37,8 @@ def create_texture_with_rotation(posx, posy, nbr):
     for i in range(nbr):
         tab.append(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32))
         tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 90))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), -90))
         tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 180))
+        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), -90))
 
         
     return tab
@@ -82,6 +82,7 @@ texture_chicken = []
 for i in range(len(texture_chicken_base)):
     texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))
 
+texture_cliff = create_texture_with_rotation(0, 160, 1)
 
 # CHANGEMENT : Utilisation d'IDs numériques au lieu de strings pour correspondre à map.BIOME_IDS
 TILE_COLORS = {
@@ -106,7 +107,8 @@ TILE_COLORS = {
 TILE_TEXTURE = {
     2: texture_herbe,  # plains - ID 2 au lieu de "plains"
     1: texture_sand,    # beach - ID 1 au lieu de "beach"
-    101: texture_wet_wand
+    101: texture_wet_wand,
+    "cliff" : texture_cliff
 }
 
 texture_ocean = create_texture_basic(0, 128, 4)  

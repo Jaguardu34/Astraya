@@ -6,11 +6,11 @@ import render_minimap
 
 
 class Minimap():
-    def __init__(self, scale, zoom, screen, sprite_group):
+    def __init__(self, scale, zoom, screen, sprites_to_show):
         self.scale = scale        
         self.zoom = zoom         
         self.screen = screen
-        self.sprite_group = sprite_group
+        self.sprites_to_show = sprites_to_show
         self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
         self.minimap_image = pygame.image.load(TEXTURE_MINIMAP_PATH)
@@ -25,28 +25,29 @@ class Minimap():
 
     def draw(self, x, y, player_position, map_to_show):
         posx, posy = player_position
-        tile_cx = int(posx // 16)
-        tile_cy = int(posy // 16)
+        tile_cx = int(posx // 32)
+        tile_cy = int(posy // 32)
         
 
         self.minimap_surface.blit(self.get_minimap_croped(tile_cx, tile_cy), (0, 0))
 
-        for sprite in self.sprite_group:
-            if sprite.game_map is map_to_show:
-                if sprite.show_on_minimap:
-                    if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
-                        sprite.draw_minimap(self.scale / self.zoom, self.minimap_surface, self.zoom, tile_cx, tile_cy)
+        for sprite_group in self.sprites_to_show:
+            for sprite in sprite_group:
+                if sprite.game_map is map_to_show:
+                    if sprite.show_on_minimap:
+                        if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
+                            sprite.draw_minimap(self.scale / self.zoom, self.minimap_surface, tile_cx, tile_cy, self.zoom)
 
         pygame.draw.rect(self.screen, "orange", (x, y, self.scale + 20, self.scale + 20))
         self.screen.blit(self.minimap_surface, (x + 10, y + 10))
 
 class Map():
-    def __init__(self, scale, screen, sprite_group):
+    def __init__(self, scale, screen, sprites_to_show):
         self.scale_x = scale[0]
         self.scale_y = scale[1]
-        self.map_cache = pygame.Surface ((self.scale_x * 16*   SCALE, self.scale_y  * 16 *   SCALE))
+        self.map_cache = pygame.Surface ((self.scale_x * 32, self.scale_y  * 32))
         self.screen = screen
-        self.sprite_group = sprite_group
+        self.sprites_to_show = sprites_to_show
         self.anim_timer = 0
         self.anim_frame = 0
         self.anim_speed = 300
@@ -60,11 +61,11 @@ class Map():
         
         posx, posy = player_position  
 
-        tile_cx = int(posx // 16)
-        tile_cy = int(posy // 16)
+        tile_cx = int(posx // 32)
+        tile_cy = int(posy // 32)
 
-        offset_x = (posx % 16) *   SCALE
-        offset_y = (posy % 16) *   SCALE
+        offset_x = (posx % 32)
+        offset_y = (posy % 32)
 
         self.map_cache.fill("blue")
         for i in range(self.scale_x + 1):
@@ -72,13 +73,13 @@ class Map():
                 map_i = tile_cx - self.scale_x//2 + i
                 map_j = tile_cy - self.scale_y//2 + j
 
-                draw_x = i * 16 *   SCALE
-                draw_y = j * 16 *   SCALE
+                draw_x = i * 32
+                draw_y = j * 32
 
                 
                 # CHANGEMENT : map.SIZE au lieu de len(map_to_show)
                 if map_i < 0 or map_j < 0 or map_j >= SIZE or map_i >= SIZE:  # Utilise map.SIZE
-                    pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+                    pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 32, 32))
                 else:
                     # CHANGEMENT : Accès NumPy [y, x] et récupération de l'ID biome + variant
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
@@ -94,31 +95,36 @@ class Map():
                         self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
                         # Tile((draw_x, draw_y), TILE_TEXTURE[biome_id][variant], tile_group)
                     elif biome_id in TILE_COLORS:  # Vérifie l'ID numérique
-                        pygame.draw.rect(self.map_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+                        pygame.draw.rect(self.map_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
                     else:
-                        pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+                        pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 32, 32))
 
                 # Y a-t-il une falaise ici ?
                 if (map_i, map_j) in cliff_edges.keys():
                     for direction in cliff_edges[(map_i, map_j)]:
                         # Dessiner le sprite de falaise correspondant
-                        pygame.draw.rect(self.map_cache, "pink", (draw_x, draw_y, 16*  SCALE, 16*  SCALE))
+                        directions = {
+                            "N" : 3,
+                            "E" : 1,
+                            "S" : 2,
+                            "W" : 0
+                        }
+                        self.map_cache.blit(TILE_TEXTURE["cliff"][directions[direction]], (draw_x, draw_y, 32, 32))
 
-        #self.screen.blit(self.minimap_surface, (x, y))
 
-
-        for sprite in self.sprite_group:
-            if sprite is not player:
-                if sprite.game_map is map_to_show:
-                    sprite.draw(self.scale_x, self.scale_y, self.map_cache, SCALE, posx, posy)
+        for sprite_group in self.sprites_to_show:
+            for sprite in sprite_group:
+                if sprite is not player:
+                    if sprite.game_map is map_to_show:
+                        sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
 
         # bords sur screen
-        pygame.draw.rect(self.screen, "white", (x-16*  SCALE, y-16*  SCALE, self.scale_x*16*  SCALE + 32*  SCALE, 16*  SCALE))
-        pygame.draw.rect(self.screen, "white", (x-16*  SCALE, y+self.scale_y*16*  SCALE -16*  SCALE, self.scale_x*16*  SCALE + 32*  SCALE, 32*  SCALE))
-        pygame.draw.rect(self.screen, "white", (x-16*  SCALE, y-16*  SCALE, 16*  SCALE, self.scale_x*16*  SCALE))
-        pygame.draw.rect(self.screen, "white", (x+self.scale_x*16*  SCALE -16*  SCALE, y-16*  SCALE, 32*  SCALE, self.scale_x*16*  SCALE))
+        pygame.draw.rect(self.screen, "white", (x-32, y-32, self.scale_x*32 + 32, 32))
+        pygame.draw.rect(self.screen, "white", (x-32, y+self.scale_y*32 -32, self.scale_x*32 + 32, 32))
+        pygame.draw.rect(self.screen, "white", (x-32, y-32, 32, self.scale_x*32))
+        pygame.draw.rect(self.screen, "white", (x+self.scale_x*32 -32, y-32, 32, self.scale_x*32))
 
-        self.screen.blit(player.sprite[player.texture_index], (x + self.scale_x//2 * 16 *   SCALE, y + self.scale_y//2 * 16 *   SCALE))
+        self.screen.blit(player.sprite[player.texture_index], (x + self.scale_x//2 * 32, y + self.scale_y//2 * 32))

@@ -1,6 +1,5 @@
 import os
 
-SCALE = 2
 RENDER_DISTANCE = 1000
 
 WIDTH    = 1280	
