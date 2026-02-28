@@ -1,10 +1,12 @@
 import numpy as np
+import math
 import random
 import matplotlib.pyplot as plt
 import pickle
 import os
 from settings import *
 import texture
+from classes.village import *
 
 # ==============================================================================
 # CONFIGURATION
@@ -126,9 +128,6 @@ def detect_cliff_edges(altitude_map):
     print(f"Détecté {len(cliffs_edges)} tiles avec falaises")  # ✅ Print une seule fois
     return cliffs_edges
 
-
-
-
 def compute_biomes_vectorized(heightmap, humiditymap, temperaturemap):
     """Calcule les biomes avec NumPy (100% vectorisé) - ULTRA RAPIDE."""
     biomes = np.zeros((SIZE, SIZE), dtype=np.uint8)
@@ -218,6 +217,65 @@ def generate_villages(biome_map, nb_villages=NB_VILLAGES):
 
     return coord_vil
 
+def classify_villages(coord_vil, biome_map, nb_villes=3, rayon_proximite=1000):
+    """Classe les villages en 3 grandes villes, 10 grands villages, le reste villages."""
+
+    # 1. Calcul de la densité locale pour chaque village
+    densites = []
+    for i, (vx, vy) in enumerate(coord_vil):
+        densite = sum(
+            1 for ox, oy in coord_vil
+            if (ox - vx)**2 + (oy - vy)**2 < rayon_proximite**2
+        )
+        densites.append((densite, vx, vy))
+
+    # 2. On trie par densité croissante (les plus isolés d'abord)
+    densites.sort(key=lambda x: x[0])
+
+    candidats = densites[:20]
+
+    villes = []
+
+    # On choisit la première ville : la plus isolée
+    _, vx0, vy0 = candidats[0]
+    villes.append((vx0, vy0))
+
+    # Sélection des autres villes
+    while len(villes) < nb_villes:
+        meilleur = None
+        meilleure_dist = -1
+
+        for _, vx, vy in candidats:
+            # distance minimale à une ville déjà choisie
+            dist_min = min(
+                (vx - cx)**2 + (vy - cy)**2
+                for cx, cy in villes
+            )
+
+            if dist_min > meilleure_dist:
+                meilleure_dist = dist_min
+                meilleur = (vx, vy)
+
+        villes.append(meilleur)
+    villes.append((1500, 1600))  # Ajouter la ville centrale
+
+    # 5. Création des objets Village
+    resultat = []
+    for vx, vy in villes:
+        biome = biome_map[vy, vx]
+        resultat.append(Village(vx, vy, "city", biome))
+
+    return resultat
+
+
+ 
+
+
+
+        
+
+
+
 
 # ==============================================================================
 # GROTTES (ENTRÉES)
@@ -259,8 +317,6 @@ def add_texture_variants(biome_map):
 # ==============================================================================
 # SAUVEGARDE / CHARGEMENT
 # ==============================================================================
-
-# Dans generate_map.py (à la fin du fichier)
 
 def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes, altitude_map):
     """Sauvegarde le monde généré."""
@@ -406,6 +462,27 @@ else:
     # Sauvegarder AVEC l'altitude
     save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
     print(f"🎮 Monde prêt : {SIZE}x{SIZE}")
+
+    # À la fin de generate_map.py, après generate_villages()
+
+print("Classification et génération des villages...")
+villages = classify_villages(coord_vil, map, nb_cities, rayon_proximite=1000)
+
+# Appliquer les bâtiments à la map (marquer les tiles occupées)
+for village in villages:
+    village.generate()
+    for building in village.buildings:
+        size = building.size
+        for dy in range(size[1]):
+            for dx in range(size[0]):
+                bx = building.x + dx
+                by = building.y + dy
+                if 0 <= bx < SIZE and 0 <= by < SIZE:
+                    map[by, bx] = BIOME_IDS["collide"]  # Bâtiment = collision
+
+print(f"   {sum(1 for v in villages if v.type == 'hamlet')} hameaux")
+print(f"   {sum(1 for v in villages if v.type == 'village')} villages")
+print(f"   {sum(1 for v in villages if v.type == 'city')} villes")
 
 # Gérer le cas où altitude_map n'existe pas dans les anciennes sauvegardes
 if altitude_map is None:

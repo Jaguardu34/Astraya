@@ -1,6 +1,6 @@
 import os
+import pygame
 
-SCALE = 2
 RENDER_DISTANCE = 1000
 
 WIDTH    = 1280	
@@ -61,6 +61,8 @@ TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatexture
 TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
 
 
+
+
 # ==============================================================================
 # TYPES DE BÂTIMENTS
 # ==============================================================================
@@ -71,41 +73,47 @@ BUILDING_TYPES = {
     "domus_rich": {"size": (4, 5), "rarity": "rare"},
     "villa_rustica": {"size": (6, 6), "rarity": "rare"},
     "insula": {"size": (4, 6), "rarity": "uncommon"},
-    
+
     # Commerce
     "taberna": {"size": (2, 2), "rarity": "common"},
     "caupona": {"size": (3, 3), "rarity": "uncommon"},
     "macellum": {"size": (4, 4), "rarity": "uncommon"},
     "forum": {"size": (8, 8), "rarity": "very_rare"},
-    
+
     # Stockage
+    "horreum": {"size": (4, 4), "rarity": "common"},  # AJOUT
     "horreum_small": {"size": (2, 3), "rarity": "common"},
     "horreum_large": {"size": (4, 5), "rarity": "uncommon"},
-    
+
     # Infrastructure
-    "puteus": {"size": (1, 1), "rarity": "common"},  # Puits
+    "puteus": {"size": (1, 1), "rarity": "common"},
     "fornax": {"size": (2, 2), "rarity": "uncommon"},  # Forge
-    "balneum": {"size": (4, 4), "rarity": "rare"},  # Bains
-    "thermae": {"size": (6, 6), "rarity": "very_rare"},  # Grands thermes
-    
+    "forge": {"size": (2, 2), "rarity": "uncommon"},   # AJOUT alias
+    "balneum": {"size": (4, 4), "rarity": "rare"},
+    "thermae": {"size": (6, 6), "rarity": "very_rare"},
+
     # Religion
-    "sacellum": {"size": (2, 2), "rarity": "uncommon"},  # Petit temple
+    "sacellum": {"size": (2, 2), "rarity": "uncommon"},
     "temple": {"size": (5, 5), "rarity": "rare"},
-    "altar": {"size": (1, 1), "rarity": "common"},  # Autel
-    
+    "altar": {"size": (1, 1), "rarity": "common"},
+    "basilica": {"size": (7, 5), "rarity": "very_rare"},  # AJOUT
+
     # Militaire
-    "castra": {"size": (8, 10), "rarity": "very_rare"},  # Caserne
-    
+    "castra": {"size": (8, 10), "rarity": "very_rare"},
+
     # Spectacle
     "amphitheatre": {"size": (10, 12), "rarity": "very_rare"},
-    
+
     # Agricole
-    "barn": {"size": (3, 2), "rarity": "common"},  # Abri agricole
+    "barn": {"size": (3, 2), "rarity": "common"},
 }
+
 
 # ==============================================================================
 # TYPES DE VILLAGES
 # ==============================================================================
+
+nb_cities = 3
 
 VILLAGE_TYPES = {
     "hamlet": {  # Hameau (4-6 maisons)

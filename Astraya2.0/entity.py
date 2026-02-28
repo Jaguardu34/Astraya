@@ -2,11 +2,12 @@ import random
 import pygame
 from generate_map import *
 from settings import SIZE, COLLIDE_TILES
+import math
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
 
-def check_collision_entites(ax, ay, bx, by, size=16):
+def check_collision_entites(ax, ay, bx, by, size=32):
     return pygame.Rect(ax, ay, size, size).colliderect(pygame.Rect(bx, by, size, size))
 
 def check_box_collide(box1, box2):
@@ -46,7 +47,7 @@ def calculate_hitbox_size(sprite, shrink=2):
     return max(4, size)
 
 # ✅ MODIFICATION : Ajout de altitude_map et current_altitude
-def veriftile_pixel(px, py, game_map, altitude_map=None, current_altitude=0, size=16):
+def veriftile_pixel(px, py, game_map, altitude_map=None, current_altitude=0, size=32):
     """Vérifie les 4 coins d'une hitbox."""
     half = size // 2
     center_x = px + half
@@ -58,22 +59,24 @@ def veriftile_pixel(px, py, game_map, altitude_map=None, current_altitude=0, siz
         (center_x + half - 1, center_y + half - 1),  # bas droite
     ]
     for cx, cy in corners:
-        result = veriftile(int(cx // 16), int(cy // 16), game_map, altitude_map, current_altitude)  # ✅ Passe altitude
+        result = veriftile(int(cx // 32), int(cy // 32), game_map, altitude_map, current_altitude)  # ✅ Passe altitude
         if result is not True:
             return result
     return True
 
 
+
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500):  # ✅ Ajouter altitude_map
         super().__init__()
-        self.x = float(x * 16)
-        self.y = float(y * 16)
+        self.x = float(x * 32)
+        self.y = float(y * 32)
         self.sprite = sprite
         self.sprite_minimap = []
         self.texture_index = 0
         self.image = self.sprite[self.texture_index]
-        self.rect = self.image.get_rect(topleft=(x * 16, y * 16))
+        self.rect = self.image.get_rect(topleft=(x * 32, y * 32))
         self.generate_minimap_sprite()
         self.game_map = game_map
         self.altitude_map = altitude_map  # ✅ NOUVEAU
@@ -90,8 +93,8 @@ class Entity(pygame.sprite.Sprite):
     def update_altitude(self):
         """Met à jour l'altitude selon la position actuelle."""  # ✅ NOUVEAU
         if self.altitude_map is not None:
-            tile_x = int(self.x // 16)
-            tile_y = int(self.y // 16)
+            tile_x = int(self.x // 32)
+            tile_y = int(self.y // 32)
             if 0 <= tile_x < SIZE and 0 <= tile_y < SIZE:
                 self.altitude = self.altitude_map[tile_y, tile_x]
 
@@ -104,31 +107,44 @@ class Entity(pygame.sprite.Sprite):
         for i in range(len(self.sprite)):
             self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
     
-    def draw(self, scalex, scaley, screen, scale, posx, posy):
-        tile_cx = int(posx // 16)
-        tile_cy = int(posy // 16)
+    def draw(self, scalex, scaley, screen, posx, posy):
+        tile_cx = int(posx // 32)
+        tile_cy = int(posy // 32)
+        
+        px = (self.x - (tile_cx - scalex//2) * 32)
+        py = (self.y - (tile_cy - scaley//2) * 32)
 
-        px = (self.x - (tile_cx - scalex//2) * 16) * scale
-        py = (self.y - (tile_cy - scaley//2) * 16) * scale 
-
-        if 0 <= px < scalex*16*scale and 0 <= py < scaley*16*scale:
+        if 0 <= px < scalex*32 and 0 <= py < scaley*32:
             screen.blit(self.sprite[self.texture_index], (px, py))
     
-    def draw_minimap(self, resolution_minimap, screen, scale, tile_cx, tile_cy):
-        ptile_x = int(self.x // 16)
-        ptile_y = int(self.y // 16)
+    def draw_minimap(self, resolution_minimap, screen, tile_cx, tile_cy, zoom):
+        ptile_x = int(self.x // 32)
+        ptile_y = int(self.y // 32)
         
-        rel_x = ptile_x - tile_cx + scale / 2
-        rel_y = ptile_y - tile_cy + scale / 2
+        rel_x = ptile_x - tile_cx + zoom // 2
+        rel_y = ptile_y - tile_cy + zoom // 2
         
         px = int(rel_x * resolution_minimap)
         py = int(rel_y * resolution_minimap)
         
         texture = self.sprite_minimap[self.texture_index]
+        px -= texture.get_width() // 2
+        py -= texture.get_height() // 2
+        
         screen.blit(texture, (px, py))
     
-    def get_pos(self):
+    @property
+    def position(self):
         return (self.x, self.y)
+    
+    def check_collision_with_group(self, group):
+        for entity in group:
+            if entity is self:
+                continue
+            if hasattr(entity, 'hitbox'):
+                if check_box_collide(self.hitbox, entity.hitbox):
+                    return entity
+        return False
 
 
 class Entity_That_Move_And_Has_Collision(Entity):
@@ -138,8 +154,8 @@ class Entity_That_Move_And_Has_Collision(Entity):
             new_y = self.y + self.vy
 
             nearby = chunk_grid.get_nearby(new_x, new_y)
-            rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox_size//2, self.hitbox_size//2)]
-            rect_y = [pygame.Rect(self.x + 1, new_y + 1, self.hitbox_size//2, self.hitbox_size//2)]
+            rect_x = [pygame.Rect(new_x + 1, self.y + 1, self.hitbox_size, self.hitbox_size)]
+            rect_y = [pygame.Rect(self.x + 1, new_y + 1, self.hitbox_size, self.hitbox_size)]
 
             #  Passer altitude_map et altitude actuelle
             if veriftile_pixel(new_x, self.y, self.actual_map, self.altitude_map, self.altitude) is True:
@@ -192,7 +208,7 @@ class Entity_That_Move_And_Has_Collision(Entity):
 
 
 class Animal(Entity_That_Move_And_Has_Collision):
-    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=2):  # ✅ Ajouter altitude_map
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):  # ✅ Ajouter altitude_map
         super().__init__(sprite, game_map, altitude_map, x, y)  # ✅ Passer altitude_map
         self.last_animation = 0
         self.state = "walking"
@@ -209,10 +225,22 @@ class Animal(Entity_That_Move_And_Has_Collision):
         self.random_cible()
         self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.has_hitbox = True
+        self.has_life = True
+        self.life_point = 3
 
     def random_cible(self):
-        self.cible_x = random.randint(int(self.x - 100), int(self.x + 100))
-        self.cible_y = random.randint(int(self.y - 100), int(self.y + 100))
+        for _ in range(20):  # max 20 tentatives pour éviter une boucle infinie
+            cx = random.randint(int(self.x - 100), int(self.x + 100))
+            cy = random.randint(int(self.y - 100), int(self.y + 100))
+            tile_x = int(cx // 32)
+            tile_y = int(cy // 32)
+            if veriftile(tile_x, tile_y, self.actual_map, self.altitude_map, self.altitude) is True:
+                self.cible_x = cx
+                self.cible_y = cy
+                return
+        # Si aucune cible valide trouvée, rester sur place
+        self.cible_x = self.x
+        self.cible_y = self.y
 
     def update(self, dt, chunk_grid, actual_map):
         now = pygame.time.get_ticks()
@@ -244,6 +272,10 @@ class Animal(Entity_That_Move_And_Has_Collision):
         super().update(chunk_grid, actual_map)
         self.hitbox[0].x = self.x
         self.hitbox[0].y = self.y
+        
+        if self.life_point <= 0:
+            self.kill()
+            return
 
     def check_blocked(self, dx, dy, prev_x, prev_y):
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
@@ -272,7 +304,7 @@ class Animal(Entity_That_Move_And_Has_Collision):
 
     
 class Chicken(Animal):
-    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed = 2):  # ✅ Ajouter altitude_map
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed = 4):  # ✅ Ajouter altitude_map
         super().__init__(sprite, game_map, altitude_map, x, y, speed)  # ✅ Passer altitude_map
         self.show_on_minimap = True
         
@@ -301,21 +333,45 @@ class Chicken(Animal):
 
 
 class Player(Entity_That_Move_And_Has_Collision): 
-    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=40):  # ✅ Ajouter altitude_map
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=60):  # ✅ Ajouter altitude_map
         super().__init__(sprite, game_map, altitude_map, x, y)  # ✅ Passer altitude_map
-        self.x = float(x * 16)
-        self.y = float(y * 16)
+        self.x = float(x * 32)
+        self.y = float(y * 32)
         self.speed = speed
         self.vx = 0
         self.vy = 0
-        self.hitbox = [pygame.Rect(self.x, self.y, 16, 16)]
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.show_on_minimap = True
         self.has_hitbox = True
+        self.anim_timer = 0
+        self.anim_frame = 0
+        self.anim_speed = 400
+        self.last_orientation = "left"
+        self.has_life = True
+        self.lifepoint = 10
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
-        self.hitbox[0].x = self.x
-        self.hitbox[0].y = self.y
+        now = pygame.time.get_ticks()
+
+        
+        if now - self.anim_timer >= self.anim_speed:
+            if self.anim_frame == 0:
+                self.anim_frame = 1
+            else: self.anim_frame = 0
+            self.anim_timer = now
+        if self.vx > 0.1:
+            self.anim_speed = 200
+            self.texture_index = 2 + self.anim_frame
+        elif self.vx < - 0.1:
+            self.anim_speed = 200
+            self.texture_index = 6 + self.anim_frame
+        else:
+            self.anim_speed = 400
+            if self.last_orientation == "left":
+                self.texture_index = 0 + self.anim_frame
+            elif self.last_orientation == "right":
+                self.texture_index = 4 + self.anim_frame
 
     def input(self, keys, dt):
         dx, dy = 0, 0
@@ -329,6 +385,10 @@ class Player(Entity_That_Move_And_Has_Collision):
             dx /= length
             dy /= length
 
+        if dx > 0.1:
+            self.last_orientation = "left"
+        elif dx < - 0.1:
+            self.last_orientation = "right"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
 
 
@@ -352,8 +412,49 @@ class Grotte(Object):
         self.collide_action= [pygame.Rect(self.x + 5,  self.y + 5,  38, 20)]
         self.show_on_minimap = False
         self.has_hitbox = True
+        self.has_life = False
 
     def collides_with(self, player_rect):
         if self.game_map is self.actual_map:
             return check_box_collide(self.collide_action, player_rect)
         return False
+    
+class Projectile(Entity):
+    def __init__(self, sprite, game_map, direction=90, speed=10, altitude_map=None, x=1500, y=1500):
+        super().__init__(sprite, game_map, altitude_map, x, y)
+        self.direction = direction
+        self.speed = speed
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
+        self.has_hitbox = True
+        self.spawn_time = pygame.time.get_ticks()
+        self.lifetime = 20000
+        self.update_hitbox_cooldown = 100
+        self.last_update_hitbox = pygame.time.get_ticks()
+        
+    def angle_to_vector(self, angle_deg):
+        angle_rad = math.radians(angle_deg)
+        x = math.cos(angle_rad) 
+        y = math.sin(angle_rad)  # positif = bas en pygame
+        return (x * 0.1, y*0.1)
+    
+    def update(self, actual_map):
+        super().update(actual_map)
+        now = pygame.time.get_ticks()
+        vx, vy = self.angle_to_vector(self.direction)
+        self.x += vx * self.speed
+        self.y += vy * self.speed
+        
+        if veriftile_pixel(self.x, self.y, self.actual_map, self.altitude_map, self.altitude) is not True:
+            self.kill()
+            return
+
+        if now - self.last_update_hitbox >= self.update_hitbox_cooldown:
+            self.last_update_hitbox = now
+            self.hitbox[0].x = self.x
+            self.hitbox[0].y = self.y
+        if now - self.spawn_time >= self.lifetime:
+            self.kill()
+            return
+    
+    
+        

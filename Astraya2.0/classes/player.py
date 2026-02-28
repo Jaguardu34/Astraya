@@ -13,7 +13,7 @@ class Player(Entity):
         self.inventory = Inventory(size=20, hotbar_size=5)
         
         # load player sprite
-        self.textures = pygame.image.load(pygame.image.load(settings.TEXTURES_PATH)).convert_alpha()
+        self.textures = pygame.image.load(pygame.image.load(TEXTURES_PATH)).convert_alpha()
         
         self.texture_coeur = get_sprite(self.textures, 0, 241, 16, 16)
         texture_coeur_upscaled = pygame.transform.scale(self.texture_coeur, (self.texture_coeur.get_width()*SCALE, self.texture_coeur.get_height()*SCALE))
