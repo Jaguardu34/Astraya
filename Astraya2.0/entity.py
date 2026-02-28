@@ -148,7 +148,16 @@ class Entity(pygame.sprite.Sprite):
 
 
 class Entity_That_Move_And_Has_Collision(Entity):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500):
+        super().__init__(sprite, game_map, altitude_map, x, y)
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
+        self.has_hitbox = True
+        self.vx = 0
+        self.vy = 0
+        
     def update(self, chunk_grid, actual_map):
+        self.hitbox[0].x = self.x
+        self.hitbox[0].y = self.y
         if abs(self.vx) > 0.1 or abs(self.vy) > 0.1:
             new_x = self.x + self.vx
             new_y = self.y + self.vy
@@ -220,11 +229,7 @@ class Animal(Entity_That_Move_And_Has_Collision):
         self.anim_change_frame = random.randint(1000, 3000)
         self.emote_duration = random.randint(5000, 8000)
         self.blocked_move = 0
-        self.vx = 0
-        self.vy = 0
         self.random_cible()
-        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
-        self.has_hitbox = True
         self.has_life = True
         self.life_point = 3
 
@@ -270,8 +275,7 @@ class Animal(Entity_That_Move_And_Has_Collision):
             self.animate_action(now)
 
         super().update(chunk_grid, actual_map)
-        self.hitbox[0].x = self.x
-        self.hitbox[0].y = self.y
+
         
         if self.life_point <= 0:
             self.kill()
@@ -338,11 +342,8 @@ class Player(Entity_That_Move_And_Has_Collision):
         self.x = float(x * 32)
         self.y = float(y * 32)
         self.speed = speed
-        self.vx = 0
-        self.vy = 0
         self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.show_on_minimap = True
-        self.has_hitbox = True
         self.anim_timer = 0
         self.anim_frame = 0
         self.anim_speed = 400
@@ -420,8 +421,10 @@ class Grotte(Object):
         return False
     
 class Projectile(Entity):
-    def __init__(self, sprite, game_map, direction=90, speed=10, altitude_map=None, x=1500, y=1500):
+    def __init__(self, sprite, game_map, launcher, direction=90, speed=10, altitude_map=None, x=0, y=0):
         super().__init__(sprite, game_map, altitude_map, x, y)
+        self.x = x
+        self.y = y
         self.direction = direction
         self.speed = speed
         self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
@@ -430,6 +433,7 @@ class Projectile(Entity):
         self.lifetime = 20000
         self.update_hitbox_cooldown = 100
         self.last_update_hitbox = pygame.time.get_ticks()
+        self.launcher = launcher
         
     def angle_to_vector(self, angle_deg):
         angle_rad = math.radians(angle_deg)
@@ -457,4 +461,40 @@ class Projectile(Entity):
             return
     
     
+        
+class Ennemy(Entity_That_Move_And_Has_Collision):
+    def __init__(self, sprite, game_map, player, projectile_grp, altitude_map=None, x=1500, y=1500):
+        super().__init__(sprite, game_map, altitude_map, x, y)
+        self.player = player
+        self.projectile_grp = projectile_grp
+        self.last_shoot = pygame.time.get_ticks()
+        self.firerate = 500
+        self.show_on_minimap = True
+        self.has_hitbox = True
+        self.speed = 10
+    
+    def update(self, chunk_grid, actual_map, dt):
+        super().update(chunk_grid, actual_map)
+        
+        dist_x = self.player.x - self.x
+        dist_y = self.player.y - self.y
+        dist = (dist_x**2 + dist_y**2) ** 0.5
+
+        if dist < 500:
+            dx = (dist_x / dist) * self.speed * dt
+            dy = (dist_y / dist) * self.speed * dt
+            now = pygame.time.get_ticks()
+            if now - self.last_shoot >= self.firerate:
+                self.last_shoot = now
+                self.shoot()
+            self.move(dx, dy)
+    
+
+    
+    def shoot(self):
+        dx = self.player.x - self.x
+        dy = self.player.y - self.y
+        angle = math.degrees(math.atan2(dy, dx))
+        p = Projectile(texture.texture_chicken, self.actual_map, self, int(angle), 30,  None, self.x, self.y)
+        self.projectile_grp.add(p)
         

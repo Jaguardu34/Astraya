@@ -68,8 +68,6 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 ]
 
 
-texture_coeur = get_sprite(sprite_sheet, 0, 241, 16, 16)
-texture_coeur_upscaled = pygame.transform.scale(texture_coeur, (texture_coeur.get_width()*  SCALE, texture_coeur.get_height()*  SCALE))  
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
 
