@@ -2,6 +2,7 @@ import random
 import pygame
 from generate_map import *
 from settings import SIZE, COLLIDE_TILES
+import math
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
@@ -314,7 +315,7 @@ class Player(Entity_That_Move_And_Has_Collision):
         self.speed = speed
         self.vx = 0
         self.vy = 0
-        self.hitbox = [pygame.Rect(self.x, self.y, 32, 32)]
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
         self.show_on_minimap = True
         self.has_hitbox = True
         self.anim_timer = 0
@@ -394,10 +395,24 @@ class Grotte(Object):
         return False
     
 class Projectile(Entity):
-    def __init__(self, sprite, game_map, direction, speed=10, altitude_map=None, x=1500, y=1500):
+    def __init__(self, sprite, game_map, direction=90, speed=10, altitude_map=None, x=1500, y=1500):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.direction = direction
         self.speed = speed
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
+        self.has_hitbox = True
         
+    def angle_to_vector(self, angle_deg):
+        angle_rad = math.radians(angle_deg)
+        x = math.cos(angle_rad) 
+        y = math.sin(angle_rad)  # positif = bas en pygame
+        return (x * 0.1, y*0.1)
+    
     def update(self, actual_map):
-        return super().update(actual_map)
+        super().update(actual_map)
+        vx, vy = self.angle_to_vector(self.direction)
+        self.x += vx * self.speed
+        self.y += vy * self.speed
+    
+    
+        

@@ -1,4 +1,5 @@
 import os
+import pygame
 
 RENDER_DISTANCE = 1000
 
@@ -58,6 +59,8 @@ COLLIDE_TILES = [0, 5, 7, 10, 15]  # ocean, mountains, snow_peak, collide
 # textures
 TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')
 TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
+
+
 
 
 # ==============================================================================
