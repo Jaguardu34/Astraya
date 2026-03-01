@@ -47,34 +47,34 @@ class Game():
         self.clock = pygame.time.Clock()
         self.dt = 0   
         self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int(self.WINDOW_SCALE[1] // 32) - 1
-        self.nbr_poulet = 100
         self.game_map = map
         self.current_map = self.game_map
         self.last_map_change = pygame.time.get_ticks()
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.init_sprites()
-        self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp])
-        self.minimap = map_render.Minimap(self.WINDOW_SCALE[1]- 200, 1000, self.screen, [self.entity_grp])
-        self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp])
+        self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
+        self.minimap = map_render.Minimap(self.WINDOW_SCALE[1]- 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
+        self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
 
 
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
-        self.entity_grp = pygame.sprite.Group()
         self.projectile_grp = pygame.sprite.Group()
+        self.entity_grp = pygame.sprite.Group()
+        self.ennemy_grp = pygame.sprite.Group()
         self.player = ent.Player(texture.texture_player, self.game_map, altitude_map, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, altitude_map, x=1520, y=1520)
-        
-        for i in range(1000):
-            self.projectile_grp.add(ent.Projectile(texture.texture_chicken, self.game_map, direction=random.randint(0, 359), speed=random.randint(10, 50), altitude_map=altitude_map, x=1500, y=1500))
-        
-        for i in range(self.nbr_poulet):
+
+        self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, altitude_map, 1530, 1530)
+
+        for i in range(100):
             self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, altitude_map, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
             
         self.entity_grp.add(self.player)
         self.entity_grp.add(self.grotte)
+        self.ennemy_grp.add(self.ennemy)
 
     #changer de map 
     def change_map(self):
@@ -88,7 +88,7 @@ class Game():
 
     #afficher les fps et coord
     def draw_infos(self, x, y, pos):
-        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//16}, y: {int(pos[1])//16})", True, "red")
+        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//32}, y: {int(pos[1])//32})", True, "red")
         fps = self.clock.get_fps()
         pygame.display.set_caption(
             f"Astraya 2.0 - FPS : {fps:.2f}","Astraya")
@@ -110,7 +110,7 @@ class Game():
 
         self.screen.fill("white")
 
-        self.update_chunk([self.entity_grp])
+        self.update_chunk([self.entity_grp, self.ennemy_grp])
         
         
         for sprite in self.entity_grp:
@@ -119,12 +119,16 @@ class Game():
                     if dist <   RENDER_DISTANCE:
                         sprite.update(self.dt, self.chunk_grid, self.current_map) 
                         
+        for sprite in self.ennemy_grp:
+            sprite.update(self.chunk_grid, self.current_map, self.dt)
+                        
         for sprite in self.projectile_grp:
             sprite.update(self.current_map)
             nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
             for entity in nearby:
                 if entity is sprite: continue
                 if entity is self.player: continue
+                if entity is sprite.launcher: continue
                 if not hasattr(entity, 'hitbox'): continue
                 if ent.check_box_collide(sprite.hitbox, entity.hitbox):
                     if hasattr(entity, 'life_point'):
@@ -142,6 +146,8 @@ class Game():
             if isinstance(sprite, ent.Grotte):
                 if sprite.collides_with(self.player.hitbox):
                     self.change_map()
+                    
+
 
 
         
