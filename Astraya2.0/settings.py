@@ -44,6 +44,7 @@ BIOME_IDS = {
     "mountains": 5,
     "snow_peak": 6,
     "collide": 7,
+    "cliff":70,
     # Grottes
     "rock": 10,
     "cave_ice": 11,
@@ -54,7 +55,7 @@ BIOME_IDS = {
     "air": 16
 }
 
-COLLIDE_TILES = [0, 5, 7, 10, 15]  # ocean, mountains, snow_peak, collide
+COLLIDE_TILES = [0, 7,70, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
 TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')

@@ -95,14 +95,14 @@ def generate_overworld():
     heightmap = heightmap * island_mask
 
     altitude_map[heightmap < 0.25] = 0  # Plaines
-    altitude_map[(heightmap >= 0.25) & (heightmap < 0.32)] = 1  # Niveau 1 
-    altitude_map[(heightmap >= 0.32) & (heightmap < 0.65)] = 2  # Niveau 2 (plaines, jungle, forêt selon humidité/température)
-    altitude_map[(heightmap >= 0.65) & (heightmap < 0.80)] = 3  # Montagnes
-    altitude_map[heightmap >= 0.80] = 4  # Pics enneigés
+    altitude_map[(heightmap >= 0.25) & (heightmap < 0.32)] = 2  # Niveau 1 
+    altitude_map[(heightmap >= 0.32) & (heightmap < 0.65)] = 4  # Niveau 2 (plaines, jungle, forêt selon humidité/température)
+    altitude_map[(heightmap >= 0.65) & (heightmap < 0.80)] = 6  # Montagnes
+    altitude_map[heightmap >= 0.80] = 8  # Pics enneigés
     
     return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map  
 
-def detect_cliff_edges(altitude_map):
+def detect_cliff_edges(altitude_map, map):
     """Détecte les bords de falaises pour ajouter des textures de cliff."""
     
     cliffs_edges = {}  # {(x, y): ['N', 'S', 'E', 'W']}
@@ -115,12 +115,16 @@ def detect_cliff_edges(altitude_map):
             # Vérifier les 4 directions
             if y > 0 and altitude_map[y-1, x] < current_alt:  # ✅ y-1 pour Nord
                 edges.append('N')
+                map[y, x] = BIOME_IDS["cliff"]  # Marquer la tile comme cliff
             if y < SIZE-1 and altitude_map[y+1, x] < current_alt:  # ✅ y+1 pour Sud
                 edges.append('S')
+                map[y, x] = BIOME_IDS["cliff"]   
             if x > 0 and altitude_map[y, x-1] < current_alt:  # ✅ x-1 pour Ouest
                 edges.append('W')
+                map[y, x] = BIOME_IDS["cliff"] 
             if x < SIZE-1 and altitude_map[y, x+1] < current_alt:  # ✅ x+1 pour Est
                 edges.append('E')
+                map[y, x] = BIOME_IDS["cliff"] 
             
             if edges:
                 cliffs_edges[(x, y)] = edges
@@ -445,6 +449,8 @@ WORLD_FILE = "world_data.pkl"
 
 loaded = load_world(WORLD_FILE)
 
+loaded = load_world(WORLD_FILE)
+
 if loaded:
     map, texture_variants, cave, coord_vil, coord_grottes, altitude_map = loaded
     print(f"🎮 Monde prêt : {SIZE}x{SIZE}")
@@ -453,6 +459,7 @@ else:
     heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()  # ✅ Récupère altitude
     map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
     map, texture_variants = add_texture_variants(map)
+    altitude_map, map = detect_cliff_edges(altitude_map, map) 
     cave = generate_cave_system()[2]
     coord_vil = generate_villages(map)
     coord_grottes = generate_grottes(map)
@@ -492,7 +499,7 @@ if altitude_map is None:
     save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
 
 # Export des variables
-cliff_edges = detect_cliff_edges(altitude_map)
+cliff_edges = detect_cliff_edges(altitude_map, map)
 
 print(f"   {len(coord_vil)} villages placés")
 print(f"   {len(coord_grottes)} grottes placées")
