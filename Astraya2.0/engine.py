@@ -39,7 +39,7 @@ class Game():
     def __init__(self):
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("Astraya 2.0")
+        
         
         self.info_display = pygame.display.Info()
         self.WINDOW_SCALE = self.info_display.current_w - 0.1*self.info_display.current_w, self.info_display.current_h - 0.1*self.info_display.current_h
@@ -90,9 +90,10 @@ class Game():
     def draw_infos(self, x, y, pos):
         text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//16}, y: {int(pos[1])//16})", True, "red")
         fps = self.clock.get_fps()
-        fps_text = self.font_to_write.render(f"FPS: ({fps:.2f})", True, "red")
+        pygame.display.set_caption(
+            f"Astraya 2.0 - FPS : {fps:.2f}","Astraya")
         self.screen.blit(text, (x, y))
-        self.screen.blit(fps_text, (x, y+32))
+
 
     #update les chunk aux alentours
     def update_chunk(self, sprite_group_to_add):
