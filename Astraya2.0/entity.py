@@ -20,25 +20,17 @@ def check_box_collide(box1, box2):
     return False
 
 def veriftile(x, y, game_map, altitude_map=None, current_altitude=0):
-    """Vérifie si une tile est traversable (biome + altitude)."""
-    if x < 0 or y < 0 or y >= SIZE or x >= SIZE:  # Utilise SIZE au lieu de len()
+    if x < 0 or y < 0 or y >= SIZE or x >= SIZE:
         return "ocean"
     
-    biome_id = game_map[y, x]  #  Accès NumPy [y, x]
+    biome_id = game_map[y, x]
     
-    # Vérification du biome (océan, montagnes, etc.)
+    # ✅ Seule vérification : le biome
     if biome_id in COLLIDE_TILES:
         return biome_id
     
-    # verif altitude
-    if altitude_map is not None:
-        target_altitude = altitude_map[y, x]
-        
-        # Ne peut pas monter/descendre de plus d'1 niveau
-        if abs(target_altitude - current_altitude) > 1:
-            return "cliff"  # Blocké par une falaise
-    
-    return True  
+    # ✅ Plus de vérification d'altitude
+    return True
 
 def calculate_hitbox_size(sprite, shrink=2):
     surf = sprite[0]

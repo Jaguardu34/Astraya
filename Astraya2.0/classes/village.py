@@ -1,6 +1,5 @@
 import random
 import pygame
-from generate_map import *
 from settings import *
 import numpy as np
 

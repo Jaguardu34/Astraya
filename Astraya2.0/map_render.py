@@ -100,16 +100,20 @@ class Map():
                         pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 32, 32))
 
                 # Y a-t-il une falaise ici ?
-                if (map_i, map_j) in cliff_edges.keys():
-                    for direction in cliff_edges[(map_i, map_j)]:
-                        # Dessiner le sprite de falaise correspondant
-                        directions = {
-                            "N" : 3,
-                            "E" : 1,
-                            "S" : 2,
-                            "W" : 0
-                        }
-                        self.map_cache.blit(TILE_TEXTURE["cliff"][directions[direction]], (draw_x, draw_y, 32, 32))
+                if (map_i, map_j) in cliff_edges:
+                    biome_id = map_to_show[map_j][map_i]
+                    
+                    if biome_id == BIOME_IDS["cliff"]:  # ✅ CETTE LIGNE
+                        for direction in cliff_edges[(map_i, map_j)]:
+                                    for direction in cliff_edges[(map_i, map_j)]:
+                                        # Dessiner le sprite de falaise correspondant
+                                        directions = {
+                                            "N" : 3,
+                                            "E" : 1,
+                                            "S" : 2,
+                                            "W" : 0
+                                        }
+                                        self.map_cache.blit(TILE_TEXTURE["cliff"][directions[direction]], (draw_x, draw_y, 32, 32))
 
 
         for sprite_group in self.sprites_to_show:
