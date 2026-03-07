@@ -54,6 +54,9 @@ class Map():
 
 
     def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
+        
+        sprites_to_draw = []
+        
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
             self.anim_frame = (self.anim_frame + 1) % 256  # reset avant overflow
@@ -115,12 +118,23 @@ class Map():
                                         }
                                         self.map_cache.blit(TILE_TEXTURE["cliff"][directions[direction]], (draw_x, draw_y, 32, 32))
 
-
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if sprite is not player:
-                    if sprite.game_map is map_to_show:
-                        sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
+                if sprite.game_map is map_to_show:
+                    sprites_to_draw.append(sprite)
+                    
+
+        
+        sprites_to_draw.sort(key=lambda s: s.y)
+        
+        for sprite in sprites_to_draw:
+            if sprite is player:
+                self.map_cache.blit(
+                    player.sprite[player.texture_index],
+                    (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
+                )
+            else:
+                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
@@ -131,4 +145,4 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x-32, y-32, 32, self.scale_x*32))
         pygame.draw.rect(self.screen, "white", (x+self.scale_x*32 -32, y-32, 32, self.scale_x*32))
 
-        self.screen.blit(player.sprite[player.texture_index], (x + self.scale_x//2 * 32, y + self.scale_y//2 * 32))
+        
