@@ -492,4 +492,3 @@ class Ennemy(Entity_That_Move_And_Has_Collision):
         angle = math.degrees(math.atan2(dy, dx))
         p = Projectile(texture.texture_chicken, self.actual_map, self, int(angle), 30,  None, self.x, self.y)
         self.projectile_grp.add(p)
-        

@@ -5,6 +5,7 @@ import entity as ent
 import texture
 from settings import *
 import map_render
+from interfaces import *
 
 
 class Chunk:
@@ -56,7 +57,7 @@ class Game():
         self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
         self.minimap = map_render.Minimap(self.WINDOW_SCALE[1]- 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
         self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
-
+        self.quest = Quest("test", "ceci est une quete de test", "primary", "red")
 
 
     #creer tt les entity et les mettre dans un sprite.group
@@ -105,6 +106,7 @@ class Game():
         
 
 
+
     #boucle principale
     def update(self):
 
@@ -147,7 +149,7 @@ class Game():
                 if sprite.collides_with(self.player.hitbox):
                     self.change_map()
                     
-
+        
 
 
         
@@ -158,6 +160,8 @@ class Game():
 
 
         self.draw_infos(16, 16, self.player.position)
+        
+        self.quest.render(self.WINDOW_SCALE[0] - 350, 10, self.screen, self.font_to_write)
 
 
         if keys[pygame.K_TAB]:
