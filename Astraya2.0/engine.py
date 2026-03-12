@@ -41,13 +41,12 @@ class Game():
         pygame.init()
         pygame.font.init()
         
-        
         self.info_display = pygame.display.Info()
-        self.WINDOW_SCALE = self.info_display.current_w - 0.1*self.info_display.current_w, self.info_display.current_h - 0.1*self.info_display.current_h
-        self.screen = pygame.display.set_mode(self.WINDOW_SCALE, pygame.RESIZABLE)
+        self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.clock = pygame.time.Clock()
         self.dt = 0   
-        self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int(self.WINDOW_SCALE[1] // 32) - 1
+        self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int((self.WINDOW_SCALE[1] - 200) // 32)
         self.game_map = map
         self.current_map = self.game_map
         self.last_map_change = pygame.time.get_ticks()
@@ -57,7 +56,7 @@ class Game():
         self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
         self.minimap = map_render.Minimap(self.WINDOW_SCALE[1]- 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
         self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
-        self.quest = Quest("test", "ceci est une quete de test", "primary", "red")
+        self.quest = Quest("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
 
 
     #creer tt les entity et les mettre dans un sprite.group
@@ -89,11 +88,13 @@ class Game():
 
     #afficher les fps et coord
     def draw_infos(self, x, y, pos):
-        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//32}, y: {int(pos[1])//32})", True, "red")
         fps = self.clock.get_fps()
+        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//32}, y: {int(pos[1])//32})", True, "red")
+        text_fps = self.font_to_write.render(f"FPS : {fps:.2f}", True, "red")
         pygame.display.set_caption(
             f"Astraya 2.0 - FPS : {fps:.2f}","Astraya")
         self.screen.blit(text, (x, y))
+        self.screen.blit(text_fps, (x, y+self.font_to_write.size("A")[1]+2))
 
 
     #update les chunk aux alentours
@@ -148,10 +149,6 @@ class Game():
             if isinstance(sprite, ent.Grotte):
                 if sprite.collides_with(self.player.hitbox):
                     self.change_map()
-                    
-        
-
-
         
         # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
@@ -161,11 +158,11 @@ class Game():
 
         self.draw_infos(16, 16, self.player.position)
         
-        self.quest.render(self.WINDOW_SCALE[0] - 350, 10, self.screen, self.font_to_write)
+        self.quest.show(self.WINDOW_SCALE[0] - 10, 10, self.screen)
 
 
         if keys[pygame.K_TAB]:
-            self.minimap.draw(0, 0, self.player.position, self.game_map)
+            self.minimap.draw((self.WINDOW_SCALE[0]//2) - ((self.WINDOW_SCALE[1] - 200) //2), 10, self.player.position, self.game_map)
 
         
         pygame.display.flip()
