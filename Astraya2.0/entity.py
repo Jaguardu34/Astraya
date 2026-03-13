@@ -1,6 +1,6 @@
 import random
 import pygame
-from settings import SIZE, COLLIDE_TILES
+import settings
 import math
 import texture
 
@@ -20,13 +20,13 @@ def check_box_collide(box1, box2):
     return False
 
 def veriftile(x, y, game_map, altitude_map=None, current_altitude=0):
-    if x < 0 or y < 0 or y >= SIZE or x >= SIZE:
+    if x < 0 or y < 0 or y >= settings.SIZE or x >= settings.SIZE:
         return "ocean"
     
     biome_id = game_map[y, x]
     
     # ✅ Seule vérification : le biome
-    if biome_id in COLLIDE_TILES:
+    if biome_id in settings.COLLIDE_TILES:
         return biome_id
     
     # ✅ Plus de vérification d'altitude
@@ -87,7 +87,7 @@ class Entity(pygame.sprite.Sprite):
         if self.altitude_map is not None:
             tile_x = int(self.x // 32)
             tile_y = int(self.y // 32)
-            if 0 <= tile_x < SIZE and 0 <= tile_y < SIZE:
+            if 0 <= tile_x < settings.SIZE and 0 <= tile_y < settings.SIZE:
                 self.altitude = self.altitude_map[tile_y, tile_x]
 
     def update(self, actual_map):
@@ -371,10 +371,10 @@ class Player(Entity_That_Move_And_Has_Collision):
 
     def input(self, keys, dt):
         dx, dy = 0, 0
-        if keys[pygame.K_z] or keys[pygame.K_UP]:    dy -= 1
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:  dy += 1
-        if keys[pygame.K_q] or keys[pygame.K_LEFT]:  dx -= 1
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: dx += 1
+        if keys[settings.KEY_UP] or keys[pygame.K_UP]:    dy -= 1
+        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:  dy += 1
+        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:  dx -= 1
+        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]: dx += 1
 
         if dx != 0 and dy != 0:
             length = (dx**2 + dy**2) ** 0.5

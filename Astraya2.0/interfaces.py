@@ -1,4 +1,5 @@
 import pygame
+import settings
 
 # Creer une quete
 class Quest():
@@ -45,6 +46,7 @@ class Button():
         self.height = self.font.size(self.content)[1] + self.PADDING_HEIGHT * 2
         self.x = 0
         self.y = 0
+        self._pressing = False
         
     def draw(self, x, y, screen):
         self.x = x
@@ -75,62 +77,166 @@ class Button():
     def state(self):
         click = pygame.mouse.get_pressed()
         if self.is_hovered() and click[0] == 1:
-            return True
+            if not self._pressing:  # premier frame seulement
+                self._pressing = True
+                return True
+        else:
+            self._pressing = False
         return False
     
-    
-class Menu():
+class FullscreenMenu():
     def __init__(self):
         self.info_display = pygame.display.Info()
         self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
         self.surface = pygame.Surface(self.WINDOW_SCALE)
+    
+class MainMenu(FullscreenMenu):
+    def __init__(self):
+        super().__init__()
         
         #boutons
         self.close_btn = Button("yellow", "Fermer le jeu", 40)
         self.play_btn = Button("red", "Jouer", 40)
         self.resume_btn = Button("gray", "Reprendre", 40)
+        self.settings_btn = Button("gray", "Parametres", 40)
         self.buttons = {
-            "close" : [self.close_btn, (self.WINDOW_SCALE[0]//2)-(self.close_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10], 
-            "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2]
+            "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2],
+            "close" : [self.close_btn, 10, 10], 
+            "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
             }
         
         self.in_menu = True
         self.launch_first_time = False
+        self.in_settings= False
         
     def draw(self, screen):
-        Button.update_cursor()
         self.surface.fill("white")
         for button in self.buttons.values():
             button[0].draw(button[1], button[2], self.surface)
         screen.blit(self.surface, (0, 0))
+        Button.update_cursor()
+        self.update()
         
     def update(self):
         
         if self.buttons["close"][0].state():
             pygame.quit()
         if self.buttons["play"][0].state():
-            self.toggle()
+            self.in_menu = False
             if not self.launch_first_time:
                 self.launch_first_time = True
                 self.buttons["play"] = [self.resume_btn, (self.WINDOW_SCALE[0]//2)-(self.resume_btn.width//2), self.WINDOW_SCALE[1]//2]
-            
-    def toggle(self):
-        if self.in_menu:
+        if self.buttons["settings"][0].state():
             self.in_menu = False
-        else: self.in_menu = True
+            self.in_settings = True
+
         
         
-class LoadingScreen():
+        
+class LoadingScreen(FullscreenMenu):
     def __init__(self):
-        self.info_display = pygame.display.Info()
-        self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
-        self.surface = pygame.Surface(self.WINDOW_SCALE)
+        super().__init__()
         self.font = pygame.font.SysFont(None, 100)
         self.text = "Chargement..."
         
     def draw(self, screen):
-        Button.update_cursor()
         self.surface.fill("white")
-        text_surface = self.font.render(self.text, True, "black")
+        text_surface = self.font.render(self.text, True, "black")   
         self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
         screen.blit(self.surface, (0, 0))
+        Button.update_cursor()
+        
+class SettingsMenu(FullscreenMenu):
+    def __init__(self):
+        super().__init__()
+        self.font = pygame.font.SysFont(None, 40)
+        self.controls = {
+            "Monter" : [Button("lightgray", "...", 40), False, settings.KEY_UP],
+            "Descendre" : [Button("lightgray", "...", 40), False, settings.KEY_DOWN],
+            "Gauche" : [Button("lightgray", "...", 40), False, settings.KEY_LEFT],
+            "Droite" : [Button("lightgray", "...", 40), False, settings.KEY_RIGHT],
+            "Map" : [Button("lightgray", "...", 40), False, settings.KEY_MAP],
+            "Menu" : [Button("lightgray", "...", 40), False, settings.KEY_MENU]
+        }
+        
+
+            
+            
+            
+        
+        self.button_fps = [
+            (Button("gray", "30", 40), 30),
+            (Button("gray", "60", 40), 60),
+            (Button("gray", "120", 40), 120),
+            (Button("gray", "240", 40), 240)
+        ]
+        
+        self.event = None
+    
+    def draw(self, screen, event):
+        self.event = event
+        text_surface=""
+        self.surface.fill("white")
+        x = 0
+        for control in self.controls:
+            self.controls[control][0].draw(300, self.WINDOW_SCALE[1]//2+x*50, self.surface)
+            text_surface = self.font.render(control, True, "black")
+            self.surface.blit(text_surface, (100, self.WINDOW_SCALE[1]//2+x*50))
+            x+=1
+        
+            
+        for i in range(len(self.button_fps)):
+            self.button_fps[i][0].draw(200+i*80, self.WINDOW_SCALE[1]//2-200, self.surface)
+        
+        fps_text = "FPS :"
+        text_fps_surface = self.font.render(fps_text, True, "black")
+        self.surface.blit(text_fps_surface, (100, self.WINDOW_SCALE[1]//2-200))
+        
+        
+        
+        screen.blit(self.surface, (0, 0))
+        Button.update_cursor()
+        
+        self.update()
+        
+    def update(self):
+        for button in self.button_fps:
+            if settings.FPS == button[1]:
+                button[0].color = "dodgerblue"
+            else:   
+                button[0].color = "lightgray"
+
+            if button[0].state():
+                settings.FPS = button[1]
+
+        settings_map = {
+            "Monter": "KEY_UP",
+            "Descendre": "KEY_DOWN",
+            "Gauche": "KEY_LEFT",
+            "Droite": "KEY_RIGHT",
+            "Map": "KEY_MAP",
+            "Menu": "KEY_MENU"
+        }
+
+        for key_name, button in self.controls.items():  # items() pas values() !
+            if button[1]:
+                button[0].color = "red"
+                button[0].content = "Appuyez sur une touche..."
+               
+                for event in self.event:
+                    if event.type == pygame.KEYDOWN:
+                        button[1] = False
+                        button[2] = event.key
+                        setattr(settings, settings_map[key_name], event.key)  # ← manquait
+            else:
+                button[0].color = "lightgray"
+                button[0].content = pygame.key.name(button[2])
+
+            if button[0].state():
+                if not button[1]:
+                    button[1] = True
+        
+    
+    
+            
+        
