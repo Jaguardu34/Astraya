@@ -1,8 +1,8 @@
 import random
 import pygame
-from generate_map import *
 from settings import SIZE, COLLIDE_TILES
 import math
+import texture
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)

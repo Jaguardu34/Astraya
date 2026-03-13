@@ -1,5 +1,5 @@
 import os
-import pygame
+
 
 RENDER_DISTANCE = 1000
 

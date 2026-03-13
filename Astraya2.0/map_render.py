@@ -2,7 +2,7 @@ import pygame
 from settings import *
 from generate_map import *
 from texture import *
-import render_minimap
+
 
 
 class Minimap():
