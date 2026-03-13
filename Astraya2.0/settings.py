@@ -5,7 +5,7 @@ import pygame
 KEY_UP = pygame.K_z
 KEY_DOWN = pygame.K_s
 KEY_LEFT = pygame.K_q
-KEY_RIGHT = pygame.K_r
+KEY_RIGHT = pygame.K_d
 KEY_MAP = pygame.K_TAB
 KEY_MENU = pygame.K_ESCAPE
 

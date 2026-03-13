@@ -146,6 +146,8 @@ class Game():
         
         events = pygame.event.get()
         for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_LCTRL and event.key == pygame.K_q:
+                pygame.quit()
             if event.type == pygame.QUIT:
                 pygame.quit()
         
