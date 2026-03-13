@@ -56,6 +56,7 @@ class Game():
         self.clock = pygame.time.Clock()
         self.dt = 0   
         self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int((self.WINDOW_SCALE[1] - 200) // 32)
+        self.render_distance = self.WINDOW_SCALE[0]//2
         
         self.game_map = None
         self.current_map = None
@@ -160,7 +161,7 @@ class Game():
             for sprite in self.entity_grp:
                     if sprite is not self.player:
                         dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
-                        if dist <   RENDER_DISTANCE:
+                        if dist < self.render_distance:
                             sprite.update(self.dt, self.chunk_grid, self.current_map) 
                             
             for sprite in self.ennemy_grp:

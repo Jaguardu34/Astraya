@@ -1,6 +1,6 @@
 import pygame
 from settings import *
-from generate_map import *
+import generate_map
 from texture import *
 
 
@@ -88,13 +88,13 @@ class Map():
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
                     if biome_id in TILE_ANIMATED:
                         frames = TILE_ANIMATED[biome_id]
-                        offset = texture_variants[map_j, map_i] 
+                        offset = generate_map.texture_variants[map_j, map_i] 
                         frame = (int(self.anim_frame) + offset) % len(frames)
                         self.map_cache.blit(frames[frame], (draw_x, draw_y))
                     # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
                     elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
                         # CHANGEMENT : Récupération du variant depuis map.texture_variants
-                        variant = texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
+                        variant = generate_map.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
                         self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
                         # Tile((draw_x, draw_y), TILE_TEXTURE[biome_id][variant], tile_group)
                     elif biome_id in TILE_COLORS:  # Vérifie l'ID numérique
