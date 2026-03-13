@@ -105,8 +105,16 @@ class Game():
             for sprite in sprite_group:
                 self.chunk_grid.insert(sprite)
         
-
-
+    def close_btn(self, x , y):
+        pygame.draw.rect(self.screen, "white", (x, y, 50, 50))
+        click = pygame.mouse.get_pressed()
+        pos_x, pos_y = pygame.mouse.get_pos()
+        
+        if pos_x > x and pos_x < x+50 and pos_y > y and pos_y < y+50:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            if click[0] == 1:
+                pygame.quit()
+        else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
     #boucle principale
     def update(self):
@@ -164,6 +172,9 @@ class Game():
         if keys[pygame.K_TAB]:
             self.minimap.draw((self.WINDOW_SCALE[0]//2) - ((self.WINDOW_SCALE[1] - 200) //2), 10, self.player.position, self.game_map)
 
+
+        if keys[pygame.K_ESCAPE]:
+            pygame.quit()
         
         pygame.display.flip()
         self.dt = self.clock.tick(FPS) / 1000
