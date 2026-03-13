@@ -7,6 +7,7 @@ import os
 from settings import *
 import texture
 from classes.village import *
+from falaises import *
 
 # ==============================================================================
 # CONFIGURATION
@@ -102,306 +103,130 @@ def generate_overworld():
     
     return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map  
 
-def detect_cliff_edges(altitude_map, map):
-    """Détecte les bords de falaises pour ajouter des textures de cliff."""
-    
-    cliffs_edges = {}  # {(x, y): ['N', 'S', 'E', 'W']}
-    
-    for y in range(SIZE): 
-        for x in range(SIZE):
-            current_alt = altitude_map[y, x]
-            edges = []
-            
-            # Vérifier les 4 directions
-            if y > 0 and altitude_map[y-1, x] < current_alt:  # ✅ y-1 pour Nord
-                edges.append('N')
-                map[y, x] = BIOME_IDS["cliff"]  # Marquer la tile comme cliff
-            if y < SIZE-1 and altitude_map[y+1, x] < current_alt:  # ✅ y+1 pour Sud
-                edges.append('S')
-                map[y, x] = BIOME_IDS["cliff"]   
-            if x > 0 and altitude_map[y, x-1] < current_alt:  # ✅ x-1 pour Ouest
-                edges.append('W')
-                map[y, x] = BIOME_IDS["cliff"] 
-            if x < SIZE-1 and altitude_map[y, x+1] < current_alt:  # ✅ x+1 pour Est
-                edges.append('E')
-                map[y, x] = BIOME_IDS["cliff"] 
-            
-            if edges:
-                cliffs_edges[(x, y)] = edges
-    
-    print(f"Détecté {len(cliffs_edges)} tiles avec falaises")  # ✅ Print une seule fois
-    return cliffs_edges
+def poser_falaises(biome_map, nb_falaises=100):
 
-def find_closed_zones(map, cliff_id):
-    """
-    Retourne une liste de zones fermées par des cliffs.
-    Chaque zone est une liste de (x, y).
-    """
-    SIZE = map.shape[0]
-    visited = [[False]*SIZE for _ in range(SIZE)]
-    closed_zones = []
+    autorises = {
+    BIOME_IDS["plains"],
+    BIOME_IDS["forest"],
+    BIOME_IDS["jungle"],
+    BIOME_IDS["mountains"],
+    BIOME_IDS["beach"]
+}
+    
+    for _ in range(nb_falaises):
+        attempts = 0
+        trouve = False
+        while attempts < 10000 and not trouve:
+            x = random.randint(0, SIZE - 1)
+            y = random.randint(0, SIZE - 1)
 
-    def neighbors(x, y):
-        for dx, dy in [(1,0),(-1,0),(0,1),(0,-1)]:
-            nx, ny = x+dx, y+dy
-            if 0 <= nx < SIZE and 0 <= ny < SIZE:
-                yield nx, ny
+            falaises = create_falaise(x, y)
 
-    for y in range(SIZE):
-        for x in range(SIZE):
-            # On ignore les cliffs et les tiles déjà visitées
-            if visited[y][x] or map[y][x] == cliff_id:
-                continue
+            valide = True
+            for xx, yy in falaises:
+                if biome_map[yy][xx] not in autorises:
+                    valide = False
+                    break
 
-            # Flood-fill avec une simple liste
-            queue = [(x, y)]
-            zone = []
-            touches_border = False
+            if valide:
+                coins = []
+                for i in range(1, len(falaises) - 1):
+                    x1, y1 = falaises[i][0], falaises[i][1]
 
-            while queue:
-                cx, cy = queue[0]
-                queue = queue[1:]
+                    if (x1 + 1, y1) in falaises and (x1, y1 + 1) in falaises:
+                        coins.append((x1, y1))
+                    if (x1 + 1, y1) in falaises and (x1, y1 - 1) in falaises:
+                        coins.append((x1, y1))
+                    if (x1 - 1, y1) in falaises and (x1, y1 + 1) in falaises:
+                        coins.append((x1, y1))
+                    if (x1 - 1, y1) in falaises and (x1, y1 - 1) in falaises:
+                        coins.append((x1, y1))
 
-                if visited[cy][cx]:
-                    continue
-                visited[cy][cx] = True
-                zone.append((cx, cy))
+                pos_deb = random.randint(0, len(coins) - 1)
+                falaises = falaises[pos_deb:] + falaises[:pos_deb]
 
-                # Si la zone touche le bord → pas fermée
-                if cx == 0 or cy == 0 or cx == SIZE-1 or cy == SIZE-1:
-                    touches_border = True
+                for i in range(len(falaises)): 
+                    current_x, current_y = falaises[i][0], falaises[i][1]
+                    currrnt_orientation = "N"
+                    if (current_x - 1, current_y) in falaises and (current_x + 1, current_y) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_x += 1
 
-                # Ajouter les voisins non-cliffs
-                for nx, ny in neighbors(cx, cy):
-                    if not visited[ny][nx] and map[ny][nx] != cliff_id:
-                        queue.append((nx, ny))
+                    elif (current_x, current_y - 1) in falaises and (current_x, current_y + 1) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_y += 1
 
-            # Si elle ne touche pas le bord → zone fermée
-            if not touches_border:
-                closed_zones.append(zone)
+                    elif (current_x + 1, current_y) in falaises and (current_x, current_y + 1) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_NE"]
+                        current_x -= 1
+                        current_y -= 1
+                        if currrnt_orientation == "N":
+                            currrnt_orientation = "E"
+                        if currrnt_orientation == "E":
+                            currrnt_orientation = "N"
+                       
+                    elif (current_x - 1, current_y) in falaises and (current_x, current_y + 1) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_NO"]
+                        current_x += 1
+                        current_y -= 1
+                        if currrnt_orientation == "N":
+                            currrnt_orientation = "O"
+                        if currrnt_orientation == "O":
+                            currrnt_orientation = "N"
 
-    return closed_zones
+                    elif (current_x + 1, current_y) in falaises and (current_x, current_y - 1) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_SE"]
+                        current_x -= 1
+                        current_y += 1
+                        if currrnt_orientation == "S":
+                            currrnt_orientation = "E"
+                        if currrnt_orientation == "E":
+                            currrnt_orientation = "S"
 
-def compute_passage_count(zone_size):
-    if zone_size < 200:
-        return 20
-    elif zone_size < 1000:
-        return 100
-    else:
-        return 500
+                    elif (current_x - 1, current_y) in falaises and (current_x, current_y - 1) in falaises :
+                        biome_map[current_y, current_x] = BIOME_IDS["cliff_SO"]
+                        current_x += 1
+                        current_y += 1
+                        if currrnt_orientation == "S":
+                            currrnt_orientation = "O"
+                        if currrnt_orientation == "O":
+                            currrnt_orientation = "S"
 
+                    # gauche a droite
+                    elif (current_x - 1, current_y) in falaises and (current_x + 1, current_y) not in falaises and (current_x, current_y - 1) not in falaises and (current_x, current_y + 1) not in falaises:
+                        biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
+                        biome_map[current_y, current_x + 2] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
+                        biome_map[current_y, current_x + 3] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_x += 3
 
-def create_passages_for_zone(zone, map, cliff_id):
-    """
-    Crée des passages pour une zone fermée.
-    
-    ✅ CORRIGÉ : 
-    - Trouve les bords de cliff adjacents à la zone
-    - Crée des passages larges (3 tiles)
-    - Vérifie que les passages sont bien créés
-    """
-    # 1. Trouver tous les bords de cliff adjacents à la zone
-    cliff_borders = []
-    
-    for (x, y) in zone:
-        # Vérifier les 4 voisins
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-            nx, ny = x + dx, y + dy
-            
-            if 0 <= nx < SIZE and 0 <= ny < SIZE:
-                # Si le voisin est un cliff
-                if map[ny, nx] == cliff_id:
-                    # Stocker : position dans zone, position cliff, direction
-                    cliff_borders.append({
-                        'zone_pos': (x, y),
-                        'cliff_pos': (nx, ny),
-                        'direction': (dx, dy)
-                    })
-    
-    if not cliff_borders:
-        print(f"   ⚠️ Aucun bord de cliff trouvé pour zone de {len(zone)} tiles")
-        return 0
-    
-    # 2. Mélanger pour avoir des passages aléatoires
-    random.shuffle(cliff_borders)
-    
-    # 3. Calculer le nombre de passages nécessaires
-    zone_size = len(zone)
-    passage_count = compute_passage_count(zone_size)
-    
-    # 4. Créer les passages
-    created = 0
-    attempted = 0
-    max_attempts = min(len(cliff_borders), passage_count * 3)
-    
-    for border in cliff_borders:
-        if created >= passage_count:
-            break
-        
-        if attempted >= max_attempts:
-            break
-        
-        attempted += 1
-        
-        if carve_passage(border, map, cliff_id):
-            created += 1
-    
-    print(f"   ✅ {created}/{passage_count} passages créés pour zone de {zone_size} tiles")
-    return created
+                    # gauche a droite
+                    elif (current_x + 1, current_y) in falaises and (current_x - 1, current_y) not in falaises and (current_x, current_y - 1) not in falaises and (current_x, current_y + 1) not in falaises:
+                        biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
+                        biome_map[current_y, current_x - 2] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
+                        biome_map[current_y, current_x - 3] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_x -= 3
+                    
+                    # bas en haut
+                    elif (current_x, current_y - 1) in falaises and (current_x, current_y + 1) not in falaises and (current_x - 1, current_y) not in falaises and (current_x + 1, current_y + 1) not in falaises:
+                        biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
+                        biome_map[current_y + 2, current_x ] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
+                        biome_map[current_y + 3, current_x ] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_y += 3
 
-def carve_passage(border_info, map, cliff_id):
-    """
-    Crée un passage à travers un cliff.
-    
-    ✅ CORRIGÉ : 
-    - Passage plus large (3 tiles de large)
-    - Creuse suffisamment profond dans le cliff
-    - Remplace par plains au lieu de garder le cliff
-    
-    Args:
-        border_info: Dict avec 'zone_pos', 'cliff_pos', 'direction'
-        map: La carte à modifier
-        cliff_id: ID du biome cliff
-    
-    Returns:
-        bool: True si le passage a été créé
-    """
-    zone_x, zone_y = border_info['zone_pos']
-    cliff_x, cliff_y = border_info['cliff_pos']
-    dx, dy = border_info['direction']
-    
-    passage_tiles = []
-    
-    # 1. Déterminer la direction perpendiculaire (pour élargir le passage)
-    if dx != 0:  # Mouvement horizontal → élargir verticalement
-        perp_dx, perp_dy = 0, 1
-    else:  # Mouvement vertical → élargir horizontalement
-        perp_dx, perp_dy = 1, 0
-    
-    # 2. Creuser un passage de 3 tiles de large et 5 tiles de profondeur
-    width = 1  # ±1 tile de chaque côté = 3 tiles au total
-    depth = 5  # Profondeur dans le cliff
-    
-    for d in range(depth):
-        for w in range(-width, width + 1):
-            px = cliff_x + dx * d + perp_dx * w
-            py = cliff_y + dy * d + perp_dy * w
-            
-            # Vérifier limites
-            if not (0 <= px < SIZE and 0 <= py < SIZE):
-                continue
-            
-            passage_tiles.append((px, py))
-    
-    # 3. Vérifier qu'on peut créer le passage
-    if len(passage_tiles) < 3:
-        return False
-    
-    # 4. Creuser le passage (remplacer par plains)
-    for px, py in passage_tiles:
-        map[py, px] = BIOME_IDS["plains"]
-    
-    return True
+                    # haut en bas
+                    elif (current_x, current_y + 1) in falaises and (current_x, current_y - 1) not in falaises and (current_x - 1, current_y) not in falaises and (current_x + 1, current_y) not in falaises:
+                        biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
+                        biome_map[current_y - 2, current_x ] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
+                        biome_map[current_y - 3, current_x ] = BIOME_IDS["cliff_" + currrnt_orientation]
+                        current_y -= 3             
+                trouve = True
 
-#def carve_passage(x, y, cx, cy, map, cliff_id):
-    SIZE = map.shape[0]
-
-    dx = cx - x
-    dy = cy - y
-
-    # Normalisation stricte
-    if abs(dx) > abs(dy):
-        dx = 1 if dx > 0 else -1
-        dy = 0
-    else:
-        dy = 1 if dy > 0 else -1
-        dx = 0
-
-    passage_tiles = []
-
-    # 1) Casser la falaise côté zone
-    entry_x = cx - dx
-    entry_y = cy - dy
-    if 0 <= entry_x < SIZE and 0 <= entry_y < SIZE:
-        passage_tiles.append((entry_x, entry_y))
-
-    # 2) Casser la falaise elle-même + 2 cases derrière
-    for i in range(3):
-        px = cx + dx * i
-        py = cy + dy * i
-
-        if not (0 <= px < SIZE and 0 <= py < SIZE):
-            return False
-
-        passage_tiles.append((px, py))
-
-    # 3) Creuser
-    for px, py in passage_tiles:
-        map[py][px] = BIOME_IDS["plains"]
-
-    return True
-
-
-def create_passages_simple(map, cliff_id, num_passages=100):
-    """
-    Crée des passages aléatoires dans les cliffs.
-    
-    ✅ AVANTAGES :
-    - Très rapide (pas de flood-fill)
-    - Garantit des passages
-    - Simple à débugger
-    
-    Args:
-        map: La carte de biomes
-        cliff_id: ID du biome cliff
-        num_passages: Nombre de passages à créer
-    
-    Returns:
-        int: Nombre de tiles converties
-    """
-    # Trouver toutes les positions de cliff
-    cliff_positions = np.argwhere(map == cliff_id)
-    
-    if len(cliff_positions) == 0:
-        print("   ⚠️ Aucun cliff trouvé")
-        return 0
-    
-    print(f"   📍 {len(cliff_positions)} tiles de cliff détectées")
-    
-    # Mélanger pour avoir des positions aléatoires
-    np.random.shuffle(cliff_positions)
-    
-    tiles_converted = 0
-    passages_created = 0
-    
-    # Créer des passages espacés
-    spacing = max(1, len(cliff_positions) // num_passages)
-    
-    for i in range(0, len(cliff_positions), spacing):
-        if passages_created >= num_passages:
-            break
-        
-        y, x = cliff_positions[i]
-        
-        # Créer un passage de 3x3 tiles
-        for dy in range(-1, 2):
-            for dx in range(-1, 2):
-                px, py = x + dx, y + dy
-                
-                if 0 <= px < SIZE and 0 <= py < SIZE:
-                    if map[py, px] == cliff_id:
-                        map[py, px] = BIOME_IDS["plains"]
-                        tiles_converted += 1
-        
-        passages_created += 1
-    
-    print(f"   ✅ {passages_created} passages créés ({tiles_converted} tiles converties)")
-    return tiles_converted
+    return biome_map
 
 
 def compute_biomes_vectorized(heightmap, humiditymap, temperaturemap):
     """Calcule les biomes avec NumPy"""
-    biomes = np.zeros((SIZE, SIZE), dtype=np.uint8)
+    biomes = np.zeros((SIZE, SIZE), dtype=np.uint32)
     
     # Masques booléens pour chaque biome
     ocean_mask = heightmap < 0.25
@@ -579,7 +404,7 @@ def generate_grottes(biome_map, nb_grottes=NB_VILLAGES):
 def add_texture_variants(biome_map):
     """Ajoute des variations de textures pour beach et plains."""
     # Créer un array de variations (0-15 pour chaque tile)
-    texture_variants = np.random.randint(0, 16, size=(SIZE, SIZE), dtype=np.uint8)
+    texture_variants = np.random.randint(0, 16, size=(SIZE, SIZE), dtype=np.uint32)
     
     # Retourner les deux arrays séparément
     return biome_map, texture_variants
@@ -727,16 +552,9 @@ else:
     heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
     map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
     map, texture_variants = add_texture_variants(map)
+    map = poser_falaises(map, nb_falaises=150)
     
-    # 2. Falaises et passages
-    print("🏔️ Détection des falaises...")
-    cliff_edges = detect_cliff_edges(altitude_map, map)
-    print(f"   → {len(cliff_edges)} tiles de cliff détectées")
-    
-    print("🚪 Création des passages...")
-    passages_count = create_passages_simple(map, BIOME_IDS["cliff"], num_passages=200)
-    print(f"   → {passages_count} tiles converties en passages")
-    
+    cliff_edges = []
     # 3. Grottes et villages
     cave = generate_cave_system()[2]
     coord_vil = generate_villages(map)
@@ -767,6 +585,8 @@ for village in villages:
 
 print(f"   → {sum(1 for v in villages if v.type == 'city')} villes")
 
+cliff_edges = []
+
 # Gérer altitude_map si absent
 if altitude_map is None:
     print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
@@ -774,26 +594,10 @@ if altitude_map is None:
     save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
 
 # Export des variables (pour utilisation dans le jeu)
-if 'cliff_edges' not in locals():
-    cliff_edges = detect_cliff_edges(altitude_map, map)
-
-# 3. Créer les passages
-print("🚪 Création des passages...")
-passages_count = create_passages_simple(map, BIOME_IDS["cliff"], num_passages=200)
-
-# ✅ AJOUTER CES LIGNES :
-# Filtrer cliff_edges pour enlever les passages
-cliff_edges = {
-    (x, y): dirs 
-    for (x, y), dirs in cliff_edges.items() 
-    if map[y, x] == BIOME_IDS["cliff"]  # Toujours un cliff ?
-}
-print(f"   → {len(cliff_edges)} cliffs après passages")
 
 print(f"\n✅ Monde prêt :")
 print(f"   → {len(coord_vil)} villages")
 print(f"   → {len(coord_grottes)} grottes")
-print(f"   → {len(cliff_edges)} falaises")
 
 if __name__ == "__main__":
     main()

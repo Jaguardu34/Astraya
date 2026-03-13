@@ -106,15 +106,11 @@ class Map():
                     if biome_id == BIOME_IDS["cliff"]:  # ✅ CETTE LIGNE
                         for direction in cliff_edges[(map_i, map_j)]:
                                     for direction in cliff_edges[(map_i, map_j)]:
-                                        # Dessiner le sprite de falaise correspondant
-                                        directions = {
-                                            "N" : 3,
-                                            "E" : 1,
-                                            "S" : 2,
-                                            "W" : 0
-                                        }
-                                        self.map_cache.blit(TILE_TEXTURE["cliff"][directions[direction]], (draw_x, draw_y, 32, 32))
-
+                                        texture_index = get_cliff_texture_index(map_i, map_j, direction)
+                                        self.map_cache.blit(
+                                            TILE_TEXTURE["cliff"][texture_index], 
+                                            (draw_x, draw_y)
+                                        )
 
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
