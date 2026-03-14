@@ -181,7 +181,6 @@ class Game():
                     self.dropped_grp.add(drop)
                 handled = True
 
-        # ✅ séparé — pas un elif
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 3:  # clic droit → placer un bloc
                 mouse_x, mouse_y = pygame.mouse.get_pos()
