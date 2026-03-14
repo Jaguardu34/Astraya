@@ -102,7 +102,7 @@ class Entity(pygame.sprite.Sprite):
         for i in range(len(self.sprite)):
             self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
     
-    def draw(self, scalex, scaley, screen, posx, posy):
+    def draw(self, scalex, scaley, screen, posx, posy, surface):
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
         
@@ -110,7 +110,7 @@ class Entity(pygame.sprite.Sprite):
         py = (self.y - (tile_cy - scaley//2) * 32)
 
         if 0 <= px < scalex*32 and 0 <= py < scaley*32:
-            screen.blit(self.sprite[self.texture_index], (px, py))
+            surface.blit(self.sprite[self.texture_index], (px, py))
     
     def draw_minimap(self, resolution_minimap, screen, tile_cx, tile_cy, zoom):
         ptile_x = int(self.x // 32)
@@ -433,6 +433,16 @@ class Grotte(Object):
         if self.game_map is self.actual_map:
             return check_box_collide(self.collide_action, player_rect)
         return False
+    
+    
+class Block(Object):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
+        super().__init__(sprite, game_map, altitude_map, x, y)  
+        self.hitbox = [pygame.Rect(self.x, self.y, sprite[0].get_width() // 2, sprite[0].get_height() // 2)]
+        self.collide_action= [pygame.Rect(self.x + 5,  self.y + 5,  38, 20)]
+        self.show_on_minimap = False
+        self.has_hitbox = True
+        self.has_life = False
     
 class Projectile(Entity):
     def __init__(self, sprite, game_map, launcher, direction=90, speed=10, altitude_map=None, x=0, y=0):

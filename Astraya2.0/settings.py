@@ -9,6 +9,8 @@ KEY_LEFT = pygame.K_q
 KEY_RIGHT = pygame.K_d
 KEY_MAP = pygame.K_TAB
 KEY_MENU = pygame.K_ESCAPE
+KEY_INVENTORY = pygame.K_e
+KEY_DROP = pygame.K_g
 
 WIDTH    = 1280	
 HEIGTH   = 720
