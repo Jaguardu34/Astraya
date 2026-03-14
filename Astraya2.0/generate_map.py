@@ -405,8 +405,8 @@ def map_generate():
 
     def add_texture_variants(biome_map):
         """Ajoute des variations de textures pour beach et plains."""
-        # Créer un array de variations (0-15 pour chaque tile)
-        texture_variants = np.random.randint(0, 16, size=(SIZE, SIZE), dtype=np.uint32)
+        # Créer un array de variations (0-255 pour chaque tile) avnt c'était 16 mais c'est trop borring
+        texture_variants = np.random.randint(0, 255, size=(SIZE, SIZE), dtype=np.uint32)
 
         # Retourner les deux arrays séparément
         return biome_map, texture_variants

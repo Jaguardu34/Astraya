@@ -96,7 +96,9 @@ ITEMS = {
     "grass_block":  Block("Bloc d'herbe",     place_biome_id=2, max_stack=64),
     "dirt_block":   Block("Bloc de terre",   place_biome_id=2, max_stack=64),
     "sand_block":   Block("Bloc de sable",   place_biome_id=1, max_stack=64),
-    "stone_block":  Block("Bloc de pierre",  place_biome_id=7, max_stack=64),
+    "stone_block":  Block("Truc rouge",  place_biome_id=7, max_stack=64),
+    "forest_block": Block("bloc de forêt",  place_biome_id=4, max_stack=64),
+    "water_block":  Block("eau",            place_biome_id=0, max_stack=64)
 }
 
 def get_item(name):

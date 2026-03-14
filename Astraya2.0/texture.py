@@ -33,15 +33,24 @@ def create_texture_mirrored(posx, posy, nbr):
     return tab_return
         
 
-def create_texture_with_rotation(posx, posy, nbr):
+def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=True):
+    """
+    posx, posy : en pixel
+    cols, rows : nombre de colonnes et de lignes de textures à charger
+    chance     : nombre de fois que chaque texture est dupliquée (augmente la probabilité d'apparition)
+    rotation   : si True, génère aussi les rotations 90, 180, 270
+    """
     tab = []
-    for i in range(nbr):
-        tab.append(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 90))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 180))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), -90))
+    for row in range(rows):
+        for col in range(cols):
+            sprite = get_sprite(sprite_sheet, posx + (col * 32), posy + (row * 32), 32, 32)
+            
+            tab.extend([sprite] * chance)
+            if rotation:
+                tab.extend([pygame.transform.rotate(sprite, 90)]  * chance)
+                tab.extend([pygame.transform.rotate(sprite, 180)] * chance)
+                tab.extend([pygame.transform.rotate(sprite, -90)] * chance)
 
-        
     return tab
 
 def create_single_texture_by_coords(x, y, w, h):
@@ -53,9 +62,11 @@ def create_single_texture_by_coords(x, y, w, h):
     
 
 
-texture_herbe = create_texture_with_rotation(0, 0, 4)
-texture_sand = create_texture_with_rotation(0, 64, 4)
-texture_wet_wand = create_texture_with_rotation(128, 64, 4)
+texture_herbe = create_texture_with_rotation(posx =0, posy = 0, cols=4)
+texture_sand = create_texture_with_rotation(posx =0, posy = 64, cols=4)
+texture_wet_wand = create_texture_with_rotation(posx =128, posy = 64, cols=4)
+texture_forest = create_texture_with_rotation(posx =0, posy = 384, cols=4, rows=4, rotation=False, chance=3) + create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
+
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
 texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
@@ -122,7 +133,8 @@ TILE_COLORS = {
 # CHANGEMENT : IDs numériques pour les textures
 TILE_TEXTURE = {
     2: texture_herbe,  # plains - ID 2 au lieu de "plains"
-    1: texture_sand,    # beach - ID 1 au lieu de "beach"
+    1: texture_sand,   # beach - ID 1 au lieu de "beach"
+    4 : texture_forest, # jungle - ID 3 au lieu de "jungle"
     101: texture_wet_wand,
     "cliff" : texture_cliff_base
 }
