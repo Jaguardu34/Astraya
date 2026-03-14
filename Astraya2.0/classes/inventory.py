@@ -152,6 +152,10 @@ class Inventory:
         for block in block_grp:
             if block.tile_x == tile_x and block.tile_y == tile_y:
                 return False
+        
+        if ent.veriftile(tile_x, tile_y, current_map) is not True:
+            return False
+        
         block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, x=tile_x, y =tile_y))
         self.remove_slot_item(self.selected_hotbar, 1)
         return True
