@@ -194,7 +194,8 @@ class Game():
                 offset_y = self.player.y % 32
                 tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
                 ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
-                self.player.inventory.try_place_selected(self.current_map, tx, ty, self.player.position)
+                if not self.inventory_open:
+                    self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp, self.player.position)
                 handled = True
             if event.button == 1 and self.inventory_open:  # clic gauche inventaire
                 idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
@@ -320,7 +321,7 @@ class Game():
             
             # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, mouse_pos=pygame.mouse.get_pos(), selected_item=self.player.inventory.selected_item)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 

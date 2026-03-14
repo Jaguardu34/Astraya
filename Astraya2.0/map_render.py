@@ -1,5 +1,5 @@
 import pygame
-from settings import *
+import settings
 from texture import *
 import world_data
 from classes.items import ItemType
@@ -53,7 +53,7 @@ class Map():
         self.anim_speed = 300
 
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos=None, selected_item=None):
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory):
         
         sprites_to_draw = []
         
@@ -125,6 +125,8 @@ class Map():
         
         highlight = None
         highlight_pos = None
+        
+        
         highlight_world_y = None
         if mouse_pos and selected_item is not None:
             from classes.items import ItemType
@@ -140,23 +142,23 @@ class Map():
                 )
                 highlight_world_y = ty * 32  # y monde pour le tri
 
-            highlight_drawn = False
-        for sprite in sprites_to_draw:
-            # dessine le highlight juste avant le joueur
-            if highlight and not highlight_drawn and sprite is player:
+         
+        #highlight
+        if not in_inventory:
+            if not (abs(player_position[0]//32 - tx) > settings.PLAYER_PLACE_RANGE or abs(player_position[1]//32 - ty) > settings.PLAYER_PLACE_RANGE):
                 self.map_cache.blit(highlight, highlight_pos)
-                highlight_drawn = True
-
+        
+        for sprite in sprites_to_draw:
             if sprite is player:
                 self.map_cache.blit(
                     player.sprite[player.texture_index],
                     (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
                 )
             else:
+
                 sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
 
-        if highlight and not highlight_drawn:
-            self.map_cache.blit(highlight, highlight_pos)
+        
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
         # bords sur screen
