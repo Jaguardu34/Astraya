@@ -156,9 +156,10 @@ class SettingsMenu(FullscreenMenu):
             "Gauche" : [Button("lightgray", "...", 40), False, settings.KEY_LEFT],
             "Droite" : [Button("lightgray", "...", 40), False, settings.KEY_RIGHT],
             "Map" : [Button("lightgray", "...", 40), False, settings.KEY_MAP],
-            "Menu" : [Button("lightgray", "...", 40), False, settings.KEY_MENU]
+            "Menu" : [Button("lightgray", "...", 40), False, settings.KEY_MENU],
+            "Inventaire" : [Button("lightgray", "...", 40), False, settings.KEY_INVENTORY],
+            "Drop" : [Button("lightgray", "...", 40), False, settings.KEY_DROP]
         }
-        
 
             
             
@@ -215,7 +216,9 @@ class SettingsMenu(FullscreenMenu):
             "Gauche": "KEY_LEFT",
             "Droite": "KEY_RIGHT",
             "Map": "KEY_MAP",
-            "Menu": "KEY_MENU"
+            "Menu": "KEY_MENU",
+            "Inventaire" : "KEY_INVENTORY",
+            "Drop" : "KEY_DROP"
         }
 
         for key_name, button in self.controls.items():  # items() pas values() !

@@ -170,10 +170,10 @@ class Game():
 
         handled = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_e:
+            if event.key == settings.KEY_INVENTORY:
                 self.inventory_open = not self.inventory_open
                 handled = True
-            elif event.key == pygame.K_a:
+            elif event.key == settings.KEY_DROP:
                 if self.inventory_open and self.panel_selected_slot is not None:
                     result = self.player.inventory.drop_slot(self.panel_selected_slot, 1)
                 else:
@@ -291,8 +291,8 @@ class Game():
             
             self.player.update(self.chunk_grid, self.current_map)
                 
-            
-            self.player.input(keys, self.dt)
+            if not self.inventory_open:
+                self.player.input(keys, self.dt)
 
             for sprite in self.entity_grp:
                 if isinstance(sprite, ent.Grotte):
@@ -327,9 +327,6 @@ class Game():
                     self.screen, self.player.inventory, pygame.mouse.get_pos(),
                     self.panel_selected_slot,
                 )
-            
-            
-            
         
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000
