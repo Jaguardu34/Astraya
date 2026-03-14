@@ -127,6 +127,7 @@ class Game():
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
+        self.dropped_grp = pygame.sprite.Group()
         
         game_map = world_data.world_map
         alt = world_data.altitude_map
