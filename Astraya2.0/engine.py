@@ -150,7 +150,11 @@ class Game():
                 
 
     def handle_event(self, event):
-        """Handle inventory toggle, drop, place; forward rest to player."""
+        """Gérer l'inventaire (toggle, drop, placement blocks) ; transmettre le reste au joueur."""
+        
+        #verifie si le monde est prêt #securite pr eviter enorme mega giga crash
+        if not self.world_ready: return
+
         handled = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
@@ -197,7 +201,7 @@ class Game():
             if event.type == pygame.QUIT:
                 pygame.quit()
             else:
-                self.handle_event(event)
+                self.handle_event(event)                
 
         keys = pygame.key.get_pressed()
         self.screen.fill("white")
@@ -219,8 +223,8 @@ class Game():
         else :
 
             #securite pr eviter enorme mega giga crash
-            if not self.world_ready:
-                return
+            if not self.world_ready:return
+
             
             self.update_chunk([self.entity_grp, self.ennemy_grp])
             
@@ -278,8 +282,8 @@ class Game():
                 self.menu.in_menu = True
             
             interfaces.Button.update_cursor()
-            
-        inventory_ui.draw_hotbar(self.screen, self.player.inventory)
+        if self.world_ready:
+            inventory_ui.draw_hotbar(self.screen, self.player.inventory)
         if self.inventory_open:
             inventory_ui.draw_inventory_panel(
                 self.screen, self.player.inventory, pygame.mouse.get_pos(),
