@@ -75,8 +75,10 @@ class Game():
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
-        import generate_map
-        generate_map.map_generate()
+        result = generate_map.map_generate()
+        generate_map.map, generate_map.texture_variants, generate_map.cave, \
+        generate_map.coord_vil, generate_map.coord_grottes, generate_map.altitude_map, \
+        generate_map.cliff_edges, generate_map.villages = result
         
         render_minimap.generate_minimap()
         
