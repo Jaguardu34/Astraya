@@ -1,8 +1,8 @@
 import random
 import pygame
-from generate_map import *
 from settings import SIZE, COLLIDE_TILES
 import math
+import texture
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
@@ -492,4 +492,3 @@ class Ennemy(Entity_That_Move_And_Has_Collision):
         angle = math.degrees(math.atan2(dy, dx))
         p = Projectile(texture.texture_chicken, self.actual_map, self, int(angle), 30,  None, self.x, self.y)
         self.projectile_grp.add(p)
-        

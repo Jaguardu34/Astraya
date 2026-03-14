@@ -13,5 +13,3 @@ while running:
     game_instance.update()
 pygame.quit()
 
-
-

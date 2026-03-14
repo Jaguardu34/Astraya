@@ -1,8 +1,8 @@
 import pygame
 from settings import *
-from generate_map import *
+import generate_map
 from texture import *
-import render_minimap
+
 
 
 class Minimap():
@@ -54,6 +54,9 @@ class Map():
 
 
     def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
+        
+        sprites_to_draw = []
+        
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
             self.anim_frame = (self.anim_frame + 1) % 256  # reset avant overflow
@@ -85,13 +88,13 @@ class Map():
                     biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
                     if biome_id in TILE_ANIMATED:
                         frames = TILE_ANIMATED[biome_id]
-                        offset = texture_variants[map_j, map_i] 
+                        offset = generate_map.texture_variants[map_j, map_i] 
                         frame = (int(self.anim_frame) + offset) % len(frames)
                         self.map_cache.blit(frames[frame], (draw_x, draw_y))
                     # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
                     elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
                         # CHANGEMENT : Récupération du variant depuis map.texture_variants
-                        variant = texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
+                        variant = generate_map.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
                         self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
                         # Tile((draw_x, draw_y), TILE_TEXTURE[biome_id][variant], tile_group)
                     elif biome_id in TILE_COLORS:  # Vérifie l'ID numérique
@@ -111,12 +114,23 @@ class Map():
                                             TILE_TEXTURE["cliff"][texture_index], 
                                             (draw_x, draw_y)
                                         )
-
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if sprite is not player:
-                    if sprite.game_map is map_to_show:
-                        sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
+                if sprite.game_map is map_to_show:
+                    sprites_to_draw.append(sprite)
+                    
+
+        
+        sprites_to_draw.sort(key=lambda s: s.y)
+        
+        for sprite in sprites_to_draw:
+            if sprite is player:
+                self.map_cache.blit(
+                    player.sprite[player.texture_index],
+                    (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
+                )
+            else:
+                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
@@ -127,4 +141,4 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x-32, y-32, 32, self.scale_x*32))
         pygame.draw.rect(self.screen, "white", (x+self.scale_x*32 -32, y-32, 32, self.scale_x*32))
 
-        self.screen.blit(player.sprite[player.texture_index], (x + self.scale_x//2 * 32, y + self.scale_y//2 * 32))
+        

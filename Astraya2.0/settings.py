@@ -1,13 +1,12 @@
 import os
-import pygame
 
-RENDER_DISTANCE = 1000
+
+
 
 WIDTH    = 1280	
 HEIGTH   = 720
-SCALE = 2
 FPS      = 60
-TILESIZE = 64
+TILE_SIZE = 32
 HITBOX_OFFSET = {
 	'player': -6,
 	'object': -40,
