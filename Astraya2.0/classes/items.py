@@ -94,9 +94,9 @@ ITEMS = {
     "apple":        Consumable("Pomme",       heal=5),
     # Placeable blocks (place_biome_id: 2=plains, 1=beach, 7=collide/solid)
     "grass_block":  Block("Bloc d'herbe",     place_biome_id=2, max_stack=64),
-    "dirt_block":   Block("Bloc de terre",   place_biome_id=2, max_stack=64),
+    "dirt_block":   Block("Bloc de terre",   place_biome_id=101, max_stack=64),
     "sand_block":   Block("Bloc de sable",   place_biome_id=1, max_stack=64),
-    "stone_block":  Block("Bloc de pierre",  place_biome_id=7, max_stack=64),
+    "stone_block":  Block("Bloc de pierre",  place_biome_id=101, max_stack=64),
 }
 
 def get_item(name):
