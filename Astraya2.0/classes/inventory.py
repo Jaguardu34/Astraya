@@ -1,3 +1,6 @@
+import entity as ent
+import texture
+
 class Slot:
     def __init__(self):
         self.item = None
@@ -125,7 +128,7 @@ class Inventory:
         """Drop from current hotbar slot. Returns (item, quantity) or None."""
         return self.drop_slot(self.selected_hotbar, quantity)
 
-    def try_place_selected(self, current_map, tile_x, tile_y):
+    def try_place_selected(self, current_map, tile_x, tile_y, block_grp):
         """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
         from .items import ItemType
         item = self.selected_item
@@ -136,7 +139,11 @@ class Inventory:
             print("Placement hors carte")
             return False
         # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
-        current_map[tile_y, tile_x] = item.place_biome_id
+        
+        for block in block_grp:
+            if block.tile_x == tile_x and block.tile_y == tile_y:
+                return False
+        block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, x=tile_x, y =tile_y))
         self.remove_slot_item(self.selected_hotbar, 1)
         return True
 

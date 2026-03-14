@@ -127,6 +127,12 @@ TILE_TEXTURE = {
     "cliff" : texture_cliff_base
 }
 
+BLOCK_TEXTURE ={
+    2: texture_herbe,  # plains - ID 2 au lieu de "plains"
+    1: texture_sand,    # beach - ID 1 au lieu de "beach"
+    101: texture_wet_wand
+}
+
 texture_ocean = create_texture_basic(0, 128, 4)  
 
 TILE_ANIMATED = {

@@ -67,6 +67,8 @@ class Entity(pygame.sprite.Sprite):
         super().__init__()
         self.x = float(x * 32)
         self.y = float(y * 32)
+        self.tile_x = x
+        self.tile_y = y
         self.sprite = sprite
         self.sprite_minimap = []
         self.texture_index = 0
