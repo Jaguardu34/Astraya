@@ -8,6 +8,9 @@ import map_render
 import threading
 import render_minimap
 import interfaces
+import world_data
+import generate_map
+
 from ui import ui_inventory
 from classes.items import get_item
 
@@ -77,6 +80,9 @@ class Game():
         #inventaire 
         self.inventory_open = False
         self.panel_selected_slot = None
+        
+        self.sprites_initialized = False
+        self.running=True
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -103,15 +109,33 @@ class Game():
             import traceback
             print("❌ ERREUR dans _load_world :")
             traceback.print_exc()
+        
+        
+        
+        world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages = generate_map.map_generate()
+
+        render_minimap.generate_minimap()
+
+        
+        if world_data.world_map is not None:
+            self.world_ready = True
+        else: self.world_ready = False
+
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
-        self.dropped_grp = pygame.sprite.Group()
         
-        alt = generate_map.altitude_map  # raccourci
+        game_map = world_data.world_map
+        alt = world_data.altitude_map
+        
+        if game_map is None or alt is None:
+            return
+        
+        self.game_map = game_map     
+        self.current_map = self.game_map
         
         self.player = ent.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
@@ -216,14 +240,19 @@ class Game():
         
         events = pygame.event.get()
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_LCTRL and event.key == pygame.K_q:
-                pygame.quit()
             if event.type == pygame.QUIT:
-                pygame.quit()
+                self.running = False
+                return  # sort immédiatement
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                    self.running = False
+                    return
             else:
-                self.handle_event(event)                
+                if self.sprites_initialized:
+                    self.handle_event(event)                
 
         keys = pygame.key.get_pressed()
+        
         self.screen.fill("white")
         if self.menu.in_menu:
             self.menu.draw(self.screen)
@@ -240,16 +269,21 @@ class Game():
         elif not self.world_ready:
             self.loadingscreen.draw(self.screen)
             
-        else :
+        elif self.world_ready and world_data.world_map is not None:
+            if not self.sprites_initialized:
+                self.init_sprites()
+                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
+                self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
+                self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
+                
+                self.sprites_initialized = True
+
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
             for d in list(self.dropped_grp):
                 if ent.check_box_collide(self.player.hitbox, d.hitbox):
                     self.player.inventory.add_item(d.item, d.quantity)
                     d.kill()
-
-            #securite pr eviter enorme mega giga crash
-            if not self.world_ready:return
 
             
             self.update_chunk([self.entity_grp, self.ennemy_grp])
@@ -291,7 +325,7 @@ class Game():
             
             # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, generate_map.cliff_edges)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 
@@ -308,13 +342,15 @@ class Game():
                 self.menu.in_menu = True
             
             interfaces.Button.update_cursor()
-        if self.world_ready:
-            ui_inventory.draw_hotbar(self.screen, self.player.inventory)
-        if self.inventory_open:
-            ui_inventory.draw_inventory_panel(
-                self.screen, self.player.inventory, pygame.mouse.get_pos(),
-                self.panel_selected_slot,
-            )
+
+                    
+            if self.world_ready:
+                ui_inventory.draw_hotbar(self.screen, self.player.inventory)
+            if self.inventory_open:
+                ui_inventory.draw_inventory_panel(
+                    self.screen, self.player.inventory, pygame.mouse.get_pos(),
+                    self.panel_selected_slot,
+                )
             
             
             

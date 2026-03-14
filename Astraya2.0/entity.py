@@ -21,6 +21,8 @@ def check_box_collide(box1, box2):
     return False
 
 def veriftile(x, y, game_map, altitude_map=None, current_altitude=0):
+
+    
     if x < 0 or y < 0 or y >= settings.SIZE or x >= settings.SIZE:
         return "ocean"
     

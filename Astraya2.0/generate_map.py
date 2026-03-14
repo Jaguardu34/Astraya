@@ -1,17 +1,13 @@
 import numpy as np
-import math
 import random
 import matplotlib.pyplot as plt
 import pickle
 import os
 from settings import *
-import texture
 from classes.village import *
 from falaises import *
 
 def map_generate():
-    
-    global map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages
     
     # ==============================================================================
     # CONFIGURATION
@@ -548,7 +544,7 @@ def map_generate():
     loaded = load_world(WORLD_FILE)
 
     if loaded:
-        map, texture_variants, cave, coord_vil, coord_grottes, altitude_map = loaded
+        world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map = loaded
         print(f"🎮 Monde chargé : {SIZE}x{SIZE}")
 
     else:
@@ -556,8 +552,8 @@ def map_generate():
 
         # 1. Génération terrain de base
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
-        map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
-        map, texture_variants = add_texture_variants(map)
+        world_map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
+        world_map, texture_variants = add_texture_variants(world_map)
 
         # 2. Falaises et passages
         print("🏔️ Détection des falaises...")
@@ -567,19 +563,19 @@ def map_generate():
         print("🚪 Création des passages...")
         # 3. Grottes et villages
         cave = generate_cave_system()[2]
-        coord_vil = generate_villages(map)
-        coord_grottes = generate_grottes(map)
+        coord_vil = generate_villages(world_map)
+        coord_grottes = generate_grottes(world_map)
 
         # 4. Spawn point
-        map[1510, 1510] = BIOME_IDS["collide"]
+        world_map[1510, 1510] = BIOME_IDS["collide"]
 
         # 5. Sauvegarder (AVEC les passages)
-        save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
+        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
         print(f"🎮 Monde généré : {SIZE}x{SIZE}")
 
         # Classification des villages (s'exécute toujours)
     print("\n Classification et génération des villages...")
-    villages = classify_villages(coord_vil, map, nb_villes=3, rayon_proximite=1000)
+    villages = classify_villages(coord_vil, world_map, nb_villes=3, rayon_proximite=1000)
 
     # Appliquer les bâtiments
     for village in villages:
@@ -591,7 +587,7 @@ def map_generate():
                     bx = building.x + dx
                     by = building.y + dy
                     if 0 <= bx < SIZE and 0 <= by < SIZE:
-                        map[by, bx] = BIOME_IDS["collide"]
+                        world_map[by, bx] = BIOME_IDS["collide"]
 
     print(f"   → {sum(1 for v in villages if v.type == 'city')} villes")
 
@@ -599,7 +595,7 @@ def map_generate():
     if altitude_map is None:
         print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
-        save_world(WORLD_FILE, map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
+        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
 
     # Export des variables (pour utilisation dans le jeu)
     if 'cliff_edges' not in locals():
@@ -620,7 +616,6 @@ def map_generate():
     if __name__ == "__main__":
         main()
 
-    return map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages
+    return world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages
 
 
-map = texture_variants = cave = coord_vil = coord_grottes = altitude_map = cliff_edges = villages = None
