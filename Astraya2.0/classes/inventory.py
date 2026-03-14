@@ -107,6 +107,36 @@ class Inventory:
     def scroll_hotbar(self, direction):
         """direction = +1 ou -1"""
         self.selected_hotbar = (self.selected_hotbar + direction) % self.hotbar_size
+    
+    def drop_slot(self, slot_index, quantity=1):
+        """Remove item from slot and return (item, quantity) for spawning in world. Returns None if slot empty or not enough."""
+        if slot_index < 0 or slot_index >= len(self.slots):
+            return None
+        slot = self.slots[slot_index]
+        if slot.is_empty() or slot.quantity < quantity:
+            return None
+        item = slot.item
+        slot.quantity -= quantity
+        if slot.quantity == 0:
+            slot.clear()
+        return (item, quantity)
+
+    def drop_selected(self, quantity=1):
+        """Drop from current hotbar slot. Returns (item, quantity) or None."""
+        return self.drop_slot(self.selected_hotbar, quantity)
+
+    def try_place_selected(self, current_map, tile_x, tile_y, size):
+        """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
+        from .items import ItemType
+        item = self.selected_item
+        if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
+            return False
+        if tile_x < 0 or tile_y < 0 or tile_x >= size or tile_y >= size:
+            return False
+        # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
+        current_map[tile_y, tile_x] = item.place_biome_id
+        self.remove_slot_item(self.selected_hotbar, 1)
+        return True
 
     def __repr__(self): # print(repr(player.inventory)) → affiche le contenu de l'inventaire ; (tu te doute qu'on ne peut pas afficher des classes sans les représenter d'une manière lisible, du coup on fait ça)
         lines = [f"=== Inventaire ==="]

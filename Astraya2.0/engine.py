@@ -8,7 +8,8 @@ import map_render
 import threading
 import render_minimap
 import interfaces
-
+import ui.ui_inventory as inventory_ui
+from classes.items import get_item
 
 class Chunk:
     def __init__(self, chunk_size=32):
@@ -72,6 +73,10 @@ class Game():
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
         self.settings_menu = interfaces.SettingsMenu()
+        
+        #inventaire 
+        self.inventory_open = False
+        self.panel_selected_slot = None
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -142,6 +147,45 @@ class Game():
         for sprite_group in sprite_group_to_add:
             for sprite in sprite_group:
                 self.chunk_grid.insert(sprite)
+                
+
+    def handle_event(self, event):
+        """Handle inventory toggle, drop, place; forward rest to player."""
+        handled = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                self.inventory_open = not self.inventory_open
+                handled = True
+            elif event.key == pygame.K_q:
+                if self.inventory_open and self.panel_selected_slot is not None:
+                    result = self.player.inventory.drop_slot(self.panel_selected_slot, 1)
+                else:
+                    result = self.player.inventory.drop_selected(1)
+                if result:
+                    item, qty = result
+                    drop = ent.DroppedItem(
+                        self.player.x, self.player.y, item, qty, self.current_map
+                    )
+                    self.dropped_grp.add(drop)
+                handled = True
+            elif event.key == pygame.K_r:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                tx = int(mouse_x // 32)
+                ty = int(mouse_y // 32)
+                
+                self.player.inventory.try_place_selected(
+                    self.current_map, tx, ty, 2
+                )
+                handled = True
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.inventory_open:
+            idx = inventory_ui.get_panel_slot_at(event.pos, self.screen.get_size())
+            if idx is not None:
+                self.panel_selected_slot = idx
+                if idx < self.player.inventory.hotbar_size:
+                    self.player.inventory.select_hotbar(idx)
+            handled = True
+        if not handled and hasattr(self.player, "handle_event"):
+            self.player.handle_event(event)
 
     #boucle principale
     def update(self):
@@ -152,7 +196,9 @@ class Game():
                 pygame.quit()
             if event.type == pygame.QUIT:
                 pygame.quit()
-        
+            else:
+                self.handle_event(event)
+
         keys = pygame.key.get_pressed()
         self.screen.fill("white")
         if self.menu.in_menu:
@@ -232,6 +278,13 @@ class Game():
                 self.menu.in_menu = True
             
             interfaces.Button.update_cursor()
+            
+        inventory_ui.draw_hotbar(self.screen, self.player.inventory)
+        if self.inventory_open:
+            inventory_ui.draw_inventory_panel(
+                self.screen, self.player.inventory, pygame.mouse.get_pos(),
+                self.panel_selected_slot,
+            )
             
             
             
