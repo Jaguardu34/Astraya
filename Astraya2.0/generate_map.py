@@ -578,20 +578,20 @@ def map_generate():
         print(f"🎮 Monde généré : {SIZE}x{SIZE}")
 
         # Classification des villages (s'exécute toujours)
-        print("\n Classification et génération des villages...")
-        villages = classify_villages(coord_vil, map, nb_cities, rayon_proximite=1000)
+    print("\n Classification et génération des villages...")
+    villages = classify_villages(coord_vil, map, nb_villes=3, rayon_proximite=1000)
 
-        # Appliquer les bâtiments
-        for village in villages:
-            village.generate()
-            for building in village.buildings:
-                size = building.size
-                for dy in range(size[1]):
-                    for dx in range(size[0]):
-                        bx = building.x + dx
-                        by = building.y + dy
-                        if 0 <= bx < SIZE and 0 <= by < SIZE:
-                            map[by, bx] = BIOME_IDS["collide"]
+    # Appliquer les bâtiments
+    for village in villages:
+        village.generate()
+        for building in village.buildings:
+            size = building.size
+            for dy in range(size[1]):
+                for dx in range(size[0]):
+                    bx = building.x + dx
+                    by = building.y + dy
+                    if 0 <= bx < SIZE and 0 <= by < SIZE:
+                        map[by, bx] = BIOME_IDS["collide"]
 
     print(f"   → {sum(1 for v in villages if v.type == 'city')} villes")
 
@@ -623,4 +623,4 @@ def map_generate():
     return map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages
 
 
-    map = texture_variants = cave = coord_vil = coord_grottes = altitude_map = cliff_edges = villages = None
+map = texture_variants = cave = coord_vil = coord_grottes = altitude_map = cliff_edges = villages = None

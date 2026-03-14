@@ -83,6 +83,7 @@ class Game():
         self.game_map = generate_map.map
         self.current_map = self.game_map
         
+
         self.init_sprites()
         self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
         self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
@@ -92,7 +93,6 @@ class Game():
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
-        import generate_map
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
