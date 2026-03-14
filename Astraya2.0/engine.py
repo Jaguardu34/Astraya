@@ -3,11 +3,11 @@ import generate_map
 import random
 import entity as ent
 import texture
-from settings import *
+import settings
 import map_render
-from interfaces import *
 import threading
 import render_minimap
+import interfaces
 
 
 class Chunk:
@@ -42,6 +42,7 @@ class Game():
     def __init__(self):
         pygame.init()
         pygame.font.init()
+
         
         self.world_ready = False
         
@@ -65,11 +66,12 @@ class Game():
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.in_menu = False
-        self.quest = Quest("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
+        self.quest = interfaces.Quest("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
-        self.menu = Menu()
-        self.loadingscreen = LoadingScreen()
+        self.menu = interfaces.MainMenu()
+        self.loadingscreen = interfaces.LoadingScreen()
+        self.settings_menu = interfaces.SettingsMenu()
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -141,11 +143,28 @@ class Game():
 
     #boucle principale
     def update(self):
+        
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_LCTRL and event.key == pygame.K_q:
+                pygame.quit()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        
+        keys = pygame.key.get_pressed()
         self.screen.fill("white")
         if self.menu.in_menu:
             self.menu.draw(self.screen)
-            self.menu.update()
             
+        
+        elif self.menu.in_settings:
+            waiting_for_key = any(btn[1] for btn in self.settings_menu.controls.values())
+            self.settings_menu.draw(self.screen, events)  # peut modifier button[1]
+            for event in events:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    if not waiting_for_key:  # état avant le draw
+                        self.menu.in_menu = True
+                        self.menu.in_settings = False
         elif not self.world_ready:
             self.loadingscreen.draw(self.screen)
             
@@ -184,7 +203,7 @@ class Game():
             
             self.player.update(self.chunk_grid, self.current_map)
                 
-            keys = pygame.key.get_pressed()
+            
             self.player.input(keys, self.dt)
 
             for sprite in self.entity_grp:
@@ -203,13 +222,17 @@ class Game():
             self.quest.draw(self.WINDOW_SCALE[0] - 10, 10, self.screen)
 
 
-            if keys[pygame.K_TAB]:
+            if keys[settings.KEY_MAP]:
                 self.minimap.draw((self.WINDOW_SCALE[0]//2) - ((self.WINDOW_SCALE[1] - 200) //2), 10, self.player.position, self.game_map)
 
 
-            if keys[pygame.K_ESCAPE]:
-                self.menu.toggle()
+            if keys[settings.KEY_MENU]:
+                self.menu.in_menu = True
+            
+            interfaces.Button.update_cursor()
+            
+            
             
         
         pygame.display.flip()
-        self.dt = self.clock.tick(FPS) / 1000
+        self.dt = self.clock.tick(settings.FPS) / 1000
