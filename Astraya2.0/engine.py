@@ -10,7 +10,6 @@ import render_minimap
 import interfaces
 import world_data
 import generate_map
-
 import ui.ui_inventory as inventory_ui
 from classes.items import get_item
 
