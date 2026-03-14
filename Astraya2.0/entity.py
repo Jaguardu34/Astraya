@@ -3,6 +3,7 @@ import pygame
 import settings
 import math
 import texture
+from classes.inventory import Inventory
 
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
@@ -347,6 +348,9 @@ class Player(Entity_That_Move_And_Has_Collision):
         self.last_orientation = "left"
         self.has_life = True
         self.lifepoint = 10
+        
+        #inventaire 
+        self.inventory = Inventory(size=20, hotbar_size=5)
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
@@ -388,6 +392,19 @@ class Player(Entity_That_Move_And_Has_Collision):
         elif dx < - 0.1:
             self.last_orientation = "right"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
+
+    def handle_event(self, event):
+        # scroll molette → changer slot hotbar
+        if event.type == pygame.MOUSEWHEEL:
+            self.inventory.scroll_hotbar(-event.y)
+        # clic gauche → utiliser item
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            self.inventory.use_selected(self)
+        # touches 1-5 → sélectionner hotbar
+        if event.type == pygame.KEYDOWN:
+            for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
+                if event.key == key:
+                    self.inventory.select_hotbar(i)
 
 
 class Object(Entity):

@@ -5,6 +5,7 @@ class ItemType(Enum):
     WEAPON = "weapon"
     TOOL = "tool"
     CONSUMABLE = "consumable"
+    BLOCK = "block"
 #classe mère de tous les items, les autres classes héritent de celle ci, elle contient les propriétés communes à tous les items (nom, type, etc.) et une méthode on_use() qui sera surchargée dans les sous-classes pour définir le comportement spécifique de chaque type d'item lorsqu'il est utilisé.
 class Item:
     def __init__(self, name, item_type=ItemType.MISC, max_stack=64, texture_index=0):
@@ -67,6 +68,16 @@ class Consumable(Item):
 
     def __repr__(self):
         return f"Consumable({self.name}, heal={self.heal})"
+    
+class Block(Item):
+    def __init__(self, name, texture_index=0):
+        super().__init__(name, ItemType.BLOCK, max_stack=64, texture_index=texture_index)
+
+    def on_use(self, user):
+        pass  # logique de placement de bloc
+
+    def __repr__(self):
+        return f"Block({self.name})"
 
 
 # --- Registre des items existants dans le jeu ---
@@ -78,6 +89,8 @@ ITEMS = {
     "axe":          Tool("Hache",             efficiency=1.0),
     "bread":        Consumable("Pain",        heal=10),
     "apple":        Consumable("Pomme",       heal=5),
+    
+    "grass_block":  Block("Bloc d'herbe"),
 }
 
 def get_item(name):

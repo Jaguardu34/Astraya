@@ -1,6 +1,7 @@
 import os
 import pygame
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 #keys
 KEY_UP = pygame.K_z
 KEY_DOWN = pygame.K_s
