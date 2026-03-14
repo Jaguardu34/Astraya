@@ -8,7 +8,7 @@ import map_render
 import threading
 import render_minimap
 import interfaces
-import ui.ui_inventory as inventory_ui
+from ui import ui_inventory
 from classes.items import get_item
 
 class Chunk:
@@ -80,35 +80,48 @@ class Game():
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
-        result = generate_map.map_generate()
-        generate_map.map, generate_map.texture_variants, generate_map.cave, \
-        generate_map.coord_vil, generate_map.coord_grottes, generate_map.altitude_map, \
-        generate_map.cliff_edges, generate_map.villages = result
-        
-        render_minimap.generate_minimap()
-        
-        self.game_map = generate_map.map
-        self.current_map = self.game_map
-        
+        try:
+            result = generate_map.map_generate()
+            generate_map.map, generate_map.texture_variants, generate_map.cave, \
+            generate_map.coord_vil, generate_map.coord_grottes, generate_map.altitude_map, \
+            generate_map.cliff_edges, generate_map.villages = result
+            
+            render_minimap.generate_minimap()
+            
+            self.game_map = generate_map.map
+            self.current_map = self.game_map
 
-        self.init_sprites()
-        self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
-        self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
-        self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
-        
-        self.world_ready = True
+            self.init_sprites()
+            self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
+            self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
+            self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
+            
+            self.world_ready = True
+            print("✅ Monde chargé avec succès")
+
+        except Exception as e:
+            import traceback
+            print("❌ ERREUR dans _load_world :")
+            traceback.print_exc()
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
+        self.dropped_grp = pygame.sprite.Group()
         
         alt = generate_map.altitude_map  # raccourci
         
         self.player = ent.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
         self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1530, 1530)
+        
+        #quelques items :
+        self.player.inventory.add_item(get_item("grass_block"), 10)
+        self.player.inventory.add_item(get_item("stone_block"), 5)
+        self.player.inventory.add_item(get_item("bread"), 3)
+        self.player.inventory.add_item(get_item("wood_sword"), 1)
 
         for i in range(100):
             self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, alt, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
@@ -160,7 +173,7 @@ class Game():
             if event.key == pygame.K_e:
                 self.inventory_open = not self.inventory_open
                 handled = True
-            elif event.key == pygame.K_q:
+            elif event.key == pygame.K_a:
                 if self.inventory_open and self.panel_selected_slot is not None:
                     result = self.player.inventory.drop_slot(self.panel_selected_slot, 1)
                 else:
@@ -174,15 +187,22 @@ class Game():
                 handled = True
             elif event.key == pygame.K_r:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                tx = int(mouse_x // 32)
-                ty = int(mouse_y // 32)
                 
-                self.player.inventory.try_place_selected(
-                    self.current_map, tx, ty, 2
-                )
+                # ✅ conversion écran → monde
+                tile_cx = int(self.player.x // 32)
+                tile_cy = int(self.player.y // 32)
+                
+                offset_x = self.player.x % 32
+                offset_y = self.player.y % 32
+                
+                # 8 = x de départ du draw (le x passé à main_map.draw)
+                tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
+                ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
+                
+                self.player.inventory.try_place_selected(self.current_map, tx, ty)
                 handled = True
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.inventory_open:
-            idx = inventory_ui.get_panel_slot_at(event.pos, self.screen.get_size())
+            idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
             if idx is not None:
                 self.panel_selected_slot = idx
                 if idx < self.player.inventory.hotbar_size:
@@ -221,6 +241,12 @@ class Game():
             self.loadingscreen.draw(self.screen)
             
         else :
+            for sprite in self.dropped_grp:
+                sprite.update(self.dt, self.chunk_grid, self.current_map)
+            for d in list(self.dropped_grp):
+                if ent.check_box_collide(self.player.hitbox, d.hitbox):
+                    self.player.inventory.add_item(d.item, d.quantity)
+                    d.kill()
 
             #securite pr eviter enorme mega giga crash
             if not self.world_ready:return
@@ -283,9 +309,9 @@ class Game():
             
             interfaces.Button.update_cursor()
         if self.world_ready:
-            inventory_ui.draw_hotbar(self.screen, self.player.inventory)
+            ui_inventory.draw_hotbar(self.screen, self.player.inventory)
         if self.inventory_open:
-            inventory_ui.draw_inventory_panel(
+            ui_inventory.draw_inventory_panel(
                 self.screen, self.player.inventory, pygame.mouse.get_pos(),
                 self.panel_selected_slot,
             )

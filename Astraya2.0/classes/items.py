@@ -70,27 +70,33 @@ class Consumable(Item):
         return f"Consumable({self.name}, heal={self.heal})"
     
 class Block(Item):
-    def __init__(self, name, texture_index=0):
+    """Placeable block: on_place modifies the world map at (tile_x, tile_y)."""
+    def __init__(self, name, place_biome_id, max_stack=64, texture_index=0):
         super().__init__(name, ItemType.BLOCK, max_stack=64, texture_index=texture_index)
+        self.place_biome_id = place_biome_id  # biome id to set when placed (e.g. plains=2, collide=7)
 
     def on_use(self, user):
-        pass  # logique de placement de bloc
+        """Place is handled by try_place_selected; use does nothing."""
+        return None
 
     def __repr__(self):
-        return f"Block({self.name})"
+        return f"Block({self.name}, biome_id={self.place_biome_id})"
 
 
 # --- Registre des items existants dans le jeu ---
 # pour créer un nouvel item, il suffit de l'ajouter dans ce dictionnaire avec une clé unique et une instance de la classe correspondante (Weapon, Tool ou Consumable). 
 ITEMS = {
-    "wood_sword":   Weapon("Épée en bois",    damage=5,  attack_speed=1.5, range=32), #putains de parametres 
+    "wood_sword":   Weapon("Épée en bois",    damage=5,  attack_speed=1.5, range=32),
     "stone_sword":  Weapon("Épée en pierre",  damage=10, attack_speed=1.2, range=32),
     "pickaxe":      Tool("Pioche",            efficiency=1.0),
     "axe":          Tool("Hache",             efficiency=1.0),
     "bread":        Consumable("Pain",        heal=10),
     "apple":        Consumable("Pomme",       heal=5),
-    
-    "grass_block":  Block("Bloc d'herbe"),
+    # Placeable blocks (place_biome_id: 2=plains, 1=beach, 7=collide/solid)
+    "grass_block":  Block("Bloc d'herbe",     place_biome_id=2, max_stack=64),
+    "dirt_block":   Block("Bloc de terre",   place_biome_id=2, max_stack=64),
+    "sand_block":   Block("Bloc de sable",   place_biome_id=1, max_stack=64),
+    "stone_block":  Block("Bloc de pierre",  place_biome_id=7, max_stack=64),
 }
 
 def get_item(name):

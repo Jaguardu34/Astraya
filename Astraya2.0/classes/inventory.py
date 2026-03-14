@@ -36,7 +36,6 @@ class Inventory:
         return slot.item if not slot.is_empty() else None
 
     def add_item(self, item, quantity=1):
-        """Ajoute un item. Retourne la quantité qui n'a pas pu être ajoutée."""
         remaining = quantity
 
         # 1. Remplir les slots existants avec le même item
@@ -55,10 +54,11 @@ class Inventory:
                 break
             if slot.is_empty():
                 slot.item = item
-                slot.quantity = min(item.max_stack, remaining)
-                remaining -= slot.quantity
+                added = min(item.max_stack, remaining)  # ← variable séparée
+                slot.quantity = added
+                remaining -= added                       # ← soustrait "added", pas "slot.quantity"
 
-        return remaining  # 0 si tout a été ajouté
+        return remaining
 
     def remove_item(self, item, quantity=1):
         """Retire un item. Retourne True si succès."""
@@ -125,13 +125,15 @@ class Inventory:
         """Drop from current hotbar slot. Returns (item, quantity) or None."""
         return self.drop_slot(self.selected_hotbar, quantity)
 
-    def try_place_selected(self, current_map, tile_x, tile_y, size):
+    def try_place_selected(self, current_map, tile_x, tile_y):
         """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
         from .items import ItemType
         item = self.selected_item
         if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
             return False
-        if tile_x < 0 or tile_y < 0 or tile_x >= size or tile_y >= size:
+        map_h, map_w = current_map.shape
+        if tile_x < 0 or tile_y < 0 or tile_x >= map_w or tile_y >= map_h:
+            print("Placement hors carte")
             return False
         # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
         current_map[tile_y, tile_x] = item.place_biome_id

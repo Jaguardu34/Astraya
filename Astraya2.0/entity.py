@@ -509,3 +509,36 @@ class Ennemy(Entity_That_Move_And_Has_Collision):
         angle = math.degrees(math.atan2(dy, dx))
         p = Projectile(texture.texture_chicken, self.actual_map, self, int(angle), 30,  None, self.x, self.y)
         self.projectile_grp.add(p)
+
+class DroppedItem(pygame.sprite.Sprite):
+    """Item on the ground; can be picked up by player overlap."""
+    def __init__(self, x_px, y_px, item, quantity, game_map):
+        super().__init__()
+        self.x = float(x_px)
+        self.y = float(y_px)
+        self.item = item
+        self.quantity = quantity
+        self.game_map = game_map
+        self.actual_map = game_map
+        self.show_on_minimap = False
+        self.is_static = True
+        self.has_hitbox = True
+        # Simple 20x20 icon (brown bag style)
+        self.image = pygame.Surface((20, 20))
+        self.image.fill((139, 90, 43))
+        pygame.draw.rect(self.image, (80, 50, 20), (0, 0, 20, 20), 2)
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+        self.hitbox = [pygame.Rect(self.x - 12, self.y - 12, 24, 24)]
+
+    def draw(self, scalex, scaley, screen, posx, posy):
+        tile_cx = int(posx // 32)
+        tile_cy = int(posy // 32)
+        px = (self.x - (tile_cx - scalex//2) * 32)
+        py = (self.y - (tile_cy - scaley//2) * 32)
+        if -32 <= px < scalex*32 + 32 and -32 <= py < scaley*32 + 32:
+            screen.blit(self.image, (px - 10, py - 10))
+
+    def update(self, dt, chunk_grid, actual_map):
+        self.actual_map = actual_map
+        self.hitbox[0].x = self.x - 12
+        self.hitbox[0].y = self.y - 12
