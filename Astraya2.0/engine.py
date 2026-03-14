@@ -86,32 +86,7 @@ class Game():
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
-        try:
-            result = generate_map.map_generate()
-            generate_map.map, generate_map.texture_variants, generate_map.cave, \
-            generate_map.coord_vil, generate_map.coord_grottes, generate_map.altitude_map, \
-            generate_map.cliff_edges, generate_map.villages = result
-            
-            render_minimap.generate_minimap()
-            
-            self.game_map = generate_map.map
-            self.current_map = self.game_map
 
-            self.init_sprites()
-            self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
-            self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
-            self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
-            
-            self.world_ready = True
-            print("✅ Monde chargé avec succès")
-
-        except Exception as e:
-            import traceback
-            print("❌ ERREUR dans _load_world :")
-            traceback.print_exc()
-        
-        
-        
         world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages = generate_map.map_generate()
 
         render_minimap.generate_minimap()
@@ -210,7 +185,7 @@ class Game():
                     )
                     self.dropped_grp.add(drop)
                 handled = True
-            elif event.key == pygame.K_r:
+            elif event.key == pygame.MOUSEBUTTONDOWN and event.button == 3:  # clic droit pour placer un bloc
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 
                 # ✅ conversion écran → monde
@@ -248,9 +223,9 @@ class Game():
                 if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     self.running = False
                     return
-            else:
-                if self.sprites_initialized:
-                    self.handle_event(event)                
+            
+            if self.sprites_initialized:
+                self.handle_event(event)                
 
         keys = pygame.key.get_pressed()
         
