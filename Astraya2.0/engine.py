@@ -163,9 +163,6 @@ class Game():
                 
 
     def handle_event(self, event):
-        """Gérer l'inventaire (toggle, drop, placement blocks) ; transmettre le reste au joueur."""
-        
-        #verifie si le monde est prêt #securite pr eviter enorme mega giga crash
         if not self.world_ready: return
 
         handled = False
@@ -180,36 +177,41 @@ class Game():
                     result = self.player.inventory.drop_selected(1)
                 if result:
                     item, qty = result
-                    drop = ent.DroppedItem(
-                        self.player.x, self.player.y, item, qty, self.current_map
-                    )
+                    drop = ent.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
                     self.dropped_grp.add(drop)
                 handled = True
-            elif event.key == pygame.MOUSEBUTTONDOWN and event.button == 3:  # clic droit pour placer un bloc
+
+        # ✅ séparé — pas un elif
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 3:  # clic droit → placer un bloc
                 mouse_x, mouse_y = pygame.mouse.get_pos()
-                
-                # ✅ conversion écran → monde
                 tile_cx = int(self.player.x // 32)
                 tile_cy = int(self.player.y // 32)
-                
                 offset_x = self.player.x % 32
                 offset_y = self.player.y % 32
-                
-                # 8 = x de départ du draw (le x passé à main_map.draw)
                 tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
                 ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
-                
                 self.player.inventory.try_place_selected(self.current_map, tx, ty)
                 handled = True
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.inventory_open:
-            idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
-            if idx is not None:
-                self.panel_selected_slot = idx
-                if idx < self.player.inventory.hotbar_size:
-                    self.player.inventory.select_hotbar(idx)
-            handled = True
+            if event.button == 1 and self.inventory_open:  # clic gauche inventaire
+                idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
+                if idx is not None:
+                    self.panel_selected_slot = idx
+                    if idx < self.player.inventory.hotbar_size:
+                        self.player.inventory.select_hotbar(idx)
+                handled = True
+
         if not handled and hasattr(self.player, "handle_event"):
             self.player.handle_event(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.inventory_open:
+                idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
+                if idx is not None:
+                    self.panel_selected_slot = idx
+                    if idx < self.player.inventory.hotbar_size:
+                        self.player.inventory.select_hotbar(idx)
+                handled = True
+            if not handled and hasattr(self.player, "handle_event"):
+                self.player.handle_event(event)
 
     #boucle principale
     def update(self):
