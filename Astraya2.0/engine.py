@@ -211,9 +211,9 @@ class Game():
                 if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     self.running = False
                     return
-                pygame.quit()
             else:
-                self.handle_event(event)                
+                if self.sprites_initialized:
+                    self.handle_event(event)                
 
         keys = pygame.key.get_pressed()
         
@@ -241,10 +241,6 @@ class Game():
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
                 
                 self.sprites_initialized = True
-        else :
-
-            #securite pr eviter enorme mega giga crash
-            if not self.world_ready:return
 
             
             self.update_chunk([self.entity_grp, self.ennemy_grp])
@@ -303,14 +299,15 @@ class Game():
                 self.menu.in_menu = True
             
             interfaces.Button.update_cursor()
-        if self.world_ready:
-            inventory_ui.draw_hotbar(self.screen, self.player.inventory)
-        if self.inventory_open:
-            inventory_ui.draw_inventory_panel(
-                self.screen, self.player.inventory, pygame.mouse.get_pos(),
-                self.panel_selected_slot,
-            )
-            
+            if self.sprites_initialized:
+                if self.world_ready:
+                    inventory_ui.draw_hotbar(self.screen, self.player.inventory)
+                if self.inventory_open:
+                    inventory_ui.draw_inventory_panel(
+                        self.screen, self.player.inventory, pygame.mouse.get_pos(),
+                        self.panel_selected_slot,
+                    )
+                
             
             
         
