@@ -1,5 +1,6 @@
 import entity as ent
 import texture
+import settings
 
 class Slot:
     def __init__(self):
@@ -128,10 +129,18 @@ class Inventory:
         """Drop from current hotbar slot. Returns (item, quantity) or None."""
         return self.drop_slot(self.selected_hotbar, quantity)
 
-    def try_place_selected(self, current_map, tile_x, tile_y, block_grp):
+    def try_place_selected(self, current_map, tile_x, tile_y, block_grp, player_pos):
         """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
         from .items import ItemType
         item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        if abs(player_tile_x - tile_x) > settings.PLAYER_PLACE_RANGE or abs(player_tile_y - tile_y) > settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        if player_tile_x == tile_x and player_tile_y == tile_y:
+            return False
+        
         if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
             return False
         map_h, map_w = current_map.shape

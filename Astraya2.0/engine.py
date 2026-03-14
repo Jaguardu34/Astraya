@@ -191,7 +191,7 @@ class Game():
                 offset_y = self.player.y % 32
                 tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
                 ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
-                self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp)
+                self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp, self.player.position)
                 handled = True
             if event.button == 1 and self.inventory_open:  # clic gauche inventaire
                 idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
