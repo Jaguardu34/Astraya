@@ -103,6 +103,7 @@ class Game():
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
         self.dropped_grp = pygame.sprite.Group()
+        self.block_grp = pygame.sprite.Group()
         
         game_map = world_data.world_map
         alt = world_data.altitude_map
@@ -193,7 +194,7 @@ class Game():
                 offset_y = self.player.y % 32
                 tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
                 ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
-                self.player.inventory.try_place_selected(self.current_map, tx, ty)
+                self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp, self.player.position)
                 handled = True
             if event.button == 1 and self.inventory_open:  # clic gauche inventaire
                 idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
@@ -252,7 +253,7 @@ class Game():
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
                 self.init_sprites()
-                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp])
+                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp])
                 self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
                 
