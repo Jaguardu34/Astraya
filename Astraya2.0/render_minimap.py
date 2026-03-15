@@ -3,7 +3,7 @@ import pickle
 from PIL import Image
 import os
 
-minimap_path = "Astraya2.0/minimap.png"
+minimap_path = "Astraya2.0/assets/minimap.png"
 world_path = "world_data.pkl"
 
 def generate_minimap():
@@ -39,7 +39,7 @@ def generate_minimap():
             img_array[mask] = color
 
         img = Image.fromarray(img_array, "RGB")
-        img.save("Astraya2.0/minimap.png")
+        img.save(minimap_path)
         print(f"Minimap générée : {w}x{h} pixels")
         
     else:

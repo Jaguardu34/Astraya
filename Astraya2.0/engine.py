@@ -11,6 +11,7 @@ import interfaces
 import world_data
 import generate_map
 
+
 from ui import ui_inventory
 from classes.items import get_item
 
@@ -46,7 +47,12 @@ class Game():
     def __init__(self):
         pygame.init()
         pygame.font.init()
+        pygame.mixer.init()
 
+        #sound
+        pygame.mixer.music.load("Astraya2.0/assets/sound/menu.wav")
+        self.MUSIC_END = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.MUSIC_END)
         
         self.world_ready = False
         
@@ -83,6 +89,8 @@ class Game():
         
         self.sprites_initialized = False
         self.running=True
+        
+        self.music_playing = False
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -144,7 +152,7 @@ class Game():
         now = pygame.time.get_ticks()
         if now - self.last_map_change >= change_cooldown:
             if self.current_map is self.game_map:
-                self.current_map = generate_map.cave
+                self.current_map = world_data.cave
             else:
                 self.current_map = self.game_map
             self.last_map_change = now
@@ -189,6 +197,17 @@ class Game():
                 handled = True
 
         if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # clic droit → placer un bloc
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                tile_cx = int(self.player.x // 32)
+                tile_cy = int(self.player.y // 32)
+                offset_x = self.player.x % 32
+                offset_y = self.player.y % 32
+                tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
+                ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
+                if not self.inventory_open:
+                    self.player.inventory.try_break(self.current_map, tx, ty, self.block_grp, self.player.position)
+                handled = True
             if event.button == 3:  # clic droit → placer un bloc
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 tile_cx = int(self.player.x // 32)
@@ -228,6 +247,8 @@ class Game():
             if event.type == pygame.QUIT:
                 self.running = False
                 return  # sort immédiatement
+            if event.type == self.MUSIC_END:
+                pygame.mixer.music.play()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     self.running = False
@@ -245,6 +266,10 @@ class Game():
         
         self.screen.fill("white")
         if self.menu.in_menu:
+            pygame.mixer.music.set_volume(0.5)
+            if not self.music_playing:
+                pygame.mixer.music.play()
+                self.music_playing = True
             self.menu.draw(self.screen)
             
         

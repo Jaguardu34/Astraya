@@ -3,6 +3,7 @@ import settings
 from texture import *
 import world_data
 from classes.items import ItemType
+import render_minimap
 
 
 class Minimap():
@@ -13,7 +14,7 @@ class Minimap():
         self.sprites_to_show = sprites_to_show
         self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
-        self.minimap_image = pygame.image.load(TEXTURE_MINIMAP_PATH)
+        self.minimap_image = pygame.image.load(render_minimap.minimap_path)
 
     def get_minimap_croped(self, tile_cx, tile_cy):
         src_x = tile_cx - self.zoom // 2
@@ -128,7 +129,6 @@ class Map():
 
         highlight = None
         highlight_pos = None
-        highlight_world_y = None
         tx, ty = 0, 0
 
         if mouse_pos and selected_item is not None:
@@ -136,16 +136,19 @@ class Map():
                 mouse_x, mouse_y = mouse_pos
                 tx = tile_cx - self.scale_x // 2 + int((mouse_x + offset_x - x) // 32)
                 ty = tile_cy - self.scale_y // 2 + int((mouse_y + offset_y - y) // 32)
-                highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
-                pygame.draw.rect(highlight, (255, 255, 255, 128), (0, 0, 32, 32), 1)
-                highlight_pos = (
-                    (tx - tile_cx + self.scale_x // 2) * 32,
-                    (ty - tile_cy + self.scale_y // 2) * 32
-                )
-                highlight_world_y = ty * 32
+                
 
-        if not in_inventory and highlight is not None and player.inventory.can_place(map_to_show, tx, ty, block_grp, player.position):
+        if not in_inventory and player.inventory.can_place(map_to_show, tx, ty, block_grp, player.position):
+            highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.rect(highlight, (255, 255, 255, 128), (0, 0, 32, 32), 1)
+            highlight_pos = (
+                (tx - tile_cx + self.scale_x // 2) * 32,
+                (ty - tile_cy + self.scale_y // 2) * 32
+            )
             self.map_cache.blit(highlight, highlight_pos)
+         
+           
+        
 
         for sprite in sprites_to_draw:
             if sprite is player:
@@ -155,6 +158,16 @@ class Map():
                 )
             else:
                 sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
+                
+        if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
+            print("break_possible")
+            highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.rect(highlight, (255, 0, 0, 128), (0, 0, 32, 32), 1)
+            highlight_pos = (
+                (tx - tile_cx + self.scale_x // 2) * 32,
+                (ty - tile_cy + self.scale_y // 2) * 32
+            )
+            self.map_cache.blit(highlight, highlight_pos)
                 
         #debug pr afficher hitbox
         if self.show_hitbox:

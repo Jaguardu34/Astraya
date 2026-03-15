@@ -423,8 +423,9 @@ class Grotte(Object):
 
 
 class Block(Object):
-    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
+    def __init__(self, sprite, game_map, item, altitude_map=None, x=1500, y=1500, speed=10):
         super().__init__(sprite, game_map, altitude_map, x, y)
+        self.item = item
         self.hitbox = [pygame.Rect(self.x, self.y, 32, 32)]
         self.show_on_minimap = False
         self.has_hitbox = True

@@ -157,7 +157,7 @@ class Inventory:
         if ent.veriftile(tile_x, tile_y, current_map) is not True:
             return False
         
-        block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, x=tile_x, y =tile_y))
+        block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, item, x=tile_x, y =tile_y))
         self.remove_slot_item(self.selected_hotbar, 1)
         return True
     
@@ -190,6 +190,43 @@ class Inventory:
             return False
         
         return True
+    
+    def can_break(self, current_map, tile_x, tile_y, block_grp, player_pos):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        for block in block_grp:
+            pos_block_x, pos_block_y = block.tile_x, block.tile_y
+            if pos_block_x == tile_x and pos_block_y == tile_y:
+                return True
+        
+        return False
+    
+    def try_break(self, current_map, tile_x, tile_y, block_grp, player_pos):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        for block in block_grp:
+            pos_block_x, pos_block_y = block.tile_x, block.tile_y
+            if pos_block_x == tile_x and pos_block_y == tile_y:
+                item = block.item
+                block_grp.remove(block)
+                block.kill()
+                self.add_item(item, 1)
+                return True
+        
+        return False
+    
 
     def __repr__(self): # print(repr(player.inventory)) → affiche le contenu de l'inventaire ; (tu te doute qu'on ne peut pas afficher des classes sans les représenter d'une manière lisible, du coup on fait ça)
         lines = [f"=== Inventaire ==="]
