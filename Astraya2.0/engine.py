@@ -128,7 +128,10 @@ class Game():
         self.player.inventory.add_item(get_item("wood_sword"), 1)
 
         for i in range(100):
-            self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, alt, x=random.randint(1300, 1600), y=random.randint(1300, 1600)))
+            x=random.randint(1300, 1600)
+            y=random.randint(1300, 1600)
+            if ent.veriftile(x, y, self.game_map) is True:
+                self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
             
         self.entity_grp.add(self.player)
         self.entity_grp.add(self.grotte)
@@ -229,6 +232,11 @@ class Game():
                 if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     self.running = False
                     return
+                if event.key == pygame.K_h and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                    if self.main_map.show_hitbox:
+                        self.main_map.show_hitbox = False
+                    else:
+                        self.main_map.show_hitbox = True
             
             if self.sprites_initialized:
                 self.handle_event(event)                
@@ -282,7 +290,7 @@ class Game():
                     d.kill()
 
             
-            self.update_chunk([self.entity_grp, self.ennemy_grp])
+            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp])
             
             
             for sprite in self.entity_grp:

@@ -49,12 +49,13 @@ class Map():
         self.sprites_to_show = sprites_to_show
         self.anim_timer = 0
         self.anim_frame = 0
-        self.anim_speed = 300
+        self.anim_speed = 500
         self.map_cache = pygame.Surface((self.scale_x * 32, self.scale_y * 32))
         self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
         self.static_cache_cx = None
         self.static_cache_cy = None
         self.animated_positions = []
+        self.show_hitbox = False
 
     def _rebuild_static_cache(self, tile_cx, tile_cy, map_to_show, cliff_edges):
         self.static_cache.fill("blue")
@@ -155,6 +156,18 @@ class Map():
                 )
             else:
                 sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
+                
+        #debug pr afficher hitbox
+        if self.show_hitbox:
+            for sprite in sprites_to_draw:
+                if hasattr(sprite, 'hitbox'):
+                    for hb in sprite.hitbox:
+                        # convertir world coords → screen coords
+                        draw_hb_x = hb.x - (tile_cx - self.scale_x//2) * 32
+                        draw_hb_y = hb.y - (tile_cy - self.scale_y//2) * 32
+                        pygame.draw.rect(self.map_cache, (255, 0, 0), (draw_hb_x, draw_hb_y, hb.width, hb.height), 1)
+                    
+
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, self.scale_x * 32 + 32, 32))
