@@ -231,7 +231,8 @@ def map_generate():
         
         # Masques booléens pour chaque biome
         ocean_mask = heightmap < 0.25
-        beach_mask = (heightmap >= 0.25) & (heightmap < 0.32)
+        beach_mask = (heightmap >= 0.28) & (heightmap < 0.32)
+        wet_sand_mask = (heightmap >= 0.25) & (heightmap < 0.28) 
         
         jungle_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.6) & (temperaturemap > 0.5)
         forest_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.4) & (temperaturemap > 0.3) & ~jungle_mask
@@ -243,6 +244,7 @@ def map_generate():
         # Attribution en une seule opération vectorisée
         biomes[ocean_mask] = BIOME_IDS["ocean"]
         biomes[beach_mask] = BIOME_IDS["beach"]
+        biomes[wet_sand_mask] = BIOME_IDS["wet_sand"]
         biomes[plains_mask] = BIOME_IDS["plains"]
         biomes[jungle_mask] = BIOME_IDS["jungle"]
         biomes[forest_mask] = BIOME_IDS["forest"]
