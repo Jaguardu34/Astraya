@@ -1,3 +1,4 @@
+import os
 import pygame
 import generate_map
 import random
@@ -54,9 +55,20 @@ class Game():
         pygame.joystick.init()
 
         #sound
-        pygame.mixer.music.load("Astraya2.0/assets/sound/menu.wav")
+        sound_dir = "Astraya2.0/assets/sound"
+        self.playlist = [
+        os.path.join(sound_dir, f)
+        for f in os.listdir(sound_dir)
+        if f.endswith(".wav") or f.endswith(".mp3") or f.endswith(".ogg")
+        ]
+        
+        self.current_music_index = 0
         self.MUSIC_END = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.MUSIC_END)
+
+        # lance la première
+        pygame.mixer.music.load(self.playlist[random.randint(0, len(self.playlist)-1)])
+        pygame.mixer.music.play()
         
         self.world_ready = False
         
@@ -198,6 +210,7 @@ class Game():
                 
 
     def handle_event(self, event):
+        
         if not self.world_ready: return
 
         handled = False
@@ -301,8 +314,6 @@ class Game():
             if event.type == pygame.QUIT:
                 self.running = False
                 return  # sort immédiatement
-            if event.type == self.MUSIC_END:
-                pygame.mixer.music.play()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     self.running = False
@@ -312,6 +323,18 @@ class Game():
                         self.main_map.show_hitbox = False
                     else:
                         self.main_map.show_hitbox = True
+            if event.type == self.MUSIC_END:
+                # passe à la suivante (aléatoire ou séquentielle)
+                
+                # ── séquentiel ──
+                self.current_music_index = (self.current_music_index + 1) % len(self.playlist)
+                next_music = self.playlist[self.current_music_index]
+                
+                # ── ou aléatoire ──
+                # next_music = random.choice(self.playlist)
+                
+                pygame.mixer.music.load(next_music)
+                pygame.mixer.music.play()
             
             if self.sprites_initialized:
                 self.handle_event(event)                
@@ -320,7 +343,7 @@ class Game():
         
         self.screen.fill("white")
         if self.menu.in_menu:
-            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.set_volume(0.2)
             if not self.music_playing:
                 pygame.mixer.music.play()
                 self.music_playing = True
