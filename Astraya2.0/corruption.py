@@ -56,10 +56,30 @@ def generer_corruption(biome_map, nb_zones=5):
             for x, y in corrompus:
                 biome_map[y, x] = BIOME_IDS["corrupted"]
 
+            donjon_coords = create_donjon(centre_x, centre_y, taille=15)
+            for x, y in donjon_coords:
+                biome_map[y, x] = BIOME_IDS["donjon_collide"]
+
             
             if len(corrompus) >= taille_zone * 0.5:  
                 break
             
             attempts += 1
-                
+
     return biome_map
+
+
+def create_donjon(center_x, center_y, taille):
+    
+    if taille % 2 == 0:
+        taille += 1
+
+    rayon = taille // 2
+    donjon_coords = []
+
+    for y in range(center_y - rayon, center_y + rayon + 1):
+        for x in range(center_x - rayon, center_x + rayon + 1):
+            donjon_coords.append((x, y))
+
+    return donjon_coords
+

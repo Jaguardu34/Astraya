@@ -93,26 +93,6 @@ texture_chicken = []
 for i in range(len(texture_chicken_base)):
     texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))
 
-texture_cliff_base = []
-for i in range(12):
-    texture_cliff_base.append(get_sprite(sprite_sheet, i * 32, 160, 32, 32))
-
-# Fonction pour mapper direction → texture
-def get_cliff_texture_index(x, y, direction):
-    """Retourne l'index de texture selon la direction."""
-    seed = (x * 7 + y * 13) % 100  # Déterministe selon position
-    
-    if direction == "S":
-        return 1 + (seed % 4)  # Indices 1-4
-    elif direction == "E":
-        return 5 + (seed % 4)  # Indices 5-8
-    elif direction == "N":
-        return 9 + (seed % 3)  # Indices 9-11
-    elif direction == "W":
-        return 0  # Coin SO
-    return 0
-
-# CHANGEMENT : Utilisation d'IDs numériques au lieu de strings pour correspondre à map.BIOME_IDS
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
     1: (237, 201, 120),   # sand
@@ -129,6 +109,7 @@ TILE_COLORS = {
     13: (120, 120, 120),  # cave_normal - ID 13 au lieu de "cave_normal"
     14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
     15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
+    71: (133, 34, 155),     # donjon_collide - ID 71 au lieu de "donjon_collide"
 }
 
 # CHANGEMENT : IDs numériques pour les textures
@@ -137,7 +118,6 @@ TILE_TEXTURE = {
     1: texture_sand,   # beach - ID 1 au lieu de "beach"
     4 : texture_forest, # jungle - ID 3 au lieu de "jungle"
     101: texture_wet_wand,
-    "cliff" : texture_cliff_base
 }
 
 BLOCK_TEXTURE ={

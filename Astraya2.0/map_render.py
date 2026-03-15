@@ -86,12 +86,6 @@ class Map():
                 else:
                     pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
 
-                if (map_i, map_j) in cliff_edges:
-                    if map_to_show[map_j, map_i] == BIOME_IDS["cliff"]:
-                        for direction in cliff_edges[(map_i, map_j)]:
-                            texture_index = get_cliff_texture_index(map_i, map_j, direction)
-                            self.static_cache.blit(TILE_TEXTURE["cliff"][texture_index], (draw_x, draw_y))
-
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
 
