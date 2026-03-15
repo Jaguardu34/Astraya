@@ -1,6 +1,7 @@
 import entity as ent
 import texture
 import settings
+import pygame
 
 class Slot:
     def __init__(self):
@@ -129,7 +130,7 @@ class Inventory:
         """Drop from current hotbar slot. Returns (item, quantity) or None."""
         return self.drop_slot(self.selected_hotbar, quantity)
 
-    def try_place_selected(self, current_map, tile_x, tile_y, block_grp, player_pos):
+    def try_place_selected(self, current_map, tile_x, tile_y, block_grp, player_pos, entity_groups):
         """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
         from .items import ItemType
         item = self.selected_item
@@ -139,8 +140,20 @@ class Inventory:
         if dist >= settings.PLAYER_PLACE_RANGE:
             return False
         
-        if player_tile_x == tile_x and player_tile_y == tile_y:
+        block_rect = pygame.Rect(tile_x * 32, tile_y * 32, 32, 32)
+    
+        # check joueur
+        player_rect = pygame.Rect(int(player_pos[0]), int(player_pos[1]), 32, 32)
+        if block_rect.colliderect(player_rect):
             return False
+        
+        # check entités mobiles
+        for group in entity_groups:
+            for entity in group:
+                if hasattr(entity, 'hitbox'):
+                    for hb in entity.hitbox:
+                        if block_rect.colliderect(hb):
+                            return False
         
         if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
             return False
@@ -161,7 +174,7 @@ class Inventory:
         self.remove_slot_item(self.selected_hotbar, 1)
         return True
     
-    def can_place(self, current_map, tile_x, tile_y, block_grp, player_pos):
+    def can_place(self, current_map, tile_x, tile_y, block_grp, player_pos, entity_groups):
         from .items import ItemType
         item = self.selected_item
         player_x, player_y = player_pos
@@ -170,8 +183,20 @@ class Inventory:
         if dist >= settings.PLAYER_PLACE_RANGE:
             return False
         
-        if player_tile_x == tile_x and player_tile_y == tile_y:
+        block_rect = pygame.Rect(tile_x * 32, tile_y * 32, 32, 32)
+    
+        # check joueur
+        player_rect = pygame.Rect(int(player_pos[0]), int(player_pos[1]), 32, 32)
+        if block_rect.colliderect(player_rect):
             return False
+        
+        # check entités mobiles
+        for group in entity_groups:
+            for entity in group:
+                if hasattr(entity, 'hitbox'):
+                    for hb in entity.hitbox:
+                        if block_rect.colliderect(hb):
+                            return False
         
         if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
             return False

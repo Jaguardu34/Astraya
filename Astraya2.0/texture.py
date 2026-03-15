@@ -80,7 +80,7 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
                 ]
 
-
+texture_swipe_weapon = create_texture_basic(0, 544, 1)
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
 

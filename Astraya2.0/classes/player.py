@@ -1,66 +1,94 @@
 import pygame
-from .entity import Entity
-from .inventory import Inventory
-from engine import get_sprite
-from settings import SCALE
-from settings import *
+import entity
+import random
+import settings
+import math
+import texture
+from classes import inventory as inv
+from classes import items
 
-class Player(Entity):
-    def __init__(self, pos=(1500, 1500)):
-        super().__init__(pos, groups=None)
+class Player(entity.Entity_That_Move_And_Has_Collision):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=60):
+        super().__init__(sprite, game_map, altitude_map, x, y)
+        self.info_display = pygame.display.Info()
+        self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
+        self.x = float(x * 32)
+        self.y = float(y * 32)
+        self.speed = speed
+        self.hitbox_offset_x = 0
+        self.hitbox_offset_y = 0
+        sw = sprite[0].get_width()-4
+        sh = sprite[0].get_height()-4
+        self.hitbox = [pygame.Rect(self.x+2, self.y+2, sw, sh)]
+        self.hitbox_size = sprite[0].get_width()
+        self.show_on_minimap = True
+        self.anim_timer = 0
+        self.anim_frame = 0
+        self.anim_speed = 400
+        self.last_orientation = "left"
+        self.has_life = True
+        self.lifepoint = 10
+        self.inventory = inv.Inventory(size=20, hotbar_size=5)
+       
         
-        # inventory
-        self.inventory = Inventory(size=20, hotbar_size=5)
-        
-        # load player sprite
-        self.textures = pygame.image.load(pygame.image.load(TEXTURES_PATH)).convert_alpha()
-        
-        self.texture_coeur = get_sprite(self.textures, 0, 241, 16, 16)
-        texture_coeur_upscaled = pygame.transform.scale(self.texture_coeur, (self.texture_coeur.get_width()*SCALE, self.texture_coeur.get_height()*SCALE))
-        self.rect = texture_coeur_upscaled.get_rect(topleft = pos)
-        
-        #hitbox plus petite que le sprite pour éviter les collisions trop précises qui bloquent le joueur
-        self.hitbox = self.rect.inflate(HITBOX_OFFSET['player'],HITBOX_OFFSET['player']) #permet d'avoir une hitbox plus petite que le sprite pour éviter les collisions trop précises qui bloquent le joueur
-        
-        # stats
-        self.stats = self.stats = {'health': 100,'energy':60,'attack': 10,'magic': 4,'speed': 5}
-        self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic' : 10, 'speed': 10}
         
         
 
-    def input(self): # le mouvement du joueur es généré dans la classe mère entity
-        if not self.attacking:
-            keys = pygame.key.get_pressed()
-
-			# movement input
-            if keys[pygame.K_UP]:
-                self.direction.y = -1
-                self.status = 'up'
-            elif keys[pygame.K_DOWN]:
-                self.direction.y = 1
-                self.status = 'down'
+    def update(self, chunk_grid, actual_map):
+        super().update(chunk_grid, actual_map)
+        now = pygame.time.get_ticks()
+        
+        if now - self.anim_timer >= self.anim_speed:
+            if self.anim_frame == 0:
+                self.anim_frame = 1
             else:
-                self.direction.y = 0
+                self.anim_frame = 0
+            self.anim_timer = now
+        if self.vx > 0.1:
+            self.anim_speed = 200
+            self.texture_index = 2 + self.anim_frame
+        elif self.vx < -0.1:
+            self.anim_speed = 200
+            self.texture_index = 6 + self.anim_frame
+        else:
+            self.anim_speed = 400
+            if self.last_orientation == "left":
+                self.texture_index = 0 + self.anim_frame
+            elif self.last_orientation == "right":
+                self.texture_index = 4 + self.anim_frame
+                
+    def apply_deadzone(self, value, threshold=0.1):
+        if abs(value) < threshold:
+            return 0.0
+        return value
 
-            if keys[pygame.K_RIGHT]:
-                self.direction.x = 1
-                self.status = 'right'
-            elif keys[pygame.K_LEFT]:
-                self.direction.x = -1
-                self.status = 'left'
-            else:
-                self.direction.x = 0
+    def input(self, keys, dt, joystick):
+        dx, dy = 0, 0
+        
+        if joystick:
+            joy_x = self.apply_deadzone(joystick.get_axis(0))
+            joy_y = self.apply_deadzone(joystick.get_axis(1))
+            dx=joy_x
+            dy=joy_y
+        
+        if keys[settings.KEY_UP] or keys[pygame.K_UP]:    dy = -1
+        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:  dy = 1
+        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:  dx = -1
+        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]: dx = 1
+
+        if dx != 0 and dy != 0:
+            length = (dx**2 + dy**2) ** 0.5
+            dx /= length
+            dy /= length
+
+        if dx > 0.1:
+            self.last_orientation = "left"
+        elif dx < -0.1:
+            self.last_orientation = "right"
+        self.move(dx * self.speed * dt, dy * self.speed * dt)
 
 
-    def handle_event(self, event):
-        # scroll molette → changer slot hotbar
-        if event.type == pygame.MOUSEWHEEL:
-            self.inventory.scroll_hotbar(-event.y)
-        # clic gauche → utiliser item
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            self.inventory.use_selected(self)
-        # touches 1-5 → sélectionner hotbar
-        if event.type == pygame.KEYDOWN:
-            for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
-                if event.key == key:
-                    self.inventory.select_hotbar(i)
+                        
+                        
+                    
+                    

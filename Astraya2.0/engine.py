@@ -10,6 +10,9 @@ import render_minimap
 import interfaces
 import world_data
 import generate_map
+from classes import items
+from classes import player as player_class
+import math
 
 
 from ui import ui_inventory
@@ -94,6 +97,9 @@ class Game():
         self.music_playing = False
         
         self.joystick = False
+        
+        
+        self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -125,12 +131,12 @@ class Game():
         self.game_map = game_map     
         self.current_map = self.game_map
         
-        self.player = ent.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
+        self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
         self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1530, 1530)
         
         #quelques items :
-        self.player.inventory.add_item(get_item("grass_block"), 64)
+        self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("truc_rouge"), 6)
         self.player.inventory.add_item(get_item("forest_block"), 53)
         self.player.inventory.add_item(get_item("sand_block"), 64)
@@ -179,6 +185,17 @@ class Game():
             for sprite in sprite_group:
                 self.chunk_grid.insert(sprite)
                 
+    def get_tile_by_mouse_pos(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        tile_cx = int(self.player.x // 32)
+        tile_cy = int(self.player.y // 32)
+        offset_x = self.player.x % 32
+        offset_y = self.player.y % 32
+        tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
+        ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
+        return tx, ty
+        
+                
 
     def handle_event(self, event):
         if not self.world_ready: return
@@ -200,27 +217,14 @@ class Game():
                 handled = True
 
         if event.type == pygame.MOUSEBUTTONDOWN:
+            tx, ty = self.get_tile_by_mouse_pos()
             if event.button == 1:  # clic droit → placer un bloc
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                tile_cx = int(self.player.x // 32)
-                tile_cy = int(self.player.y // 32)
-                offset_x = self.player.x % 32
-                offset_y = self.player.y % 32
-                tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
-                ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
                 if not self.inventory_open:
                     self.player.inventory.try_break(self.current_map, tx, ty, self.block_grp, self.player.position)
                 handled = True
             if event.button == 3:  # clic droit → placer un bloc
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                tile_cx = int(self.player.x // 32)
-                tile_cy = int(self.player.y // 32)
-                offset_x = self.player.x % 32
-                offset_y = self.player.y % 32
-                tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
-                ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
                 if not self.inventory_open:
-                    self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp, self.player.position)
+                    self.player.inventory.try_place_selected(self.current_map, tx, ty, self.block_grp, self.player.position, [self.entity_grp, self.ennemy_grp])
                 handled = True
             if event.button == 1 and self.inventory_open:  # clic gauche inventaire
                 idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
@@ -239,8 +243,40 @@ class Game():
                     if idx < self.player.inventory.hotbar_size:
                         self.player.inventory.select_hotbar(idx)
                 handled = True
-            if not handled and hasattr(self.player, "handle_event"):
-                self.player.handle_event(event, self.joystick)
+                
+        
+        index = 0
+        if event.type == pygame.MOUSEWHEEL:
+            self.player.inventory.scroll_hotbar(-event.y)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            item = self.player.inventory.selected_item
+            if isinstance(item, items.Weapon):
+                if item.on_use(self.player) != 0: 
+                    center = self.WINDOW_SCALE[0]//2, self.WINDOW_SCALE[1]//2
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    dx = mouse_x - center[0]
+                    dy = mouse_y - center[1]
+                    angle = math.degrees(math.atan2(dy, -dx))
+                    self.info_swipe[1] = angle
+                    self.info_swipe[0] = True
+                    self.info_swipe[3] = pygame.time.get_ticks()
+        
+        if event.type == pygame.KEYDOWN:
+            for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
+                if event.key == key:
+                    self.player.inventory.select_hotbar(i)
+                    
+        if self.joystick:
+            if self.joystick.get_button(4) or self.joystick.get_button(5):
+                if self.joystick.get_button(4):
+                    index +=1
+                if self.joystick.get_button(5):
+                    index -=1
+                if index < 0:
+                    index = 4
+                if index > 4:
+                    index = 0
+                self.player.inventory.select_hotbar(index)
                 
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
@@ -249,12 +285,18 @@ class Game():
 
     #boucle principale
     def update(self):
+        now = pygame.time.get_ticks()
+        if self.info_swipe[0]:
+            if now - self.info_swipe[3] >= self.info_swipe[2]:
+                self.info_swipe[0] = False
+        
         if pygame.joystick.get_count() > 0:
             self.joystick = pygame.joystick.Joystick(0)
         else: 
             self.joystick = False
         
         events = pygame.event.get()
+        
         for event in events:
             if event.type == pygame.QUIT:
                 self.running = False
@@ -354,7 +396,7 @@ class Game():
             
             # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp, self.info_swipe)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 
