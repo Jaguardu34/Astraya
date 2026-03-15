@@ -62,10 +62,11 @@ def create_single_texture_by_coords(x, y, w, h):
     
 
 
-texture_herbe = create_texture_with_rotation(posx =0, posy = 0, cols=4)
+texture_herbe = create_texture_with_rotation(posx =128, posy = 0, cols=8, rotation=False)
 texture_sand = create_texture_with_rotation(posx =0, posy = 64, cols=4)
 texture_wet_wand = create_texture_with_rotation(posx =128, posy = 64, cols=4)
-texture_forest = create_texture_with_rotation(posx =0, posy = 384, cols=4, rows=4, rotation=False, chance=3) + create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
+texture_forest = create_texture_with_rotation(posx =0, posy = 384, cols=7, rows=4, rotation=False, chance=3) 
+#+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
 
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
@@ -145,7 +146,7 @@ BLOCK_TEXTURE ={
     101: texture_wet_wand
 }
 
-texture_ocean = create_texture_basic(0, 128, 4)  
+texture_ocean = create_texture_basic(192, 128, 4)  
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé

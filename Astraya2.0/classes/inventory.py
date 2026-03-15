@@ -135,7 +135,8 @@ class Inventory:
         item = self.selected_item
         player_x, player_y = player_pos
         player_tile_x, player_tile_y= player_x//32, player_y//32
-        if abs(player_tile_x - tile_x) > settings.PLAYER_PLACE_RANGE or abs(player_tile_y - tile_y) > settings.PLAYER_PLACE_RANGE:
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
             return False
         
         if player_tile_x == tile_x and player_tile_y == tile_y:
@@ -158,6 +159,36 @@ class Inventory:
         
         block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, x=tile_x, y =tile_y))
         self.remove_slot_item(self.selected_hotbar, 1)
+        return True
+    
+    def can_place(self, current_map, tile_x, tile_y, block_grp, player_pos):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        if player_tile_x == tile_x and player_tile_y == tile_y:
+            return False
+        
+        if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
+            return False
+        
+        map_h, map_w = current_map.shape
+        if tile_x < 0 or tile_y < 0 or tile_x >= map_w or tile_y >= map_h:
+            print("Placement hors carte")
+            return False
+        # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
+        
+        for block in block_grp:
+            if block.tile_x == tile_x and block.tile_y == tile_y:
+                return False
+        
+        if ent.veriftile(tile_x, tile_y, current_map) is not True:
+            return False
+        
         return True
 
     def __repr__(self): # print(repr(player.inventory)) → affiche le contenu de l'inventaire ; (tu te doute qu'on ne peut pas afficher des classes sans les représenter d'une manière lisible, du coup on fait ça)
