@@ -6,6 +6,7 @@ import os
 from settings import *
 from classes.village import *
 from falaises import *
+from corruption import generer_corruption
 
 def map_generate():
     
@@ -230,7 +231,8 @@ def map_generate():
         
         # Masques booléens pour chaque biome
         ocean_mask = heightmap < 0.25
-        beach_mask = (heightmap >= 0.25) & (heightmap < 0.32)
+        beach_mask = (heightmap >= 0.28) & (heightmap < 0.32)
+        wet_sand_mask = (heightmap >= 0.25) & (heightmap < 0.28) 
         
         jungle_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.6) & (temperaturemap > 0.5)
         forest_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.4) & (temperaturemap > 0.3) & ~jungle_mask
@@ -242,6 +244,7 @@ def map_generate():
         # Attribution en une seule opération vectorisée
         biomes[ocean_mask] = BIOME_IDS["ocean"]
         biomes[beach_mask] = BIOME_IDS["beach"]
+        biomes[wet_sand_mask] = BIOME_IDS["wet_sand"]
         biomes[plains_mask] = BIOME_IDS["plains"]
         biomes[jungle_mask] = BIOME_IDS["jungle"]
         biomes[forest_mask] = BIOME_IDS["forest"]
@@ -249,6 +252,7 @@ def map_generate():
         biomes[snow_mask] = BIOME_IDS["snow_peak"]
 
         biomes = poser_falaises(biomes, nb_falaises=100)
+        biomes = generer_corruption(biomes, nb_zones=5)
         
         return biomes
 
@@ -554,6 +558,7 @@ def map_generate():
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         world_map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         world_map, texture_variants = add_texture_variants(world_map)
+        #world_map = generer_corruption(world_map)
 
         # 2. Falaises et passages
         print("🏔️ Détection des falaises...")
@@ -596,13 +601,6 @@ def map_generate():
         print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
-
-    # Export des variables (pour utilisation dans le jeu)
-    if 'cliff_edges' not in locals():
-        cliff_edges = []
-    # 3. Créer les passages
-    print("🚪 Création des passages...")
-    
     
     # Filtrer cliff_edges pour enlever les passages
     cliff_edges = []
