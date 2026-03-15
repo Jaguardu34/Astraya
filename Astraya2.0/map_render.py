@@ -172,13 +172,12 @@ class Map():
                         draw_hb_y = hb.y - (tile_cy - self.scale_y//2) * 32
                         pygame.draw.rect(self.map_cache, (255, 0, 0), (draw_hb_x, draw_hb_y, hb.width, hb.height), 1)
                         
-        if info_swipe[0]:
-            texture_swipe_rotate = pygame.transform.rotate(texture_swipe_weapon[0], info_swipe[1]+90)
-            self.map_cache.blit(texture_swipe_rotate, (self.map_cache.get_width()//2, self.map_cache.get_height()//2))
+        
                     
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
+            
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))

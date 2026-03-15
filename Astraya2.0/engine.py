@@ -265,7 +265,7 @@ class Game():
             item = self.player.inventory.selected_item
             if isinstance(item, items.Weapon):
                 if item.on_use(self.player) != 0: 
-                    center = self.WINDOW_SCALE[0]//2, self.WINDOW_SCALE[1]//2
+                    center = self.main_map.scale_x*32//2+8, self.main_map.scale_y*32//2+8
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     dx = mouse_x - center[0]
                     dy = mouse_y - center[1]
@@ -298,6 +298,8 @@ class Game():
 
     #boucle principale
     def update(self):
+        
+        
         now = pygame.time.get_ticks()
         if self.info_swipe[0]:
             if now - self.info_swipe[3] >= self.info_swipe[2]:
@@ -448,7 +450,9 @@ class Game():
                 
 
             
-                 
+            if self.info_swipe[0]:
+                texture_swipe_rotate = pygame.transform.rotate(texture.texture_swipe_weapon[0], self.info_swipe[1]+90)
+                self.screen.blit(texture_swipe_rotate, (self.main_map.scale_x*32//2+8, self.main_map.scale_y*32//2+8))
         
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000
