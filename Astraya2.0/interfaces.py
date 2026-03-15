@@ -2,7 +2,7 @@ import pygame
 import settings
 
 # Creer une quete
-class Quest():
+class Quest_PopUp():
     def __init__(self, content, color="white", font_size=24,):
         self.content = content
         self.color = color
@@ -174,7 +174,7 @@ class SettingsMenu(FullscreenMenu):
         
         self.event = None
     
-    def draw(self, screen, event):
+    def draw(self, screen, event, joystick_plugged):
         self.event = event
         text_surface=""
         self.surface.fill("white")
@@ -192,6 +192,14 @@ class SettingsMenu(FullscreenMenu):
         fps_text = "FPS :"
         text_fps_surface = self.font.render(fps_text, True, "black")
         self.surface.blit(text_fps_surface, (100, self.WINDOW_SCALE[1]//2-200))
+        
+        joystick_text_surface = ""
+        if joystick_plugged:
+            joystick_text_surface = self.font.render("Manette Branchée", True, "orange")
+        else: joystick_text_surface = self.font.render("Manette Débranchée", True, "gray")
+
+        
+        self.surface.blit(joystick_text_surface, (self.WINDOW_SCALE[1]- 500, self.WINDOW_SCALE[1]//2))
         
         
         

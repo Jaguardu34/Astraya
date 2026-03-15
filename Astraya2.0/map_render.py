@@ -160,7 +160,6 @@ class Map():
                 sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
                 
         if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
-            print("break_possible")
             highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
             pygame.draw.rect(highlight, (255, 0, 0, 128), (0, 0, 32, 32), 1)
             highlight_pos = (

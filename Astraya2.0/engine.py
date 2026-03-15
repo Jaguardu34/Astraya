@@ -48,6 +48,7 @@ class Game():
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
+        pygame.joystick.init()
 
         #sound
         pygame.mixer.music.load("Astraya2.0/assets/sound/menu.wav")
@@ -76,7 +77,7 @@ class Game():
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.in_menu = False
-        self.quest = interfaces.Quest("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
+        self.quest = interfaces.Quest_PopUp("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
         self.menu = interfaces.MainMenu()
@@ -91,6 +92,8 @@ class Game():
         self.running=True
         
         self.music_playing = False
+        
+        self.joystick = False
 
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -228,7 +231,7 @@ class Game():
                 handled = True
 
         if not handled and hasattr(self.player, "handle_event"):
-            self.player.handle_event(event)
+            self.player.handle_event(event, self.joystick)
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.inventory_open:
                 idx = ui_inventory.get_panel_slot_at(event.pos, self.screen.get_size())
                 if idx is not None:
@@ -237,10 +240,19 @@ class Game():
                         self.player.inventory.select_hotbar(idx)
                 handled = True
             if not handled and hasattr(self.player, "handle_event"):
-                self.player.handle_event(event)
+                self.player.handle_event(event, self.joystick)
+                
+    def apply_deadzone(self, value, threshold=0.1):
+        if abs(value) < threshold:
+            return 0.0
+        return value
 
     #boucle principale
     def update(self):
+        if pygame.joystick.get_count() > 0:
+            self.joystick = pygame.joystick.Joystick(0)
+        else: 
+            self.joystick = False
         
         events = pygame.event.get()
         for event in events:
@@ -275,7 +287,7 @@ class Game():
         
         elif self.menu.in_settings:
             waiting_for_key = any(btn[1] for btn in self.settings_menu.controls.values())
-            self.settings_menu.draw(self.screen, events)  # peut modifier button[1]
+            self.settings_menu.draw(self.screen, events, self.joystick)  # peut modifier button[1]
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     if not waiting_for_key:  # état avant le draw
@@ -333,7 +345,7 @@ class Game():
             self.player.update(self.chunk_grid, self.current_map)
                 
             if not self.inventory_open:
-                self.player.input(keys, self.dt)
+                self.player.input(keys, self.dt, self.joystick)
 
             for sprite in self.entity_grp:
                 if isinstance(sprite, ent.Grotte):

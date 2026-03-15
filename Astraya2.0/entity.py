@@ -364,13 +364,25 @@ class Player(Entity_That_Move_And_Has_Collision):
                 self.texture_index = 0 + self.anim_frame
             elif self.last_orientation == "right":
                 self.texture_index = 4 + self.anim_frame
+                
+    def apply_deadzone(self, value, threshold=0.1):
+        if abs(value) < threshold:
+            return 0.0
+        return value
 
-    def input(self, keys, dt):
+    def input(self, keys, dt, joystick):
         dx, dy = 0, 0
-        if keys[settings.KEY_UP] or keys[pygame.K_UP]:    dy -= 1
-        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:  dy += 1
-        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:  dx -= 1
-        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]: dx += 1
+        
+        if joystick:
+            joy_x = self.apply_deadzone(joystick.get_axis(0))
+            joy_y = self.apply_deadzone(joystick.get_axis(1))
+            dx=joy_x
+            dy=joy_y
+        
+        if keys[settings.KEY_UP] or keys[pygame.K_UP]:    dy = -1
+        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:  dy = 1
+        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:  dx = -1
+        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]: dx = 1
 
         if dx != 0 and dy != 0:
             length = (dx**2 + dy**2) ** 0.5
@@ -383,7 +395,8 @@ class Player(Entity_That_Move_And_Has_Collision):
             self.last_orientation = "right"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
 
-    def handle_event(self, event):
+    def handle_event(self, event, joystick):
+        index = 0
         if event.type == pygame.MOUSEWHEEL:
             self.inventory.scroll_hotbar(-event.y)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -392,6 +405,17 @@ class Player(Entity_That_Move_And_Has_Collision):
             for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
                 if event.key == key:
                     self.inventory.select_hotbar(i)
+        if joystick:
+            if joystick.get_button(4) or joystick.get_button(5):
+                if joystick.get_button(4):
+                    index +=1
+                if joystick.get_button(5):
+                    index -=1
+                if index < 0:
+                    index = 4
+                if index > 4:
+                    index = 0
+                self.inventory.select_hotbar(index)
 
 
 class Object(Entity):
