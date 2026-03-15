@@ -94,7 +94,7 @@ class Map():
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory):
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp):
         sprites_to_draw = []
 
         now = pygame.time.get_ticks()
@@ -144,9 +144,8 @@ class Map():
                 )
                 highlight_world_y = ty * 32
 
-        if not in_inventory and highlight is not None:
-            if not (abs(player_position[0] // 32 - tx) > settings.PLAYER_PLACE_RANGE or abs(player_position[1] // 32 - ty) > settings.PLAYER_PLACE_RANGE):
-                self.map_cache.blit(highlight, highlight_pos)
+        if not in_inventory and highlight is not None and player.inventory.can_place(map_to_show, tx, ty, block_grp, player.position):
+            self.map_cache.blit(highlight, highlight_pos)
 
         for sprite in sprites_to_draw:
             if sprite is player:

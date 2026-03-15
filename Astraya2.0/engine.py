@@ -268,19 +268,7 @@ class Game():
                 
                 self.sprites_initialized = True
                 
-            # hollow de blocs
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            texture_hollow = pygame.Surface((32, 32), pygame.SRCALPHA)
-            pygame.draw.rect(texture_hollow, (255, 255, 255, 128), (0, 0, 32, 32), 1)
-            tile_cx = int(self.player.x // 32)
-            tile_cy = int(self.player.y // 32)
-            offset_x = self.player.x % 32
-            offset_y = self.player.y % 32
-            tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
-            ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
-            screen_x = (tx - tile_cx + self.main_map.scale_x // 2) * 32 - offset_x + 9
-            screen_y = (ty - tile_cy + self.main_map.scale_y // 2) * 32 - offset_y + 9
-            self.screen.blit(texture_hollow, (screen_x, screen_y))
+            
             
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
@@ -329,7 +317,7 @@ class Game():
             
             # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 
