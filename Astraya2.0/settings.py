@@ -71,6 +71,7 @@ BIOME_IDS = {
     "passage_cliff_S_2":714,
     "passage_cliff_O_1":715,
     "passage_cliff_O_2":716,
+    "corrupted": 800,
 
     # Grottes
     "rock": 10,

@@ -6,6 +6,7 @@ import os
 from settings import *
 from classes.village import *
 from falaises import *
+from corruption import generer_corruption
 
 def map_generate():
     
@@ -249,6 +250,7 @@ def map_generate():
         biomes[snow_mask] = BIOME_IDS["snow_peak"]
 
         biomes = poser_falaises(biomes, nb_falaises=100)
+        biomes = generer_corruption(biomes, nb_zones=5)
         
         return biomes
 
@@ -554,6 +556,7 @@ def map_generate():
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         world_map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         world_map, texture_variants = add_texture_variants(world_map)
+        #world_map = generer_corruption(world_map)
 
         # 2. Falaises et passages
         print("🏔️ Détection des falaises...")
@@ -596,13 +599,6 @@ def map_generate():
         print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
-
-    # Export des variables (pour utilisation dans le jeu)
-    if 'cliff_edges' not in locals():
-        cliff_edges = []
-    # 3. Créer les passages
-    print("🚪 Création des passages...")
-    
     
     # Filtrer cliff_edges pour enlever les passages
     cliff_edges = []
