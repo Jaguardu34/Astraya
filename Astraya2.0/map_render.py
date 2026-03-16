@@ -15,7 +15,7 @@ class Minimap():
         self.sprites_to_show = sprites_to_show
         self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
-        self.minimap_image = pygame.image.load(render_minimap.minimap_pathhttps://github.com/Jaguardu34/Astraya)
+        self.minimap_image = pygame.image.load(render_minimap.minimap_path)
 
     def get_minimap_croped(self, tile_cx: int, tile_cy: int) -> pygame.Surface:
         src_x = tile_cx - self.zoom // 2
