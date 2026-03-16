@@ -149,7 +149,7 @@ class Game():
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
-        self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1530, 1530)
+        
         
         #quelques items :
         self.player.inventory.add_item(get_item("wood_sword"), 1)
@@ -160,13 +160,18 @@ class Game():
         self.player.inventory.add_item(get_item("bread"), 3)
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         
-        for i in range(10000):
+        
+        
+        for i in range(100000):
             x_plant=random.randint(0, 5000)
             y_plant=random.randint(0, 5000)
             if ent.veriftile(x_plant, y_plant, self.game_map) is True:
-                if self.game_map[x_plant][y_plant] in [2, 3, 4]:
+                if self.game_map[y_plant, x_plant] in [2, 3, 4]:
                     
                     self.plant_grp.add(ent.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+
+        for i in range(20):
+            self.ennemy_grp.add(ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
@@ -176,7 +181,6 @@ class Game():
             
         self.entity_grp.add(self.player)
         self.entity_grp.add(self.grotte)
-        self.ennemy_grp.add(self.ennemy)
 
     #changer de map 
     def change_map(self):
