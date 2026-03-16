@@ -1,3 +1,8 @@
+import entity as ent
+import texture
+import settings
+import pygame
+
 class Slot:
     def __init__(self):
         self.item = None
@@ -36,7 +41,6 @@ class Inventory:
         return slot.item if not slot.is_empty() else None
 
     def add_item(self, item, quantity=1):
-        """Ajoute un item. Retourne la quantité qui n'a pas pu être ajoutée."""
         remaining = quantity
 
         # 1. Remplir les slots existants avec le même item
@@ -55,10 +59,11 @@ class Inventory:
                 break
             if slot.is_empty():
                 slot.item = item
-                slot.quantity = min(item.max_stack, remaining)
-                remaining -= slot.quantity
+                added = min(item.max_stack, remaining)  # ← variable séparée
+                slot.quantity = added
+                remaining -= added                       # ← soustrait "added", pas "slot.quantity"
 
-        return remaining  # 0 si tout a été ajouté
+        return remaining
 
     def remove_item(self, item, quantity=1):
         """Retire un item. Retourne True si succès."""
@@ -125,18 +130,128 @@ class Inventory:
         """Drop from current hotbar slot. Returns (item, quantity) or None."""
         return self.drop_slot(self.selected_hotbar, quantity)
 
-    def try_place_selected(self, current_map, tile_x, tile_y, size):
+    def try_place_selected(self, current_map, tile_x, tile_y, block_grp, player_pos, entity_groups):
         """If selected item is a block, place it at (tile_x, tile_y). Returns True if placed."""
         from .items import ItemType
         item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        block_rect = pygame.Rect(tile_x * 32, tile_y * 32, 32, 32)
+    
+        # check joueur
+        player_rect = pygame.Rect(int(player_pos[0]), int(player_pos[1]), 32, 32)
+        if block_rect.colliderect(player_rect):
+            return False
+        
+        # check entités mobiles
+        for group in entity_groups:
+            for entity in group:
+                if hasattr(entity, 'hitbox'):
+                    for hb in entity.hitbox:
+                        if block_rect.colliderect(hb):
+                            return False
+        
         if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
             return False
-        if tile_x < 0 or tile_y < 0 or tile_x >= size or tile_y >= size:
+        map_h, map_w = current_map.shape
+        if tile_x < 0 or tile_y < 0 or tile_x >= map_w or tile_y >= map_h:
+            print("Placement hors carte")
             return False
         # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
-        current_map[tile_y, tile_x] = item.place_biome_id
+        
+        for block in block_grp:
+            if block.tile_x == tile_x and block.tile_y == tile_y:
+                return False
+        
+        if ent.veriftile(tile_x, tile_y, current_map) is not True:
+            return False
+        
+        block_grp.add(ent.Block(texture.BLOCK_TEXTURE[item.place_biome_id], current_map, item, x=tile_x, y =tile_y))
         self.remove_slot_item(self.selected_hotbar, 1)
         return True
+    
+    def can_place(self, current_map, tile_x, tile_y, block_grp, player_pos, entity_groups):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        block_rect = pygame.Rect(tile_x * 32, tile_y * 32, 32, 32)
+    
+        # check joueur
+        player_rect = pygame.Rect(int(player_pos[0]), int(player_pos[1]), 32, 32)
+        if block_rect.colliderect(player_rect):
+            return False
+        
+        # check entités mobiles
+        for group in entity_groups:
+            for entity in group:
+                if hasattr(entity, 'hitbox'):
+                    for hb in entity.hitbox:
+                        if block_rect.colliderect(hb):
+                            return False
+        
+        if item is None or getattr(item, "item_type", None) != ItemType.BLOCK:
+            return False
+        
+        map_h, map_w = current_map.shape
+        if tile_x < 0 or tile_y < 0 or tile_x >= map_w or tile_y >= map_h:
+            print("Placement hors carte")
+            return False
+        # Don't place on ocean (0) or other blocking tiles if we want walkable placement only
+        
+        for block in block_grp:
+            if block.tile_x == tile_x and block.tile_y == tile_y:
+                return False
+        
+        if ent.veriftile(tile_x, tile_y, current_map) is not True:
+            return False
+        
+        return True
+    
+    def can_break(self, current_map, tile_x, tile_y, block_grp, player_pos):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        for block in block_grp:
+            pos_block_x, pos_block_y = block.tile_x, block.tile_y
+            if pos_block_x == tile_x and pos_block_y == tile_y:
+                return True
+        
+        return False
+    
+    def try_break(self, current_map, tile_x, tile_y, block_grp, player_pos):
+        from .items import ItemType
+        item = self.selected_item
+        player_x, player_y = player_pos
+        player_tile_x, player_tile_y= player_x//32, player_y//32
+        dist = ((player_pos[0] // 32 - tile_x) ** 2 + (player_pos[1] // 32 - tile_y) ** 2) ** 0.5
+        if dist >= settings.PLAYER_PLACE_RANGE:
+            return False
+        
+        for block in block_grp:
+            pos_block_x, pos_block_y = block.tile_x, block.tile_y
+            if pos_block_x == tile_x and pos_block_y == tile_y:
+                item = block.item
+                block_grp.remove(block)
+                block.kill()
+                self.add_item(item, 1)
+                return True
+        
+        return False
+    
 
     def __repr__(self): # print(repr(player.inventory)) → affiche le contenu de l'inventaire ; (tu te doute qu'on ne peut pas afficher des classes sans les représenter d'une manière lisible, du coup on fait ça)
         lines = [f"=== Inventaire ==="]

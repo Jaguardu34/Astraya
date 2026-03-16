@@ -33,15 +33,24 @@ def create_texture_mirrored(posx, posy, nbr):
     return tab_return
         
 
-def create_texture_with_rotation(posx, posy, nbr):
+def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=True):
+    """
+    posx, posy : en pixel
+    cols, rows : nombre de colonnes et de lignes de textures à charger
+    chance     : nombre de fois que chaque texture est dupliquée (augmente la probabilité d'apparition)
+    rotation   : si True, génère aussi les rotations 90, 180, 270
+    """
     tab = []
-    for i in range(nbr):
-        tab.append(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 90))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), 180))
-        tab.append(pygame.transform.rotate(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32), -90))
+    for row in range(rows):
+        for col in range(cols):
+            sprite = get_sprite(sprite_sheet, posx + (col * 32), posy + (row * 32), 32, 32)
+            
+            tab.extend([sprite] * chance)
+            if rotation:
+                tab.extend([pygame.transform.rotate(sprite, 90)]  * chance)
+                tab.extend([pygame.transform.rotate(sprite, 180)] * chance)
+                tab.extend([pygame.transform.rotate(sprite, -90)] * chance)
 
-        
     return tab
 
 def create_single_texture_by_coords(x, y, w, h):
@@ -53,9 +62,12 @@ def create_single_texture_by_coords(x, y, w, h):
     
 
 
-texture_herbe = create_texture_with_rotation(0, 0, 4)
-texture_sand = create_texture_with_rotation(0, 64, 4)
-texture_wet_wand = create_texture_with_rotation(128, 64, 4)
+texture_herbe = create_texture_with_rotation(posx =128, posy = 0, cols=8, rotation=False)
+texture_sand = create_texture_with_rotation(posx =0, posy = 64, cols=4)
+texture_wet_wand = create_texture_with_rotation(posx =128, posy = 64, cols=4)
+texture_forest = create_texture_with_rotation(posx =0, posy = 384, cols=7, rows=4, rotation=False, chance=3) 
+#+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
+
 
 texture_chicken = create_texture_mirrored(0, 48, 3)
 texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
@@ -68,7 +80,7 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
                 ]
 
-
+texture_swipe_weapon = create_texture_basic(0, 544, 1)
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
 
@@ -81,26 +93,6 @@ texture_chicken = []
 for i in range(len(texture_chicken_base)):
     texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))
 
-texture_cliff_base = []
-for i in range(12):
-    texture_cliff_base.append(get_sprite(sprite_sheet, i * 32, 160, 32, 32))
-
-# Fonction pour mapper direction → texture
-def get_cliff_texture_index(x, y, direction):
-    """Retourne l'index de texture selon la direction."""
-    seed = (x * 7 + y * 13) % 100  # Déterministe selon position
-    
-    if direction == "S":
-        return 1 + (seed % 4)  # Indices 1-4
-    elif direction == "E":
-        return 5 + (seed % 4)  # Indices 5-8
-    elif direction == "N":
-        return 9 + (seed % 3)  # Indices 9-11
-    elif direction == "W":
-        return 0  # Coin SO
-    return 0
-
-# CHANGEMENT : Utilisation d'IDs numériques au lieu de strings pour correspondre à map.BIOME_IDS
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
     1: (237, 201, 120),   # sand
@@ -117,17 +109,24 @@ TILE_COLORS = {
     13: (120, 120, 120),  # cave_normal - ID 13 au lieu de "cave_normal"
     14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
     15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
+    71: (133, 34, 155),     # donjon_collide - ID 71 au lieu de "donjon_collide"
 }
 
 # CHANGEMENT : IDs numériques pour les textures
 TILE_TEXTURE = {
     2: texture_herbe,  # plains - ID 2 au lieu de "plains"
-    1: texture_sand,    # beach - ID 1 au lieu de "beach"
+    1: texture_sand,   # beach - ID 1 au lieu de "beach"
+    4 : texture_forest, # jungle - ID 3 au lieu de "jungle"
     101: texture_wet_wand,
-    "cliff" : texture_cliff_base
 }
 
-texture_ocean = create_texture_basic(0, 128, 4)  
+BLOCK_TEXTURE ={
+    2: texture_herbe,  # plains - ID 2 au lieu de "plains"
+    1: texture_sand,    # beach - ID 1 au lieu de "beach"
+    101: texture_wet_wand
+}
+
+texture_ocean = create_texture_basic(192, 128, 4)  
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé

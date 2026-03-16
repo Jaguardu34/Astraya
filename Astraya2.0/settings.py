@@ -2,6 +2,9 @@ import os
 import pygame
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+PLAYER_PLACE_RANGE = 5
 #keys
 KEY_UP = pygame.K_z
 KEY_DOWN = pygame.K_s
@@ -9,6 +12,8 @@ KEY_LEFT = pygame.K_q
 KEY_RIGHT = pygame.K_d
 KEY_MAP = pygame.K_TAB
 KEY_MENU = pygame.K_ESCAPE
+KEY_INVENTORY = pygame.K_e
+KEY_DROP = pygame.K_g
 
 WIDTH    = 1280	
 HEIGTH   = 720
@@ -50,6 +55,7 @@ BIOME_IDS = {
     "mountains": 5,
     "snow_peak": 6,
     "collide": 7,
+    "donjon_collide": 71,
     "cliff_N":701,
     "cliff_E":702,
     "cliff_S":703,
@@ -66,6 +72,7 @@ BIOME_IDS = {
     "passage_cliff_S_2":714,
     "passage_cliff_O_1":715,
     "passage_cliff_O_2":716,
+    "corrupted": 800,
 
     # Grottes
     "rock": 10,
@@ -77,7 +84,7 @@ BIOME_IDS = {
     "air": 16
 }
 
-COLLIDE_TILES = [0, 7,70, 10, 15]  # ocean, mountains, snow_peak, collide
+COLLIDE_TILES = [0, 7,70,71, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
 TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')

@@ -1,8 +1,9 @@
 import pygame
-from settings import *
+import settings
 from texture import *
 import world_data
-
+from classes.items import ItemType
+import render_minimap
 
 
 class Minimap():
@@ -13,7 +14,7 @@ class Minimap():
         self.sprites_to_show = sprites_to_show
         self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
-        self.minimap_image = pygame.image.load(TEXTURE_MINIMAP_PATH)
+        self.minimap_image = pygame.image.load(render_minimap.minimap_path)
 
     def get_minimap_croped(self, tile_cx, tile_cy):
         src_x = tile_cx - self.zoom // 2
@@ -45,84 +46,104 @@ class Map():
     def __init__(self, scale, screen, sprites_to_show):
         self.scale_x = scale[0]
         self.scale_y = scale[1]
-        self.map_cache = pygame.Surface ((self.scale_x * 32, self.scale_y  * 32))
         self.screen = screen
         self.sprites_to_show = sprites_to_show
         self.anim_timer = 0
         self.anim_frame = 0
-        self.anim_speed = 300
+        self.anim_speed = 500
+        self.map_cache = pygame.Surface((self.scale_x * 32, self.scale_y * 32))
+        self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
+        self.static_cache_cx = None
+        self.static_cache_cy = None
+        self.animated_positions = []
+        self.show_hitbox = False
 
+    def _rebuild_static_cache(self, tile_cx, tile_cy, map_to_show, cliff_edges):
+        self.static_cache.fill("blue")
+        self.animated_positions = []
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges):
-        
-        sprites_to_draw = []
-        
-        now = pygame.time.get_ticks()
-        if now - self.anim_timer >= self.anim_speed:
-            self.anim_frame = (self.anim_frame + 1) % 256  # reset avant overflow
-            self.anim_timer = now
-        
-        posx, posy = player_position  
-
-        tile_cx = int(posx // 32)
-        tile_cy = int(posy // 32)
-
-        offset_x = (posx % 32)
-        offset_y = (posy % 32)
-
-        self.map_cache.fill("blue")
-        for i in range(self.scale_x + 1):
-            for j in range(self.scale_y + 1):
-                map_i = tile_cx - self.scale_x//2 + i
-                map_j = tile_cy - self.scale_y//2 + j
-
+        for i in range(self.scale_x + 2):
+            for j in range(self.scale_y + 2):
+                map_i = tile_cx - self.scale_x // 2 - 1 + i
+                map_j = tile_cy - self.scale_y // 2 - 1 + j
                 draw_x = i * 32
                 draw_y = j * 32
 
-                
-                # CHANGEMENT : map.SIZE au lieu de len(map_to_show)
-                if map_i < 0 or map_j < 0 or map_j >= SIZE or map_i >= SIZE:  # Utilise map.SIZE
-                    pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 32, 32))
-                else:
-                    # CHANGEMENT : Accès NumPy [y, x] et récupération de l'ID biome + variant
-                    biome_id = map_to_show[map_j, map_i]  # NumPy : virgule au lieu de double crochet
-                    if biome_id in TILE_ANIMATED:
-                        frames = TILE_ANIMATED[biome_id]
-                        offset = world_data.texture_variants[map_j, map_i] 
-                        frame = (int(self.anim_frame) + offset) % len(frames)
-                        self.map_cache.blit(frames[frame], (draw_x, draw_y))
-                    # CHANGEMENT : Vérification de l'ID au lieu de string.startswith()
-                    elif biome_id in TILE_TEXTURE:  # Vérifie l'ID numérique (1 ou 2)
-                        # CHANGEMENT : Récupération du variant depuis map.texture_variants
-                        variant = world_data.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])  # Utilise l'array de variants
-                        self.map_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
-                        # Tile((draw_x, draw_y), TILE_TEXTURE[biome_id][variant], tile_group)
-                    elif biome_id in TILE_COLORS:  # Vérifie l'ID numérique
-                        pygame.draw.rect(self.map_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
-                    else:
-                        pygame.draw.rect(self.map_cache, "blue", (draw_x, draw_y, 32, 32))
+                if map_i < 0 or map_j < 0 or map_j >= SIZE or map_i >= SIZE:
+                    pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
+                    continue
 
-                # Y a-t-il une falaise ici ?
-                if (map_i, map_j) in cliff_edges:
-                    biome_id = map_to_show[map_j][map_i]
-                    
-                    if biome_id == BIOME_IDS["cliff"]:  # ✅ CETTE LIGNE
-                        for direction in cliff_edges[(map_i, map_j)]:
-                                    for direction in cliff_edges[(map_i, map_j)]:
-                                        texture_index = get_cliff_texture_index(map_i, map_j, direction)
-                                        self.map_cache.blit(
-                                            TILE_TEXTURE["cliff"][texture_index], 
-                                            (draw_x, draw_y)
-                                        )
+                biome_id = map_to_show[map_j, map_i]
+
+                if biome_id in TILE_ANIMATED:
+                    pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
+                    self.animated_positions.append((draw_x, draw_y, map_i, map_j, biome_id))
+                elif biome_id in TILE_TEXTURE:
+                    variant = world_data.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])
+                    self.static_cache.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
+                elif biome_id in TILE_COLORS:
+                    pygame.draw.rect(self.static_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
+                else:
+                    pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
+
+        self.static_cache_cx = tile_cx
+        self.static_cache_cy = tile_cy
+
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp, info_swipe):
+        sprites_to_draw = []
+
+        now = pygame.time.get_ticks()
+        if now - self.anim_timer >= self.anim_speed:
+            self.anim_frame = (self.anim_frame + 1) % 256
+            self.anim_timer = now
+
+        posx, posy = player_position
+        tile_cx = int(posx // 32)
+        tile_cy = int(posy // 32)
+        offset_x = int(posx % 32)
+        offset_y = int(posy % 32)
+
+        if tile_cx != self.static_cache_cx or tile_cy != self.static_cache_cy:
+            self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges)
+
+        self.map_cache.blit(self.static_cache, (-32, -32))
+
+        for (draw_x, draw_y, map_i, map_j, biome_id) in self.animated_positions:
+            frames = TILE_ANIMATED[biome_id]
+            offset = world_data.texture_variants[map_j, map_i]
+            frame = (int(self.anim_frame) + offset) % len(frames)
+            self.map_cache.blit(frames[frame], (draw_x - 32, draw_y - 32))
+
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
                 if sprite.game_map is map_to_show:
                     sprites_to_draw.append(sprite)
-                    
 
-        
         sprites_to_draw.sort(key=lambda s: s.y)
+
+        highlight = None
+        highlight_pos = None
+        tx, ty = 0, 0
+
+        if mouse_pos and selected_item is not None:
+            if getattr(selected_item, "item_type", None) == ItemType.BLOCK:
+                mouse_x, mouse_y = mouse_pos
+                tx = tile_cx - self.scale_x // 2 + int((mouse_x + offset_x - x) // 32)
+                ty = tile_cy - self.scale_y // 2 + int((mouse_y + offset_y - y) // 32)
+                
+
+        if not in_inventory and player.inventory.can_place(map_to_show, tx, ty, block_grp, player.position, entity_groups=self.sprites_to_show):
+            highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.rect(highlight, (255, 255, 255, 128), (0, 0, 32, 32), 1)
+            highlight_pos = (
+                (tx - tile_cx + self.scale_x // 2) * 32,
+                (ty - tile_cy + self.scale_y // 2) * 32
+            )
+            self.map_cache.blit(highlight, highlight_pos)
+         
+           
         
+
         for sprite in sprites_to_draw:
             if sprite is player:
                 self.map_cache.blit(
@@ -130,15 +151,35 @@ class Map():
                     (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
                 )
             else:
-                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy)
+                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
+                
+        if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
+            highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
+            pygame.draw.rect(highlight, (255, 0, 0, 128), (0, 0, 32, 32), 1)
+            highlight_pos = (
+                (tx - tile_cx + self.scale_x // 2) * 32,
+                (ty - tile_cy + self.scale_y // 2) * 32
+            )
+            self.map_cache.blit(highlight, highlight_pos)
+                
+        #debug pr afficher hitbox
+        if self.show_hitbox:
+            for sprite in sprites_to_draw:
+                if hasattr(sprite, 'hitbox'):
+                    for hb in sprite.hitbox:
+                        # convertir world coords → screen coords
+                        draw_hb_x = hb.x - (tile_cx - self.scale_x//2) * 32
+                        draw_hb_y = hb.y - (tile_cy - self.scale_y//2) * 32
+                        pygame.draw.rect(self.map_cache, (255, 0, 0), (draw_hb_x, draw_hb_y, hb.width, hb.height), 1)
+                        
+        
+                    
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
-
-        # bords sur screen
-        pygame.draw.rect(self.screen, "white", (x-32, y-32, self.scale_x*32 + 32, 32))
-        pygame.draw.rect(self.screen, "white", (x-32, y+self.scale_y*32 -32, self.scale_x*32 + 32, 32))
-        pygame.draw.rect(self.screen, "white", (x-32, y-32, 32, self.scale_x*32))
-        pygame.draw.rect(self.screen, "white", (x+self.scale_x*32 -32, y-32, 32, self.scale_x*32))
-
+            
+        pygame.draw.rect(self.screen, "white", (x - 32, y - 32, self.scale_x * 32 + 32, 32))
+        pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
+        pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
+        pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
         

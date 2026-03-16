@@ -2,7 +2,7 @@ import pygame
 import settings
 
 # Creer une quete
-class Quest():
+class Quest_PopUp():
     def __init__(self, content, color="white", font_size=24,):
         self.content = content
         self.color = color
@@ -156,9 +156,10 @@ class SettingsMenu(FullscreenMenu):
             "Gauche" : [Button("lightgray", "...", 40), False, settings.KEY_LEFT],
             "Droite" : [Button("lightgray", "...", 40), False, settings.KEY_RIGHT],
             "Map" : [Button("lightgray", "...", 40), False, settings.KEY_MAP],
-            "Menu" : [Button("lightgray", "...", 40), False, settings.KEY_MENU]
+            "Menu" : [Button("lightgray", "...", 40), False, settings.KEY_MENU],
+            "Inventaire" : [Button("lightgray", "...", 40), False, settings.KEY_INVENTORY],
+            "Drop" : [Button("lightgray", "...", 40), False, settings.KEY_DROP]
         }
-        
 
             
             
@@ -173,7 +174,7 @@ class SettingsMenu(FullscreenMenu):
         
         self.event = None
     
-    def draw(self, screen, event):
+    def draw(self, screen, event, joystick_plugged):
         self.event = event
         text_surface=""
         self.surface.fill("white")
@@ -191,6 +192,14 @@ class SettingsMenu(FullscreenMenu):
         fps_text = "FPS :"
         text_fps_surface = self.font.render(fps_text, True, "black")
         self.surface.blit(text_fps_surface, (100, self.WINDOW_SCALE[1]//2-200))
+        
+        joystick_text_surface = ""
+        if joystick_plugged:
+            joystick_text_surface = self.font.render("Manette Branchée", True, "orange")
+        else: joystick_text_surface = self.font.render("Manette Débranchée", True, "gray")
+
+        
+        self.surface.blit(joystick_text_surface, (self.WINDOW_SCALE[1]- 500, self.WINDOW_SCALE[1]//2))
         
         
         
@@ -215,7 +224,9 @@ class SettingsMenu(FullscreenMenu):
             "Gauche": "KEY_LEFT",
             "Droite": "KEY_RIGHT",
             "Map": "KEY_MAP",
-            "Menu": "KEY_MENU"
+            "Menu": "KEY_MENU",
+            "Inventaire" : "KEY_INVENTORY",
+            "Drop" : "KEY_DROP"
         }
 
         for key_name, button in self.controls.items():  # items() pas values() !
