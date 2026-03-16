@@ -1,11 +1,11 @@
 import pygame
-import entity
+from classes import (entity, items)
 import random
 import settings
 import math
 import texture
 from classes import inventory as inv
-from classes import items
+
 
 class Player(entity.Entity_That_Move_And_Has_Collision):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=60):

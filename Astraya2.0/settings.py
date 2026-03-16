@@ -14,6 +14,7 @@ KEY_MAP = pygame.K_TAB
 KEY_MENU = pygame.K_ESCAPE
 KEY_INVENTORY = pygame.K_e
 KEY_DROP = pygame.K_g
+KEY_NPC = pygame.K_a
 
 WIDTH    = 1280	
 HEIGTH   = 720
@@ -87,7 +88,7 @@ BIOME_IDS = {
 COLLIDE_TILES = [0, 7,70,71, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
-TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')
+TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png')
 TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
 
 

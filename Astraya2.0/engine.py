@@ -2,7 +2,7 @@ import os
 import pygame
 import generate_map
 import random
-import entity as ent
+from classes import (animals, objects, ennemy, entity, items, npc)
 import texture
 import settings
 import map_render
@@ -11,11 +11,10 @@ import render_minimap
 import interfaces
 import world_data
 import generate_map
-from classes import items
 from classes import player as player_class
+from classes import quest as quest_module 
 import math
-
-
+from ui import debug
 from ui import ui_inventory
 from classes.items import get_item
 
@@ -92,6 +91,8 @@ class Game():
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.in_menu = False
+
+        self.quest_manager = quest_module.QuestManager()
         self.quest = interfaces.Quest_PopUp("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
@@ -113,6 +114,7 @@ class Game():
         
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
 
+
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
 
@@ -133,6 +135,8 @@ class Game():
         self.ennemy_grp = pygame.sprite.Group()
         self.dropped_grp = pygame.sprite.Group()
         self.block_grp = pygame.sprite.Group()
+        self.plant_grp = pygame.sprite.Group()
+        self.npc_grp = pygame.sprite.Group()
         
         game_map = world_data.world_map
         alt = world_data.altitude_map
@@ -140,12 +144,17 @@ class Game():
         if game_map is None or alt is None:
             return
         
+        
+            
+        
         self.game_map = game_map     
         self.current_map = self.game_map
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
-        self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
-        self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1530, 1530)
+        self.entity_grp.add(self.player)
+        self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
+        self.npc_grp.add(npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512))
+        
         
         #quelques items :
         self.player.inventory.add_item(get_item("wood_sword"), 1)
@@ -155,16 +164,26 @@ class Game():
         self.player.inventory.add_item(get_item("water_block"), 12)
         self.player.inventory.add_item(get_item("bread"), 3)
         self.player.inventory.add_item(get_item("wood_sword"), 1)
+        
+        
+        
+        for i in range(100000):
+            x_plant=random.randint(0, 5000)
+            y_plant=random.randint(0, 5000)
+            if entity.veriftile(x_plant, y_plant, self.game_map) is True:
+                if self.game_map[y_plant, x_plant] in [2, 3, 4]:
+                    
+                    self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+
+        for i in range(20):
+            self.ennemy_grp.add(ennemy.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
             y=random.randint(1300, 1600)
-            if ent.veriftile(x, y, self.game_map) is True:
-                self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
+            if entity.veriftile(x, y, self.game_map) is True:
+                self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
             
-        self.entity_grp.add(self.player)
-        self.entity_grp.add(self.grotte)
-        self.ennemy_grp.add(self.ennemy)
 
     #changer de map 
     def change_map(self):
@@ -181,8 +200,8 @@ class Game():
     #afficher les fps et coord
     def draw_infos(self, x, y, pos):
         fps = self.clock.get_fps()
-        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//32}, y: {int(pos[1])//32})", True, "red")
-        text_fps = self.font_to_write.render(f"FPS : {fps:.2f}", True, "red")
+        text = self.font_to_write.render(f"Coordinates: (x: {int(pos[0])//32}, y: {int(pos[1])//32})", True, "black")
+        text_fps = self.font_to_write.render(f"FPS : {fps:.2f}", True, "black")
         pygame.display.set_caption(
             f"Astraya 2.0 - FPS : {fps:.2f}","Astraya")
         self.screen.blit(text, (x, y))
@@ -225,7 +244,7 @@ class Game():
                     result = self.player.inventory.drop_selected(1)
                 if result:
                     item, qty = result
-                    drop = ent.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
+                    drop = entity.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
                     self.dropped_grp.add(drop)
                 handled = True
 
@@ -290,6 +309,9 @@ class Game():
                 if index > 4:
                     index = 0
                 self.player.inventory.select_hotbar(index)
+                
+        for sprite in self.npc_grp:
+            sprite.update(self.game_map, self.player, event)
                 
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
@@ -366,9 +388,9 @@ class Game():
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
                 self.init_sprites()
-                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp])
-                self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
-                self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
+                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp, self.plant_grp, self.npc_grp])
+                self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
+                self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 
                 self.sprites_initialized = True
                 
@@ -377,12 +399,12 @@ class Game():
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
             for d in list(self.dropped_grp):
-                if ent.check_box_collide(self.player.hitbox, d.hitbox):
+                if entity.check_box_collide(self.player.hitbox, d.hitbox):
                     self.player.inventory.add_item(d.item, d.quantity)
                     d.kill()
 
             
-            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp])
+            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
             
             
             for sprite in self.entity_grp:
@@ -397,14 +419,14 @@ class Game():
             for sprite in self.projectile_grp:
                 sprite.update(self.current_map)
                 nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
-                for entity in nearby:
-                    if entity is sprite: continue
-                    if entity is self.player: continue
-                    if entity is sprite.launcher: continue
-                    if not hasattr(entity, 'hitbox'): continue
-                    if ent.check_box_collide(sprite.hitbox, entity.hitbox):
-                        if hasattr(entity, 'life_point'):
-                            entity.life_point -= 1
+                for ent in nearby:
+                    if ent is sprite: continue
+                    if ent is self.player: continue
+                    if ent is sprite.launcher: continue
+                    if not hasattr(ent, 'hitbox'): continue
+                    if entity.check_box_collide(sprite.hitbox, ent.hitbox):
+                        if hasattr(ent, 'life_point'):
+                            ent.life_point -= 1
                         sprite.kill()
                         break
 
@@ -415,17 +437,18 @@ class Game():
                 self.player.input(keys, self.dt, self.joystick)
 
             for sprite in self.entity_grp:
-                if isinstance(sprite, ent.Grotte):
+                if isinstance(sprite, objects.Grotte):
                     if sprite.collides_with(self.player.hitbox):
                         self.change_map()
+                        
             
-            # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
+            
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp, self.info_swipe)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 
-            self.draw_infos(16, 16, self.player.position)
+            self.draw_infos(20, 20, self.player.position)
             
             self.quest.draw(self.WINDOW_SCALE[0] - 10, 10, self.screen)
 
@@ -448,11 +471,13 @@ class Game():
                     self.panel_selected_slot,
                 )
                 
+            
 
             
             if self.info_swipe[0]:
                 texture_swipe_rotate = pygame.transform.rotate(texture.texture_swipe_weapon[0], self.info_swipe[1]+90)
                 self.screen.blit(texture_swipe_rotate, (self.main_map.scale_x*32//2+8, self.main_map.scale_y*32//2+8))
-        
+                
+            debug.draw(self.screen)
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000

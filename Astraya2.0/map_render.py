@@ -4,10 +4,11 @@ from texture import *
 import world_data
 from classes.items import ItemType
 import render_minimap
+from classes import (entity, objects)
 
 
 class Minimap():
-    def __init__(self, scale, zoom, screen, sprites_to_show):
+    def __init__(self, scale: int, zoom: int, screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale = scale        
         self.zoom = zoom         
         self.screen = screen
@@ -16,7 +17,7 @@ class Minimap():
         self.distance_de_vue = 250
         self.minimap_image = pygame.image.load(render_minimap.minimap_path)
 
-    def get_minimap_croped(self, tile_cx, tile_cy):
+    def get_minimap_croped(self, tile_cx: int, tile_cy: int) -> pygame.Surface:
         src_x = tile_cx - self.zoom // 2
         src_y = tile_cy - self.zoom // 2
         minimap_croped = pygame.Surface((self.zoom, self.zoom), pygame.SRCALPHA)
@@ -24,7 +25,7 @@ class Minimap():
         minimap_croped_upscaled = pygame.transform.scale(minimap_croped, (self.scale, self.scale))
         return minimap_croped_upscaled
 
-    def draw(self, x, y, player_position, map_to_show):
+    def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show) -> None:
         posx, posy = player_position
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
@@ -43,7 +44,7 @@ class Minimap():
         self.screen.blit(self.minimap_surface, (x + 10, y + 10))
 
 class Map():
-    def __init__(self, scale, screen, sprites_to_show):
+    def __init__(self, scale: tuple[int, int], screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale_x = scale[0]
         self.scale_y = scale[1]
         self.screen = screen
@@ -55,10 +56,10 @@ class Map():
         self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
         self.static_cache_cx = None
         self.static_cache_cy = None
-        self.animated_positions = []
+        self.animated_positions: list[tuple[int, int, int, int, int]] = []
         self.show_hitbox = False
 
-    def _rebuild_static_cache(self, tile_cx, tile_cy, map_to_show, cliff_edges):
+    def _rebuild_static_cache(self, tile_cx: int, tile_cy: int, map_to_show, cliff_edges: list) -> None:
         self.static_cache.fill("blue")
         self.animated_positions = []
 
@@ -88,9 +89,17 @@ class Map():
 
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
+        
+        for sprite_group in self.sprites_to_show:
+            for sprite in sprite_group:
+                if isinstance(sprite, objects.Plant) and sprite.game_map is map_to_show:
+                    draw_x = sprite.x - (tile_cx - self.scale_x // 2 - 1) * 32
+                    draw_y = sprite.y - (tile_cy - self.scale_y // 2 - 1) * 32
+                    if -32 <= draw_x < (self.scale_x + 2) * 32 and -32 <= draw_y < (self.scale_y + 2) * 32:
+                        self.static_cache.blit(sprite.sprite[sprite.texture_index], (draw_x, draw_y))
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp, info_swipe):
-        sprites_to_draw = []
+    def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show, player, cliff_edges: list, mouse_pos: tuple[int, int] | None, selected_item, in_inventory: bool, block_grp) -> None:
+        sprites_to_draw: list = []
 
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
@@ -114,15 +123,17 @@ class Map():
             frame = (int(self.anim_frame) + offset) % len(frames)
             self.map_cache.blit(frames[frame], (draw_x - 32, draw_y - 32))
 
+
+                    
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if sprite.game_map is map_to_show:
+                if sprite.game_map is map_to_show and not isinstance(sprite, objects.Plant):
                     sprites_to_draw.append(sprite)
 
         sprites_to_draw.sort(key=lambda s: s.y)
 
         highlight = None
-        highlight_pos = None
+        highlight_pos: tuple[int, int] | None = None
         tx, ty = 0, 0
 
         if mouse_pos and selected_item is not None:
@@ -142,7 +153,6 @@ class Map():
             self.map_cache.blit(highlight, highlight_pos)
          
            
-        
 
         for sprite in sprites_to_draw:
             if sprite is player:
@@ -151,7 +161,7 @@ class Map():
                     (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
                 )
             else:
-                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
+                sprite.draw(self.scale_x, self.scale_y, posx, posy, self.map_cache)
                 
         if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
             highlight = pygame.Surface((32, 32), pygame.SRCALPHA)
@@ -173,7 +183,6 @@ class Map():
                         pygame.draw.rect(self.map_cache, (255, 0, 0), (draw_hb_x, draw_hb_y, hb.width, hb.height), 1)
                         
         
-                    
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
@@ -182,4 +191,3 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
         pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
-        

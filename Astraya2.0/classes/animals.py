@@ -1,70 +1,119 @@
+import random
+from classes import entity
 import pygame
-from .entity import Entity
-import engine
 
-#à modifier
-
-class Chicken(Entity):
-    def __init__(self, pos=(1500, 1500)):
-        super().__init__(pos, groups=None)
-        self.speed = 10
+class Animal(entity.Entity_That_Move_And_Has_Collision):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
+        super().__init__(sprite, game_map, altitude_map, x, y)
         self.last_animation = 0
-        self.emoting_state = False
+        self.state = "walking"
         self.emoting_start = 0
-        self.last_emoting = 0
-        self.emoting_duration = 0
-        self.last_walking_animation = 0
+        self.speed = speed
         self.cible_x = 0
         self.cible_y = 0
+        self.last_walking_animation = 0
+        self.anim_change_frame = random.randint(1000, 3000)
+        self.emote_duration = random.randint(5000, 8000)
+        self.blocked_move = 0
         self.random_cible()
+        self.has_life = True
+        self.life_point = 3
 
     def random_cible(self):
-        self.cible_x = random.randint(int(self.x - 50), int(self.x + 50))
-        self.cible_y = random.randint(int(self.y - 50), int(self.y + 50))
+        for _ in range(20):
+            cx = random.randint(int(self.x - 100), int(self.x + 100))
+            cy = random.randint(int(self.y - 100), int(self.y + 100))
+            tile_x = int(cx // 32)
+            tile_y = int(cy // 32)
+            if entity.veriftile(tile_x, tile_y, self.actual_map, self.altitude_map, self.altitude) is True:
+                self.cible_x = cx
+                self.cible_y = cy
+                return
+        self.cible_x = self.x
+        self.cible_y = self.y
 
-    def _on_valid_move(self, new_x, new_y):
-        if not any(engine.check_collision_entites(new_x, new_y, p.x, p.y) for p in engine.tab_poulet if p is not self):
-            if not engine.check_collision_entites(new_x, new_y, engine.player.x, engine.player.y):
-                self.x = new_x
-                self.y = new_y
-
-    def update(self, dt):
-        self.animate()
+    def update(self, dt, chunk_grid, actual_map):
         now = pygame.time.get_ticks()
 
-        if self.emoting_state:
-            if now - self.last_emoting >= self.emoting_duration:
-                self.emoting_state = False
-        else:
+        if self.state == "walking":
             dist_x = self.cible_x - self.x
             dist_y = self.cible_y - self.y
-            dist = (dist_x ** 2 + dist_y ** 2) ** 0.5
+            dist = (dist_x**2 + dist_y**2) ** 0.5
+
+            if dist > 200:
+                self.random_cible()
 
             if dist > 1:
-                self._walk(dist_x, dist_y, dist, dt)
+                dx = (dist_x / dist) * self.speed * dt
+                dy = (dist_y / dist) * self.speed * dt
+                prev_x, prev_y = self.x, self.y
+                self.move(dx, dy)
+                self.check_blocked(dx, dy, prev_x, prev_y)
+                self.animate_on_move(dx, dy, now)
             else:
                 self.random_cible()
-                self.emoting_state = True
+                self.anim_change_frame = random.randint(1000, 3000)
+                self.emote_duration = random.randint(5000, 8000)
+                self.state = "emoting"
                 self.emoting_start = now
-                self.last_emoting = now
-                self.emoting_duration = random.randint(5000, 8000)
 
-    def _walk(self, dist_x, dist_y, dist, dt):
-        now = pygame.time.get_ticks()
-        dx = (dist_x / dist) * self.speed * dt
-        dy = (dist_y / dist) * self.speed * dt
-        self.move(dx, dy)
+        elif self.state == "emoting":
+            if now - self.emoting_start >= self.emote_duration:
+                self.state = "walking"
+            self.animate_action(now)
 
+        super().update(chunk_grid, actual_map)
+
+        if self.life_point <= 0:
+            self.kill()
+            return
+
+    def check_blocked(self, dx, dy, prev_x, prev_y):
+        real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
+        expected_dist = (dx**2 + dy**2) ** 0.5
+        if expected_dist < 0.1:
+            return
+        if real_dist < expected_dist * 0.3:
+            self.blocked_move += 1
+        else:
+            self.blocked_move = 0
+        if self.blocked_move >= 20:
+            self.cible_x = self.x + random.randint(-100, 100)
+            self.cible_y = self.y + random.randint(-100, 100)
+            self.blocked_move = 0
+
+    def animate_action(self, now):
+        pass
+
+    def animate_on_move(self, dx, dy, now):
+        pass
+
+
+class Chicken(Animal):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=4):
+        super().__init__(sprite, game_map, altitude_map, x, y, speed)
+        self.show_on_minimap = True
+
+    def animate_action(self, now):
+        if self.state != "emoting":
+            return
+        if now - self.last_animation >= self.anim_change_frame:
+            if self.texture_index == 0:
+                self.texture_index = 2
+            else:
+                self.texture_index = 0
+            self.last_animation = now
+
+    def animate_on_move(self, dx, dy, now):
         if now - self.last_walking_animation >= 500:
             if dx > 0:
-                self.texture_index = 1 if self.texture_index == 0 else 0
+                if self.texture_index != 1:
+                    self.texture_index = 1
+                else:
+                    self.texture_index = 0
             elif dx < 0:
-                self.texture_index = 7 if self.texture_index == 6 else 6
+                if self.texture_index != 4:
+                    self.texture_index = 4
+                else:
+                    self.texture_index = 3
             self.last_walking_animation = now
-
-    def animate(self):
-        now = pygame.time.get_ticks()
-        if self.emoting_state:
-            if now - self.last_animation >= self.emoting_duration // 2:
-                self.texture_index = 3 if self.texture_index == 0 else 0
-                self.last_animation = now
