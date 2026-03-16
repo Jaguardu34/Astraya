@@ -67,6 +67,8 @@ texture_sand = create_texture_basic(192, 0, 4)
 texture_wet_wand = create_texture_basic(384, 0 ,4)
 texture_forest = create_texture_basic(0, 0, 1) 
 
+texture_old_npc = create_texture_basic(0, 320, 1)
+
 texture_plant = create_texture_basic(0, 64, 9)
 #+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
 

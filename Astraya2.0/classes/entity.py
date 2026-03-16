@@ -89,7 +89,7 @@ class Entity(pygame.sprite.Sprite):
         for i in range(len(self.sprite)):
             self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
 
-    def draw(self, scalex, scaley, screen, posx, posy, surface):
+    def draw(self, scalex, scaley, posx, posy, surface):
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
         px = (self.x - (tile_cx - scalex//2) * 32)

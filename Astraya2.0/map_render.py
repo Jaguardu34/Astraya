@@ -161,7 +161,7 @@ class Map():
                     (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
                 )
             else:
-                sprite.draw(self.scale_x, self.scale_y, self.map_cache, posx, posy, self.map_cache)
+                sprite.draw(self.scale_x, self.scale_y, posx, posy, self.map_cache)
                 
         if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
             highlight = pygame.Surface((32, 32), pygame.SRCALPHA)

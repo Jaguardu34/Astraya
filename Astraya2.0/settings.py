@@ -14,6 +14,7 @@ KEY_MAP = pygame.K_TAB
 KEY_MENU = pygame.K_ESCAPE
 KEY_INVENTORY = pygame.K_e
 KEY_DROP = pygame.K_g
+KEY_NPC = pygame.K_a
 
 WIDTH    = 1280	
 HEIGTH   = 720
