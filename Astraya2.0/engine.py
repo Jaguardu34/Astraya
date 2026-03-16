@@ -13,6 +13,7 @@ import world_data
 import generate_map
 from classes import items
 from classes import player as player_class
+from classes import quest as quest_module 
 import math
 
 
@@ -92,6 +93,8 @@ class Game():
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.in_menu = False
+
+        self.quest_manager = quest_module.QuestManager()
         self.quest = interfaces.Quest_PopUp("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
@@ -419,7 +422,6 @@ class Game():
                     if sprite.collides_with(self.player.hitbox):
                         self.change_map()
             
-            # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
             self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp, self.info_swipe)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
