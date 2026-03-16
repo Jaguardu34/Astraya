@@ -133,12 +133,16 @@ class Game():
         self.ennemy_grp = pygame.sprite.Group()
         self.dropped_grp = pygame.sprite.Group()
         self.block_grp = pygame.sprite.Group()
+        self.plant_grp = pygame.sprite.Group()
         
         game_map = world_data.world_map
         alt = world_data.altitude_map
         
         if game_map is None or alt is None:
             return
+        
+        
+            
         
         self.game_map = game_map     
         self.current_map = self.game_map
@@ -155,6 +159,14 @@ class Game():
         self.player.inventory.add_item(get_item("water_block"), 12)
         self.player.inventory.add_item(get_item("bread"), 3)
         self.player.inventory.add_item(get_item("wood_sword"), 1)
+        
+        for i in range(10000):
+            x_plant=random.randint(0, 5000)
+            y_plant=random.randint(0, 5000)
+            if ent.veriftile(x_plant, y_plant, self.game_map) is True:
+                if self.game_map[x_plant][y_plant] in [2, 3, 4]:
+                    
+                    self.plant_grp.add(ent.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
 
         for i in range(100):
             x=random.randint(1300, 1600)
@@ -366,7 +378,7 @@ class Game():
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
                 self.init_sprites()
-                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp])
+                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp, self.plant_grp])
                 self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
                 
@@ -421,7 +433,7 @@ class Game():
             
             # CHANGEMENT : Utilisation de map.cave au lieu de map.cave_biomes
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp, self.info_swipe)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 

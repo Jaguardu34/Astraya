@@ -87,7 +87,7 @@ BIOME_IDS = {
 COLLIDE_TILES = [0, 7,70,71, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
-TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astrayatextures.png')
+TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png')
 TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
 
 

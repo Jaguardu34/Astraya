@@ -361,6 +361,12 @@ class Block(Object):
         self.has_hitbox = True
         self.has_life = False
 
+class Plant(Object):
+    def __init__(self, sprite, game_map, nbr_texture, altitude_map=None, x=1500, y=1500, speed=10):
+        super().__init__(sprite, game_map, altitude_map, x, y, speed)
+        self.has_hitbox = False
+        self.has_life = False
+        self.texture_index = random.randint(0, nbr_texture)
 
 class Projectile(Entity):
     def __init__(self, sprite, game_map, launcher, direction=90, speed=10, altitude_map=None, x=0, y=0):
@@ -468,3 +474,4 @@ class DroppedItem(pygame.sprite.Sprite):
         self.actual_map = actual_map
         self.hitbox[0].x = self.x - 12
         self.hitbox[0].y = self.y - 12
+        
