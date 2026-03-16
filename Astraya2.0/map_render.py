@@ -8,16 +8,16 @@ import entity
 
 
 class Minimap():
-    def __init__(self, scale, zoom, screen, sprites_to_show):
+    def __init__(self, scale: int, zoom: int, screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale = scale        
         self.zoom = zoom         
         self.screen = screen
         self.sprites_to_show = sprites_to_show
         self.minimap_surface = pygame.Surface((self.scale, self.scale))
         self.distance_de_vue = 250
-        self.minimap_image = pygame.image.load(render_minimap.minimap_path)
+        self.minimap_image = pygame.image.load(render_minimap.minimap_pathhttps://github.com/Jaguardu34/Astraya)
 
-    def get_minimap_croped(self, tile_cx, tile_cy):
+    def get_minimap_croped(self, tile_cx: int, tile_cy: int) -> pygame.Surface:
         src_x = tile_cx - self.zoom // 2
         src_y = tile_cy - self.zoom // 2
         minimap_croped = pygame.Surface((self.zoom, self.zoom), pygame.SRCALPHA)
@@ -25,7 +25,7 @@ class Minimap():
         minimap_croped_upscaled = pygame.transform.scale(minimap_croped, (self.scale, self.scale))
         return minimap_croped_upscaled
 
-    def draw(self, x, y, player_position, map_to_show):
+    def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show) -> None:
         posx, posy = player_position
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
@@ -44,7 +44,7 @@ class Minimap():
         self.screen.blit(self.minimap_surface, (x + 10, y + 10))
 
 class Map():
-    def __init__(self, scale, screen, sprites_to_show):
+    def __init__(self, scale: tuple[int, int], screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale_x = scale[0]
         self.scale_y = scale[1]
         self.screen = screen
@@ -56,10 +56,10 @@ class Map():
         self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
         self.static_cache_cx = None
         self.static_cache_cy = None
-        self.animated_positions = []
+        self.animated_positions: list[tuple[int, int, int, int, int]] = []
         self.show_hitbox = False
 
-    def _rebuild_static_cache(self, tile_cx, tile_cy, map_to_show, cliff_edges):
+    def _rebuild_static_cache(self, tile_cx: int, tile_cy: int, map_to_show, cliff_edges: list) -> None:
         self.static_cache.fill("blue")
         self.animated_positions = []
 
@@ -98,8 +98,8 @@ class Map():
                     if -32 <= draw_x < (self.scale_x + 2) * 32 and -32 <= draw_y < (self.scale_y + 2) * 32:
                         self.static_cache.blit(sprite.sprite[sprite.texture_index], (draw_x, draw_y))
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp):
-        sprites_to_draw = []
+    def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show, player, cliff_edges: list, mouse_pos: tuple[int, int] | None, selected_item, in_inventory: bool, block_grp) -> None:
+        sprites_to_draw: list = []
 
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
@@ -133,7 +133,7 @@ class Map():
         sprites_to_draw.sort(key=lambda s: s.y)
 
         highlight = None
-        highlight_pos = None
+        highlight_pos: tuple[int, int] | None = None
         tx, ty = 0, 0
 
         if mouse_pos and selected_item is not None:
@@ -183,7 +183,6 @@ class Map():
                         pygame.draw.rect(self.map_cache, (255, 0, 0), (draw_hb_x, draw_hb_y, hb.width, hb.height), 1)
                         
         
-                    
 
 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
@@ -192,4 +191,3 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
         pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
-        
