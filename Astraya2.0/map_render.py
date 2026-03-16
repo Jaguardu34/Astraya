@@ -4,7 +4,7 @@ from texture import *
 import world_data
 from classes.items import ItemType
 import render_minimap
-from classes import (entity, objects)
+import entity
 
 
 class Minimap():
@@ -92,7 +92,7 @@ class Map():
         
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if isinstance(sprite, objects.Plant) and sprite.game_map is map_to_show:
+                if isinstance(sprite, entity.Plant) and sprite.game_map is map_to_show:
                     draw_x = sprite.x - (tile_cx - self.scale_x // 2 - 1) * 32
                     draw_y = sprite.y - (tile_cy - self.scale_y // 2 - 1) * 32
                     if -32 <= draw_x < (self.scale_x + 2) * 32 and -32 <= draw_y < (self.scale_y + 2) * 32:
@@ -127,7 +127,7 @@ class Map():
                     
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if sprite.game_map is map_to_show and not isinstance(sprite, objects.Plant):
+                if sprite.game_map is map_to_show and not isinstance(sprite, entity.Plant):
                     sprites_to_draw.append(sprite)
 
         sprites_to_draw.sort(key=lambda s: s.y)
