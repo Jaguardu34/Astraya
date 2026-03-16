@@ -62,10 +62,12 @@ def create_single_texture_by_coords(x, y, w, h):
     
 
 
-texture_herbe = create_texture_with_rotation(posx =128, posy = 0, cols=8, rotation=False)
-texture_sand = create_texture_with_rotation(posx =0, posy = 64, cols=4)
-texture_wet_wand = create_texture_with_rotation(posx =128, posy = 64, cols=4)
-texture_forest = create_texture_with_rotation(posx =0, posy = 384, cols=7, rows=4, rotation=False, chance=3) 
+texture_herbe = create_texture_basic(96, 0, 1)
+texture_sand = create_texture_basic(192, 0, 4)
+texture_wet_wand = create_texture_basic(384, 0 ,4)
+texture_forest = create_texture_basic(0, 0, 1) 
+
+texture_plant = create_texture_basic(0, 64, 9)
 #+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
 
 
@@ -80,14 +82,14 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
                 ]
 
-texture_swipe_weapon = create_texture_basic(0, 544, 1)
+texture_swipe_weapon = create_texture_basic(0, 896, 1)
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
 
-texture_chicken_base = [get_sprite(sprite_sheet, 0, 112, 16, 16), get_sprite(sprite_sheet, 0, 96, 16, 16), get_sprite(sprite_sheet, 16, 96, 16, 16), 
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 112, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 96, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 96, 16, 16), True, False)]
+texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16), 
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 304, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 288, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False)]
 
 texture_chicken = []
 for i in range(len(texture_chicken_base)):
@@ -97,7 +99,7 @@ TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
     1: (237, 201, 120),   # sand
     2: (100, 180, 80),  
-    101: (255, 0, 0),
+    101: (237, 201, 120),
     3: (144, 238, 144),   # jungle - ID 3 au lieu de "jungle"
     4: (0, 100, 0),       # forest - ID 4 au lieu de "forest"
     5: (128, 128, 128),   # mountains - ID 5 au lieu de "mountains"
@@ -110,6 +112,7 @@ TILE_COLORS = {
     14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
     15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
     71: (133, 34, 155),     # donjon_collide - ID 71 au lieu de "donjon_collide"
+    800: (255, 0 , 0)
 }
 
 # CHANGEMENT : IDs numériques pour les textures
@@ -126,7 +129,7 @@ BLOCK_TEXTURE ={
     101: texture_wet_wand
 }
 
-texture_ocean = create_texture_basic(192, 128, 4)  
+texture_ocean = create_texture_basic(576, 0, 4)  
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé

@@ -4,6 +4,7 @@ from texture import *
 import world_data
 from classes.items import ItemType
 import render_minimap
+import entity
 
 
 class Minimap():
@@ -88,8 +89,16 @@ class Map():
 
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
+        
+        for sprite_group in self.sprites_to_show:
+            for sprite in sprite_group:
+                if isinstance(sprite, entity.Plant) and sprite.game_map is map_to_show:
+                    draw_x = sprite.x - (tile_cx - self.scale_x // 2 - 1) * 32
+                    draw_y = sprite.y - (tile_cy - self.scale_y // 2 - 1) * 32
+                    if -32 <= draw_x < (self.scale_x + 2) * 32 and -32 <= draw_y < (self.scale_y + 2) * 32:
+                        self.static_cache.blit(sprite.sprite[sprite.texture_index], (draw_x, draw_y))
 
-    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp, info_swipe):
+    def draw(self, x, y, player_position, map_to_show, player, cliff_edges, mouse_pos, selected_item, in_inventory, block_grp):
         sprites_to_draw = []
 
         now = pygame.time.get_ticks()
@@ -114,9 +123,11 @@ class Map():
             frame = (int(self.anim_frame) + offset) % len(frames)
             self.map_cache.blit(frames[frame], (draw_x - 32, draw_y - 32))
 
+
+                    
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
-                if sprite.game_map is map_to_show:
+                if sprite.game_map is map_to_show and not isinstance(sprite, entity.Plant):
                     sprites_to_draw.append(sprite)
 
         sprites_to_draw.sort(key=lambda s: s.y)
@@ -142,7 +153,6 @@ class Map():
             self.map_cache.blit(highlight, highlight_pos)
          
            
-        
 
         for sprite in sprites_to_draw:
             if sprite is player:

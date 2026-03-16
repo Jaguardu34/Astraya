@@ -136,6 +136,7 @@ class Game():
         self.ennemy_grp = pygame.sprite.Group()
         self.dropped_grp = pygame.sprite.Group()
         self.block_grp = pygame.sprite.Group()
+        self.plant_grp = pygame.sprite.Group()
         
         game_map = world_data.world_map
         alt = world_data.altitude_map
@@ -143,12 +144,15 @@ class Game():
         if game_map is None or alt is None:
             return
         
+        
+            
+        
         self.game_map = game_map     
         self.current_map = self.game_map
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
-        self.ennemy = ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1530, 1530)
+        
         
         #quelques items :
         self.player.inventory.add_item(get_item("wood_sword"), 1)
@@ -158,6 +162,19 @@ class Game():
         self.player.inventory.add_item(get_item("water_block"), 12)
         self.player.inventory.add_item(get_item("bread"), 3)
         self.player.inventory.add_item(get_item("wood_sword"), 1)
+        
+        
+        
+        for i in range(100000):
+            x_plant=random.randint(0, 5000)
+            y_plant=random.randint(0, 5000)
+            if ent.veriftile(x_plant, y_plant, self.game_map) is True:
+                if self.game_map[y_plant, x_plant] in [2, 3, 4]:
+                    
+                    self.plant_grp.add(ent.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+
+        for i in range(20):
+            self.ennemy_grp.add(ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
@@ -167,7 +184,6 @@ class Game():
             
         self.entity_grp.add(self.player)
         self.entity_grp.add(self.grotte)
-        self.ennemy_grp.add(self.ennemy)
 
     #changer de map 
     def change_map(self):
@@ -369,7 +385,7 @@ class Game():
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
                 self.init_sprites()
-                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp])
+                self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp, self.plant_grp])
                 self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp])
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp])
                 
@@ -423,7 +439,7 @@ class Game():
                         self.change_map()
             
 
-            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp, self.info_swipe)
+            self.main_map.draw(8, 8, self.player.position, self.current_map, self.player, world_data.cliff_edges, pygame.mouse.get_pos(), self.player.inventory.selected_item, self.inventory_open, self.block_grp)
             self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
 
