@@ -86,6 +86,14 @@ class Map():
                     pygame.draw.rect(self.static_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
                 else:
                     pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
+                
+                for direction, (dj, di) in {"N": (-1,0), "S": (1,0), "E": (0,1), "O": (0,-1)}.items():
+                    nj, ni = map_j + dj, map_i + di
+                    if 0 <= nj < SIZE and 0 <= ni < SIZE:
+                        if map_to_show[nj, ni] != biome_id:
+                            edge = TILE_EDGE.get((biome_id, direction))
+                            if edge:        
+                                self.static_cache.blit(edge, (draw_x, draw_y))
 
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy

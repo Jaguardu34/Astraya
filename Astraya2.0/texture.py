@@ -136,3 +136,19 @@ texture_ocean = create_texture_basic(576, 0, 4)
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé
 }
+
+cliff_plain = create_texture_with_rotation(32,0, cols=1, rows=1, rotation=True)
+cliff_forest_diagonal = create_texture_with_rotation(64,0, cols=1, rows=1, rotation=True)
+
+cliff_forest = create_texture_with_rotation(128,0, cols=1, rows=1, rotation=True)
+cliff_plain_diagonal = create_texture_with_rotation(192,0, cols=1, rows=1, rotation=True)
+
+
+TILE_EDGE = {
+    (2, "N"): cliff_plain[0],  # plains ID=2
+    (2, "S"): cliff_plain[2],
+    (2, "E"): cliff_plain[3],
+    (2, "O"): cliff_plain[1],
+
+    # etc.
+}
