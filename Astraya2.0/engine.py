@@ -2,7 +2,7 @@ import os
 import pygame
 import generate_map
 import random
-import entity as ent
+from classes import (animals, objects, ennemy, entity, items)
 import texture
 import settings
 import map_render
@@ -11,7 +11,6 @@ import render_minimap
 import interfaces
 import world_data
 import generate_map
-from classes import items
 from classes import player as player_class
 import math
 
@@ -148,7 +147,7 @@ class Game():
         self.current_map = self.game_map
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
-        self.grotte = ent.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
+        self.grotte = objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520)
         
         
         #quelques items :
@@ -165,19 +164,19 @@ class Game():
         for i in range(100000):
             x_plant=random.randint(0, 5000)
             y_plant=random.randint(0, 5000)
-            if ent.veriftile(x_plant, y_plant, self.game_map) is True:
+            if entity.veriftile(x_plant, y_plant, self.game_map) is True:
                 if self.game_map[y_plant, x_plant] in [2, 3, 4]:
                     
-                    self.plant_grp.add(ent.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+                    self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
 
         for i in range(20):
-            self.ennemy_grp.add(ent.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
+            self.ennemy_grp.add(ennemy.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
             y=random.randint(1300, 1600)
-            if ent.veriftile(x, y, self.game_map) is True:
-                self.entity_grp.add(ent.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
+            if entity.veriftile(x, y, self.game_map) is True:
+                self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
             
         self.entity_grp.add(self.player)
         self.entity_grp.add(self.grotte)
@@ -241,7 +240,7 @@ class Game():
                     result = self.player.inventory.drop_selected(1)
                 if result:
                     item, qty = result
-                    drop = ent.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
+                    drop = entity.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
                     self.dropped_grp.add(drop)
                 handled = True
 
@@ -393,7 +392,7 @@ class Game():
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
             for d in list(self.dropped_grp):
-                if ent.check_box_collide(self.player.hitbox, d.hitbox):
+                if entity.check_box_collide(self.player.hitbox, d.hitbox):
                     self.player.inventory.add_item(d.item, d.quantity)
                     d.kill()
 
@@ -418,7 +417,7 @@ class Game():
                     if entity is self.player: continue
                     if entity is sprite.launcher: continue
                     if not hasattr(entity, 'hitbox'): continue
-                    if ent.check_box_collide(sprite.hitbox, entity.hitbox):
+                    if entity.check_box_collide(sprite.hitbox, entity.hitbox):
                         if hasattr(entity, 'life_point'):
                             entity.life_point -= 1
                         sprite.kill()
@@ -431,7 +430,7 @@ class Game():
                 self.player.input(keys, self.dt, self.joystick)
 
             for sprite in self.entity_grp:
-                if isinstance(sprite, ent.Grotte):
+                if isinstance(sprite, objects.Grotte):
                     if sprite.collides_with(self.player.hitbox):
                         self.change_map()
             

@@ -1,4 +1,4 @@
-import entity as ent
+from classes import entity as ent
 import texture
 import settings
 import pygame
