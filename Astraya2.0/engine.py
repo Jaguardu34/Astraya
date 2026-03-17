@@ -76,9 +76,10 @@ class Game():
         thread.daemon = True
         thread.start()
         
-        self.info_display = pygame.display.Info()
-        self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
-        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        
+        
+        self.screen = pygame.display.set_mode((settings.WINDOW_WIDTH, settings.WINDOW_HEIGTH), pygame.RESIZABLE, pygame.OPENGL)
+        self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()
         self.clock = pygame.time.Clock()
         self.dt = 0   
         self.scale_main_map = int(self.WINDOW_SCALE[0] // 32) , int((self.WINDOW_SCALE[1] - 200) // 32)
@@ -320,7 +321,8 @@ class Game():
 
     #boucle principale
     def update(self):
-        
+
+        self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()
         
         now = pygame.time.get_ticks()
         if self.info_swipe[0]:
@@ -394,6 +396,10 @@ class Game():
                 
                 self.sprites_initialized = True
                 
+            self.main_map.resize(
+                int(self.screen.get_width() // 32),
+                int((self.screen.get_height() - 200) // 32)
+            )           
             
             
             for sprite in self.dropped_grp:
@@ -472,7 +478,6 @@ class Game():
                 )
                 
             
-
             
             if self.info_swipe[0]:
                 texture_swipe_rotate = pygame.transform.rotate(texture.texture_swipe_weapon[0], self.info_swipe[1]+90)

@@ -86,6 +86,14 @@ class Map():
                     pygame.draw.rect(self.static_cache, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
                 else:
                     pygame.draw.rect(self.static_cache, "blue", (draw_x, draw_y, 32, 32))
+                
+                for direction, (dj, di) in {"N": (-1,0), "S": (1,0), "E": (0,1), "O": (0,-1)}.items():
+                    nj, ni = map_j + dj, map_i + di
+                    if 0 <= nj < SIZE and 0 <= ni < SIZE:
+                        if map_to_show[nj, ni] != biome_id:
+                            edge = TILE_EDGE.get((biome_id, direction))
+                            if edge:        
+                                self.static_cache.blit(edge, (draw_x, draw_y))
 
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
@@ -191,3 +199,14 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
         pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
+
+    def resize(self, new_scale_x: int, new_scale_y: int) -> None:
+        if new_scale_x == self.scale_x and new_scale_y == self.scale_y:
+            return
+        self.scale_x = new_scale_x
+        self.scale_y = new_scale_y
+        self.map_cache    = pygame.Surface((self.scale_x * 32,       self.scale_y * 32))
+        self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
+        # force le rebuild du cache statique au prochain draw
+        self.static_cache_cx = None
+        self.static_cache_cy = None

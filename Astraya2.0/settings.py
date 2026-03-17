@@ -16,8 +16,8 @@ KEY_INVENTORY = pygame.K_e
 KEY_DROP = pygame.K_g
 KEY_NPC = pygame.K_a
 
-WIDTH    = 1280	
-HEIGTH   = 720
+WINDOW_WIDTH    = 1280	
+WINDOW_HEIGTH   = 720
 FPS      = 60
 TILE_SIZE = 32
 HITBOX_OFFSET = {
