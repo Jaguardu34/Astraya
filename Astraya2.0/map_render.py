@@ -199,3 +199,14 @@ class Map():
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
         pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
+
+    def resize(self, new_scale_x: int, new_scale_y: int) -> None:
+        if new_scale_x == self.scale_x and new_scale_y == self.scale_y:
+            return
+        self.scale_x = new_scale_x
+        self.scale_y = new_scale_y
+        self.map_cache    = pygame.Surface((self.scale_x * 32,       self.scale_y * 32))
+        self.static_cache = pygame.Surface(((self.scale_x + 2) * 32, (self.scale_y + 2) * 32))
+        # force le rebuild du cache statique au prochain draw
+        self.static_cache_cx = None
+        self.static_cache_cy = None
