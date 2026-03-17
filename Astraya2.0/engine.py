@@ -111,6 +111,8 @@ class Game():
         
         self.joystick = False
         
+        self.quest_init = False
+        
         
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
 
@@ -312,7 +314,7 @@ class Game():
                 self.player.inventory.select_hotbar(index)
                 
         for sprite in self.npc_grp:
-            sprite.update(self.game_map, self.player, event)
+            sprite.update(self.game_map, self.player, event, self.quest_manager)
                 
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
@@ -329,11 +331,17 @@ class Game():
                 quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
             ]
         )
+        self.quest_manager.add_quest(self.first_quest)
+        self.quest_manager.accept_quest(self.first_quest)
+        self.quest_init = True
 
     #boucle principale
     def update(self):
 
         self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()
+        
+        settings.WINDOW_HEIGTH = self.WINDOW_SCALE[1]
+        settings.WINDOW_WIDTH = self.WINDOW_SCALE[0]
         
         now = pygame.time.get_ticks()
         if self.info_swipe[0]:
@@ -406,6 +414,9 @@ class Game():
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 
                 self.sprites_initialized = True
+            
+            if not self.quest_init:
+                self.init_quest()
                 
             self.main_map.resize(
                 int(self.screen.get_width() // 32),
@@ -415,6 +426,7 @@ class Game():
             
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
+                
             for d in list(self.dropped_grp):
                 if entity.check_box_collide(self.player.hitbox, d.hitbox):
                     self.player.inventory.add_item(d.item, d.quantity)
@@ -485,7 +497,8 @@ class Game():
                     self.screen, self.player.inventory, pygame.mouse.get_pos(),
                     self.panel_selected_slot,
                 )
-                
+            
+            self.quest_manager.update(self.screen)
             
             
             if self.info_swipe[0]:

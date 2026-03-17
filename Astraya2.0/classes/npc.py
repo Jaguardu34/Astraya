@@ -1,5 +1,5 @@
 import pygame
-from classes import entity
+from classes import (entity, quest)
 from ui import debug
 import settings
 
@@ -34,20 +34,24 @@ class Npc(entity.Entity):
                     surface.blit(self.text_e_surface, (px + (32//2-self. main_font.size("E")[0]//2), py-(self. main_font.size("E")[1]+10)))
             
             if self.in_dialog:
+                
+                self.quest_manager.on_talk(self)
                 if self.toast.finished_anim():
                     surface.blit(self.text_continue_surface, (px+16+(self.toast.width//2)-self.little_font.size("Espace")[0], py-40+self.toast.height))
+                    if self.index_dialog == len(self.dialog_tab) - 1:
+                        self.has_talk_to_player = True
                 self.toast.content = self.dialog_tab[self.index_dialog]
                 self.toast.draw(px+16-(self.toast.width//2), py-40, surface)
-                if self.index_dialog == len(self.dialog_tab):
-                    self.has_talk_to_player = True
+                
                 
         else:
             self.toast.reset()
             self.in_dialog = False
             self.index_dialog = 0
         
-    def update(self, actual_map, player, event):
+    def update(self, actual_map, player, event, quest_manager):
         super().update(actual_map)
+        self.quest_manager = quest_manager
         dist_x = player.x - self.x
         dist_y = player.y - self.y
         dist = (dist_x**2 + dist_y**2) ** 0.5
