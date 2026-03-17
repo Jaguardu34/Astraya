@@ -94,7 +94,6 @@ class Game():
         self.in_menu = False
 
         self.quest_manager = quest_module.QuestManager()
-        self.quest = interfaces.Quest_PopUp("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
         self.menu = interfaces.MainMenu()
@@ -154,7 +153,8 @@ class Game():
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.entity_grp.add(self.player)
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
-        self.npc_grp.add(npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512))
+        self.old_npc = npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
+        self.npc_grp.add(self.old_npc)
         
         
         #quelques items :
@@ -318,6 +318,17 @@ class Game():
         if abs(value) < threshold:
             return 0.0
         return value
+    
+    
+    def init_quest(self):
+        self.first_quest = quest_module.Quest(
+            title="Allez voir le vieux sage",
+            content="Parlez au vieux npc",
+            type="idk",
+            objectives=[
+                quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
+            ]
+        )
 
     #boucle principale
     def update(self):
@@ -455,8 +466,6 @@ class Game():
 
 
             self.draw_infos(20, 20, self.player.position)
-            
-            self.quest.draw(self.WINDOW_SCALE[0] - 10, 10, self.screen)
 
 
             if keys[settings.KEY_MAP]:

@@ -20,6 +20,7 @@ class Npc(entity.Entity):
         self.has_hitbox = True
         self.in_dialog = False
         self.toast = Npc_Dialog_Toast(dialog_tab[self.index_dialog])
+        self.has_talk_to_player = False
         
     def draw(self, scalex, scaley, posx, posy, surface):
         super().draw(scalex, scaley, posx, posy, surface)
@@ -37,6 +38,8 @@ class Npc(entity.Entity):
                     surface.blit(self.text_continue_surface, (px+16+(self.toast.width//2)-self.little_font.size("Espace")[0], py-40+self.toast.height))
                 self.toast.content = self.dialog_tab[self.index_dialog]
                 self.toast.draw(px+16-(self.toast.width//2), py-40, surface)
+                if self.index_dialog == len(self.dialog_tab):
+                    self.has_talk_to_player = True
                 
         else:
             self.toast.reset()
@@ -115,3 +118,4 @@ class Npc_Dialog_Toast():
             return True
         return False
     
+
