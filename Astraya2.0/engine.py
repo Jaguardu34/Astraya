@@ -398,7 +398,7 @@ class Game():
                 
             self.main_map.resize(
                 int(self.screen.get_width() // 32),
-                int((self.screen.get_height() - 200) // 32)
+                int((self.screen.get_height()) // 32)
             )           
             
             
