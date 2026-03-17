@@ -61,6 +61,10 @@ class FullscreenMenu():
         self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
         self.surface = pygame.Surface(self.WINDOW_SCALE)
     
+    def draw(self, window_scale):
+        self.WINDOW_SCALE = window_scale
+        self.surface = pygame.Surface(self.WINDOW_SCALE)
+    
 class MainMenu(FullscreenMenu):
     def __init__(self):
         super().__init__()
@@ -80,7 +84,14 @@ class MainMenu(FullscreenMenu):
         self.launch_first_time = False
         self.in_settings= False
         
-    def draw(self, screen):
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
+        self.buttons = {
+            "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2],
+            "close" : [self.close_btn, 10, 10], 
+            "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
+            }
+        
         self.surface.fill("white")
         for button in self.buttons.values():
             button[0].draw(button[1], button[2], self.surface)
@@ -110,7 +121,8 @@ class LoadingScreen(FullscreenMenu):
         self.font = pygame.font.SysFont(None, 100)
         self.text = "Chargement..."
         
-    def draw(self, screen):
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
         self.surface.fill("white")
         text_surface = self.font.render(self.text, True, "black")   
         self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
@@ -154,8 +166,8 @@ class SettingsMenu(FullscreenMenu):
         
         self.event = None
     
-    def draw(self, screen, event, joystick_plugged):
-        
+    def draw(self, screen, event, joystick_plugged, window_scale):
+        super().draw(window_scale)
         self.event = event
         text_surface=""
         self.surface.fill("white")
