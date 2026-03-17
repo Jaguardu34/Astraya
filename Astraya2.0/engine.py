@@ -17,30 +17,64 @@ import math
 from ui import debug
 from ui import ui_inventory
 from classes.items import get_item
+import numpy as np
 
 class Chunk:
     def __init__(self, chunk_size=32):
         self.chunk_size = chunk_size
         self.grid = {}
-        
-    def get_chunk(self, x ,y):
+        self._entity_chunk = {}  # entity → (cx, cy) dernier connu
+
+    def get_chunk(self, x, y):
         return (int(x // self.chunk_size), int(y // self.chunk_size))
-    
+
     def clear(self):
         self.grid.clear()
-    
+        self._entity_chunk.clear()
+
     def insert(self, entity):
         chunk = self.get_chunk(entity.x, entity.y)
         if chunk not in self.grid:
             self.grid[chunk] = []
         self.grid[chunk].append(entity)
-        
+        self._entity_chunk[id(entity)] = chunk
+
+    def update_entity(self, entity):
+        new_chunk = self.get_chunk(entity.x, entity.y)
+        old_chunk = self._entity_chunk.get(id(entity))
+
+        if old_chunk == new_chunk:
+            return  # pas bougé de chunk, rien à faire
+
+        if old_chunk is not None and old_chunk in self.grid:
+            try:
+                self.grid[old_chunk].remove(entity)
+            except ValueError:
+                pass
+            if not self.grid[old_chunk]:
+                del self.grid[old_chunk]
+
+        if new_chunk not in self.grid:
+            self.grid[new_chunk] = []
+        self.grid[new_chunk].append(entity)
+        self._entity_chunk[id(entity)] = new_chunk
+
+    def remove_entity(self, entity):
+        old_chunk = self._entity_chunk.pop(id(entity), None)
+        if old_chunk and old_chunk in self.grid:
+            try:
+                self.grid[old_chunk].remove(entity)
+            except ValueError:
+                pass
+            if not self.grid[old_chunk]:
+                del self.grid[old_chunk]
+
     def get_nearby(self, x, y):
         cx, cy = self.get_chunk(x, y)
         nearby = []
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                chunk = (cx +dx, cy+dy)
+                chunk = (cx + dx, cy + dy)
                 if chunk in self.grid:
                     nearby.extend(self.grid[chunk])
         return nearby
@@ -170,13 +204,17 @@ class Game():
         
         
         
-        for i in range(100000):
-            x_plant=random.randint(0, 5000)
-            y_plant=random.randint(0, 5000)
-            if entity.veriftile(x_plant, y_plant, self.game_map) is True:
-                if self.game_map[y_plant, x_plant] in [2, 3, 4]:
-                    
-                    self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+
+        valid_mask = np.isin(self.game_map, [2, 3, 4])
+        valid_positions = np.argwhere(valid_mask)  
+
+
+        rng = np.random.default_rng()
+        indices = rng.choice(len(valid_positions), size=min(5000, len(valid_positions)), replace=False)
+
+        for idx in indices:
+            y_plant, x_plant = valid_positions[idx]
+            self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
 
         for i in range(20):
             self.ennemy_grp.add(ennemy.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
@@ -187,7 +225,8 @@ class Game():
             if entity.veriftile(x, y, self.game_map) is True:
                 self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
             
-
+        self.plant_index_built = False
+        self._chunk_registered = False
     #changer de map 
     def change_map(self):
         import generate_map
@@ -212,12 +251,20 @@ class Game():
 
 
     #update les chunk aux alentours
-    def update_chunk(self, sprite_group_to_add):
+    def register_all_entities(self, sprite_group_to_add):
+
         self.chunk_grid.clear()
         self.chunk_grid.insert(self.player)
-        for sprite_group in sprite_group_to_add:
-            for sprite in sprite_group:
+        for group in sprite_group_to_add:
+            for sprite in group:
                 self.chunk_grid.insert(sprite)
+
+    def update_chunk(self, sprite_group_to_add):
+
+        self.chunk_grid.update_entity(self.player)
+        for group in sprite_group_to_add:
+            for sprite in group:
+                self.chunk_grid.update_entity(sprite)
                 
     def get_tile_by_mouse_pos(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -343,6 +390,8 @@ class Game():
         settings.WINDOW_HEIGTH = self.WINDOW_SCALE[1]
         settings.WINDOW_WIDTH = self.WINDOW_SCALE[0]
         
+        self.render_distance = self.WINDOW_SCALE[0]
+        
         now = pygame.time.get_ticks()
         if self.info_swipe[0]:
             if now - self.info_swipe[3] >= self.info_swipe[2]:
@@ -413,7 +462,14 @@ class Game():
                 self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 
+                self.main_map.build_plant_index(self.plant_grp)
+                self.plant_index_built = True
+                
                 self.sprites_initialized = True
+            if self.sprites_initialized and not getattr(self, '_chunk_registered', False):
+                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
+                self._chunk_registered = True
+                
             
             if not self.quest_init:
                 self.init_quest()
@@ -456,7 +512,9 @@ class Game():
                     if entity.check_box_collide(sprite.hitbox, ent.hitbox):
                         if hasattr(ent, 'life_point'):
                             ent.life_point -= 1
+                        self.chunk_grid.remove_entity(sprite)
                         sprite.kill()
+                        
                         break
 
             
