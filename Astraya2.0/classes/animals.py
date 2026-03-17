@@ -18,6 +18,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
         self.random_cible()
         self.has_life = True
         self.life_point = 3
+        self.last_direction = "left"
 
     def random_cible(self):
         for _ in range(20):
@@ -98,22 +99,69 @@ class Chicken(Animal):
         if self.state != "emoting":
             return
         if now - self.last_animation >= self.anim_change_frame:
-            if self.texture_index == 0:
-                self.texture_index = 2
-            else:
-                self.texture_index = 0
-            self.last_animation = now
+            if self.last_direction == "right":
+                if self.texture_index == 0:
+                    self.texture_index = 2
+                else:
+                    self.texture_index = 0
+                self.last_animation = now
+            elif self.last_direction == "left":
+                if self.texture_index == 5:
+                    self.texture_index = 3
+                else:
+                    self.texture_index = 5
+                self.last_animation = now
 
     def animate_on_move(self, dx, dy, now):
         if now - self.last_walking_animation >= 500:
             if dx > 0:
+                self.last_direction = "right"
                 if self.texture_index != 1:
                     self.texture_index = 1
                 else:
                     self.texture_index = 0
             elif dx < 0:
+                self.last_direction = "left"
                 if self.texture_index != 4:
                     self.texture_index = 4
+                else:
+                    self.texture_index = 3
+            self.last_walking_animation = now
+            
+class Cow(Animal):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=4):
+        super().__init__(sprite, game_map, altitude_map, x, y, speed)
+        self.show_on_minimap = True
+
+    def animate_action(self, now):
+        if self.state != "emoting":
+            return
+        if now - self.last_animation >= self.anim_change_frame:
+            if self.last_direction == "right":
+                if self.texture_index == 0:
+                    self.texture_index = 4
+                else:
+                    self.texture_index = 0
+                self.last_animation = now
+            elif self.last_direction == "left":
+                if self.texture_index == 1:
+                    self.texture_index = 5
+                else:
+                    self.texture_index = 1
+                self.last_animation = now
+
+    def animate_on_move(self, dx, dy, now):
+        if now - self.last_walking_animation >= 500:
+            if dx > 0:
+                self.last_direction = "right"
+                if self.texture_index != 0:
+                    self.texture_index = 0
+                else:
+                    self.texture_index = 2
+            elif dx < 0:
+                self.last_direction = "left"
+                if self.texture_index != 1:
+                    self.texture_index = 1
                 else:
                     self.texture_index = 3
             self.last_walking_animation = now

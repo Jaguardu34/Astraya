@@ -217,13 +217,19 @@ class Game():
             self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
 
         for i in range(20):
-            self.ennemy_grp.add(ennemy.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
+            self.ennemy_grp.add(ennemy.Corrupted_Chicken(texture.texture_chicken_corrupted, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
             y=random.randint(1300, 1600)
             if entity.veriftile(x, y, self.game_map) is True:
                 self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
+                
+        for i in range(100):
+            x=random.randint(1300, 1600)
+            y=random.randint(1300, 1600)
+            if entity.veriftile(x, y, self.game_map) is True:
+                self.entity_grp.add(animals.Cow(texture.texture_cow, self.game_map, alt, x=x, y=y))
             
         self.plant_index_built = False
         self._chunk_registered = False
