@@ -120,6 +120,7 @@ BUILDING_TYPES = {
     "puteus": {"size": (1, 1), "rarity": "common"},
     "fornax": {"size": (2, 2), "rarity": "uncommon"},  # Forge
     "forge": {"size": (2, 2), "rarity": "uncommon"},   # AJOUT alias
+    "fornus": {"size":(2,2), "rarity":"uncommon"}, #four
     "balneum": {"size": (4, 4), "rarity": "rare"},
     "thermae": {"size": (6, 6), "rarity": "very_rare"},
 
