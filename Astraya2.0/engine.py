@@ -373,19 +373,19 @@ class Game():
             if not self.music_playing:
                 pygame.mixer.music.play()
                 self.music_playing = True
-            self.menu.draw(self.screen)
+            self.menu.draw(self.screen, self.WINDOW_SCALE)
             
         
         elif self.menu.in_settings:
             waiting_for_key = any(btn[1] for btn in self.settings_menu.controls.values())
-            self.settings_menu.draw(self.screen, events, self.joystick)  # peut modifier button[1]
+            self.settings_menu.draw(self.screen, events, self.joystick, self.WINDOW_SCALE)  # peut modifier button[1]
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     if not waiting_for_key:  # état avant le draw
                         self.menu.in_menu = True
                         self.menu.in_settings = False
         elif not self.world_ready:
-            self.loadingscreen.draw(self.screen)
+            self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
             
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
