@@ -94,109 +94,63 @@ TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
 
 
 
+# Biomes interdits pour les villages (eau et sable)
+FORBIDDEN_VILLAGE_BIOMES = [
+    BIOME_IDS["ocean"],      # 0
+    BIOME_IDS["beach"],      # 1
+    BIOME_IDS["wet_sand"],   # 101
+]
+ 
+ 
 # ==============================================================================
-# TYPES DE BÂTIMENTS
+# TYPES DE BÂTIMENTS (6 types seulement)
 # ==============================================================================
-
+ 
 BUILDING_TYPES = {
-    # Habitations
-    "domus_modest": {"size": (3, 3), "rarity": "common"},
-    "domus_rich": {"size": (4, 5), "rarity": "rare"},
-    "villa_rustica": {"size": (6, 6), "rarity": "rare"},
-    "insula": {"size": (4, 6), "rarity": "uncommon"},
+    "domus": {"size": (3, 3), "rarity": "common"},
+    
+    "villa": {"size": (5, 5), "rarity": "rare"},
 
-    # Commerce
-    "taberna": {"size": (2, 2), "rarity": "common"},
-    "caupona": {"size": (3, 3), "rarity": "uncommon"},
-    "macellum": {"size": (4, 4), "rarity": "uncommon"},
-    "forum": {"size": (8, 8), "rarity": "very_rare"},
-
+    "forum": {"size": (10, 10), "rarity": "common"},
+    
     # Stockage
-    "horreum": {"size": (4, 4), "rarity": "common"},  # AJOUT
-    "horreum_small": {"size": (2, 3), "rarity": "common"},
-    "horreum_large": {"size": (4, 5), "rarity": "uncommon"},
+    "stock": {"size": (3, 3), "rarity": "common"},
 
-    # Infrastructure
+    "temple": {"size": (6, 6), "rarity": "uncommon"},
+
     "puteus": {"size": (1, 1), "rarity": "common"},
-    "fornax": {"size": (2, 2), "rarity": "uncommon"},  # Forge
-    "forge": {"size": (2, 2), "rarity": "uncommon"},   # AJOUT alias
-    "fornus": {"size":(2,2),"rarity":"uncommon"}, #four AJOUT
-    "balneum": {"size": (4, 4), "rarity": "rare"},
-    "thermae": {"size": (6, 6), "rarity": "very_rare"},
-
-    # Religion
-    "sacellum": {"size": (2, 2), "rarity": "uncommon"},
-    "temple": {"size": (5, 5), "rarity": "rare"},
-    "altar": {"size": (1, 1), "rarity": "common"},
-    "basilica": {"size": (7, 5), "rarity": "very_rare"},  # AJOUT
-
-    # Militaire
-    "castra": {"size": (8, 10), "rarity": "very_rare"},
-
-    # Spectacle
-    "amphitheatre": {"size": (10, 12), "rarity": "very_rare"},
-
-    # Agricole
-    "barn": {"size": (3, 2), "rarity": "common"},
 }
-
-
-# ==============================================================================
-# TYPES DE VILLAGES
-# ==============================================================================
-
+ 
+ 
+# ====================
+# TYPES DE VILLAGES 
+# ====================
+ 
 nb_cities = 3
-
+ 
 VILLAGE_TYPES = {
-    "hamlet": {  # Hameau (4-6 maisons)
-        "min_houses": 4,
-        "max_houses": 6,
-        "radius": 30,  # tiles
+    "hamlet": {  # Hameau (5-8 maisons)
+        "min_houses": 5,
+        "max_houses": 8,
+        "radius": 40,  # tiles
         "buildings": [
-            ("domus_modest", 4, 6),  # (type, min, max)
-            ("horreum_small", 1, 1),
-            ("puteus", 1, 1),
-            ("taberna", 0, 1),
-            ("barn", 1, 2),
-            ("altar", 1, 1),
+            ("domus", 5, 8),        # Maisons simples
+            ("stock", 1, 2),      # Stockage
+            ("puteus", 1, 1),       # Puits central
         ]
     },
     
-    "village": {  # Village moyen (10 maisons)
-        "min_houses": 8,
-        "max_houses": 12,
-        "radius": 50,
-        "buildings": [
-            ("domus_modest", 8, 12),
-            ("villa_rustica", 1, 1),
-            ("caupona", 1, 1),
-            ("fornax", 1, 1),
-            ("macellum", 1, 1),
-            ("sacellum", 1, 1),
-            ("horreum_large", 1, 1),
-            ("balneum", 0, 1),
-            ("puteus", 1, 2),
-        ]
-    },
-    
-    "city": {  # Grande ville (20+ maisons)
+    "city": {  # Grande ville (20-35 bâtiments)
         "min_houses": 20,
-        "max_houses": 40,
+        "max_houses": 35,
         "radius": 80,
         "buildings": [
-            ("domus_modest", 15, 25),
-            ("domus_rich", 3, 5),
-            ("insula", 5, 10),
-            ("forum", 1, 1),
-            ("basilica", 1, 1),
-            ("thermae", 1, 1),
-            ("temple", 1, 2),
-            ("amphitheatre", 0, 1),
-            ("castra", 1, 1),
-            ("macellum", 2, 3),
-            ("caupona", 3, 5),
-            ("fornax", 2, 3),
-            ("puteus", 3, 5),
+            ("domus", 15, 25),      # Maisons simples
+            ("villa", 2, 5),        # Maisons riches
+            ("forum", 1, 1),        # Place du marché
+            ("temple", 1, 2),       # Temple
+            ("stock", 2, 4),      # Stockages
+            ("puteus", 2, 3),       # Puits
         ]
     }
 }

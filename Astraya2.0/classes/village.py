@@ -4,63 +4,55 @@ from settings import *
 from classes.npc import Npc
 import texture
 import numpy as np
-
+ 
 #========================================
 # Classes pour la génération de villages
 # Une village et une Building
 #========================================
-
-
+ 
+ 
 class Village:
     def __init__(self, x, y, village_type, biome):
-        self.x = x  # Position centrale
+        self.x = x  
         self.y = y
-        self.type = village_type  # "hamlet", "village", "city"
+        self.type = village_type  
         self.biome = biome
-        self.buildings = []  # Liste de Building
-        self.roads = []  # Liste de segments de route
-        self.decorations = []  # Amphores, statues, etc.
+        self.buildings = []  
+        self.roads = []  
+        self.decorations = []  
         self.radius = VILLAGE_TYPES[village_type]["radius"]
         
-    def generate(self):
+    def generate(self, biome_map=None):
         """Génère le plan complet du village."""
         config = VILLAGE_TYPES[self.type]
         
-        # Générer le centre (puits, forum, etc.)
+        # Générer le centre (puits)
         self.generate_center()
         
         # Générer les bâtiments principaux
         for building_type, min_count, max_count in config["buildings"]:
             count = random.randint(min_count, max_count)
             for _ in range(count):
-                self.add_building(building_type)
-
+                self.add_building(building_type, biome_map)
+ 
     def generate_center(self):
-        """Génère le centre du village avec des éléments décoratifs."""
-
-        if self.type == "hamlet":
-            # Hameau : puits au centre
-            self.add_building_at("puteus", self.x, self.y)
-        elif self.type == "village":
-            # Village : temple ou place
-            self.add_building_at("sacellum", self.x, self.y)
-        else:
-            # Ville : forum
-            self.add_building_at("forum", self.x, self.y)
-
-    def add_building(self, building_type):
+        """Génère le centre du village avec un puits."""
+        # Tous les villages ont un puits au centre
+        self.add_building_at("puteus", self.x, self.y)
+ 
+    def add_building(self, building_type, biome_map=None):
         """Ajoute un bâtiment à une position libre."""
         attempts = 0
         while attempts < 100:
             # Position aléatoire dans le rayon du village
             angle = random.uniform(0, 2 * 3.14159)
-            distance = random.uniform(5, self.radius)
+            distance = random.uniform(5, self.radius / 2)
             
             bx = int(self.x + distance * np.cos(angle))
             by = int(self.y + distance * np.sin(angle))
             
             # Vérifier si la position est valide
-            if self.can_place_building(bx, by, building_type):
+            if self.can_place_building(bx, by, building_type, biome_map):
                 building = Building(bx, by, building_type)
                 self.buildings.append(building)
                 return True
@@ -73,9 +65,9 @@ class Village:
         """Place un bâtiment à une position précise."""
         building = Building(x, y, building_type)
         self.buildings.append(building)
-
-
-    def can_place_building(self, x, y, building_type):
+ 
+ 
+    def can_place_building(self, x, y, building_type, biome_map=None):
         """Vérifie si on peut placer un bâtiment ici."""
         size = BUILDING_TYPES[building_type]["size"]
         
@@ -83,9 +75,21 @@ class Village:
         if x < 10 or y < 10 or x > SIZE - 10 or y > SIZE - 10:
             return False
         
-        # Vérifier biome (pas dans l'océan)
-        if self.biome == BIOME_IDS["ocean"]:
-            return False
+        # Vérifier que le biome n'est pas interdit (eau ou sable)
+        if biome_map is not None:
+            # Vérifier plusieurs points du bâtiment
+            for dx in range(size[0]):
+                for dy in range(size[1]):
+                    check_x = min(x + dx, SIZE - 1)
+                    check_y = min(y + dy, SIZE - 1)
+                    tile_biome = biome_map[check_y, check_x]
+                    
+                    if tile_biome in FORBIDDEN_VILLAGE_BIOMES:
+                        return False
+        else:
+            # Fallback si pas de biome_map (vérifier le biome du village)
+            if self.biome in FORBIDDEN_VILLAGE_BIOMES:
+                return False
         
         # Vérifier collision avec autres bâtiments
         for building in self.buildings:
@@ -109,8 +113,8 @@ class Village:
         r2.inflate_ip(4, 4)
         
         return r1.colliderect(r2)
-
-
+ 
+ 
     def generate_decorations(self):
         """Ajoute statues, amphores, jardins, etc."""
         num_decorations = len(self.buildings) * 2
@@ -121,11 +125,7 @@ class Village:
                 deco_type = random.choice([
                     "statue", "fountain", "column", "garden", "amphora"
                 ])
-            elif self.type == "village":
-                deco_type = random.choice([
-                    "cart", "amphora", "animal", "garden"
-                ])
-            else:
+            else:  # hamlet
                 deco_type = random.choice([
                     "amphora", "animal", "garden"
                 ])
@@ -141,8 +141,8 @@ class Village:
                 "x": dx,
                 "y": dy
             })
-
-
+ 
+ 
 class Building:
     def __init__(self, x, y, building_type):
         self.x = x
@@ -150,85 +150,20 @@ class Building:
         self.type = building_type
         self.size = BUILDING_TYPES[building_type]["size"]
         self.rotation = random.choice([0, 90, 180, 270])  # Orientation
-
-
-def draw_village(village, screen, camera_pos, offset_x, offset_y, scale):
-    """Dessine un village complet."""
-    tile_cx = int(camera_pos[0] // 16)
-    tile_cy = int(camera_pos[1] // 16)
-    scalex = scale[0]
-    scaley = scale[1]
-
-    for building in village.buildings:
-        bx = (building.x - (tile_cx - scalex//2)) * 16 * scale - offset_x
-        by = (building.y - (tile_cy - scaley//2)) * 16 * scale - offset_y
-        
-        # Vérifier si visible
-        if -50 <= bx < (scalex+1)*16*scale and -50 <= by < (scaley+1)*16*scale:
-            draw_building(building, screen, bx, by, scale)
-    
-    # 3. Dessiner les décorations
-    for deco in village.decorations:
-        dx = (deco["x"] - (tile_cx - scalex//2)) * 16 * scale - offset_x
-        dy = (deco["y"] - (tile_cy - scaley//2)) * 16 * scale - offset_y
-        
-        if -50 <= dx < (scalex+1)*16*scale and -50 <= dy < (scaley+1)*16*scale:
-            draw_decoration(deco, screen, dx, dy, scale)
-
-def draw_building(building, screen, x, y, scale):
-    """Dessine un bâtiment individuel."""
-    size = building.size
-    
-    # Couleurs selon le type
-    if building.type.startswith("domus"):
-        color = (210, 180, 140)  # Tan
-    elif building.type in ["forum", "basilica"]:
-        color = (255, 255, 255)  # Blanc (marbre)
-    elif building.type in ["temple", "sacellum"]:
-        color = (255, 215, 0)  # Or
-    elif building.type in ["horreum", "barn"]:
-        color = (139, 90, 43)  # Brun
-    else:
-        color = (169, 169, 169)  # Gris
-    
-    # Dessiner le rectangle du bâtiment
-    pygame.draw.rect(screen, color, 
-                    (int(x), int(y), size[0] * 16 * scale, size[1] * 16 * scale))
-    
-    # Contour noir
-    pygame.draw.rect(screen, (0, 0, 0), 
-                    (int(x), int(y), size[0] * 16 * scale, size[1] * 16 * scale), 2)
-    
-    # Toit (triangle)
-    roof_height = 8 * scale
-    points = [
-        (x, y),
-        (x + size[0] * 16 * scale, y),
-        (x + size[0] * 8 * scale, y - roof_height)
-    ]
-    pygame.draw.polygon(screen, (178, 34, 34), points)  # Rouge brique
-
-
-def draw_decoration(deco, screen, x, y, scale):
-    """Dessine une décoration."""
-    if deco["type"] == "statue":
-        pygame.draw.circle(screen, (200, 200, 200), (int(x), int(y)), 4 * scale)
-    elif deco["type"] == "amphora":
-        pygame.draw.circle(screen, (139, 69, 19), (int(x), int(y)), 2 * scale)
-    elif deco["type"] == "fountain":
-        pygame.draw.circle(screen, (100, 149, 237), (int(x), int(y)), 6 * scale)
+ 
 
 def spawn_villageois(village, game_map):
     """Génère des villageois autour du village."""
     villagers = []
-    num_villagers = len(village.buildings) * 2
+    num_villagers = len(village.buildings) // 2
     
     for _ in range(num_villagers):
         angle = random.uniform(0, 2 * 3.14159)
         distance = random.uniform(5, village.radius)
         vx = int(village.x + distance * np.cos(angle))
         vy = int(village.y + distance * np.sin(angle))
+        type = random.choice(["fermier", "marchant", "garde"])
         
-        villagers.append(Npc(texture.texture_old_npc, game_map, ["Salut je ne suis un pas trop npc", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
+        villagers.append(Npc(type, texture.texture_old_npc, game_map, [f"Salut je ne suis un pas trop npc, je suis {type}", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
 
     return villagers

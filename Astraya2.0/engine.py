@@ -190,7 +190,7 @@ class Game():
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.entity_grp.add(self.player)
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
-        self.old_npc = npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
+        self.old_npc = npc.Npc("spawn NPC", texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
         self.npc_grp.add(self.old_npc)
         self.npc_grp.add(village.spawn_villageois(world_data.villages[0], self.game_map))
         
