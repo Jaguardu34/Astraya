@@ -155,6 +155,14 @@ class QuestManager:
             self.available.remove(quest)
             self.active.append(quest)
 
+    def complete_princ_quest(self, quest):
+        if quest in self.active and quest.type == "principale":
+            self.active.remove(quest)
+            self.completed.append(quest)
+            self.active.append(quest)
+            self.font_last_on_screen = pygame.time.get_ticks()
+            print(f" Quete termine : {quest.title}")
+
     def update(self, screen):
         now = pygame.time.get_ticks()
         if now - self.font_last_on_screen < self.font_stay_on_screen:
@@ -196,7 +204,6 @@ class QuestManager:
             for obj in quest.objectives:
                 if isinstance(obj, ReachObjective):
                     obj.update_position(player_x, player_y)
-
 
 
 

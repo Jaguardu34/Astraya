@@ -13,6 +13,7 @@ import world_data
 import generate_map
 from classes import player as player_class
 from classes import quest as quest_module 
+from classes import village as village
 import math
 from ui import debug
 from ui import ui_inventory
@@ -191,6 +192,7 @@ class Game():
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
         self.old_npc = npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
         self.npc_grp.add(self.old_npc)
+        self.npc_grp.add(village.spawn_villageois(world_data.villages[0], self.game_map))
         
         
         #quelques items :
