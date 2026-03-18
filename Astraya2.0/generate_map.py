@@ -322,7 +322,8 @@ def map_generate():
     def classify_villages(coord_vil, biome_map, nb_villes=3, rayon_proximite=1000):
         """Classe les villages en 3 grandes villes, 10 grands villages, le reste villages."""
 
-        # 1. Calcul de la densité locale pour chaque village
+        villes = []
+        villes.append((1500, 1600))  # Ajouter la ville centrale
         densites = []
         for i, (vx, vy) in enumerate(coord_vil):
             densite = sum(
@@ -331,14 +332,10 @@ def map_generate():
             )
             densites.append((densite, vx, vy))
 
-        # 2. On trie par densité croissante (les plus isolés d'abord)
         densites.sort(key=lambda x: x[0])
 
         candidats = densites[:20]
 
-        villes = []
-
-        # On choisit la première ville : la plus isolée
         _, vx0, vy0 = candidats[0]
         villes.append((vx0, vy0))
 
@@ -359,24 +356,15 @@ def map_generate():
                     meilleur = (vx, vy)
 
             villes.append(meilleur)
-        villes.append((1500, 1600))  # Ajouter la ville centrale
 
-        # 5. Création des objets Village
+        # Création des objets Village
         resultat = []
         for vx, vy in villes:
             biome = biome_map[vy, vx]
             resultat.append(Village(vx, vy, "city", biome))
 
         return resultat
-
-
-    
-
-
-
             
-
-
 
 
     # ==============================================================================

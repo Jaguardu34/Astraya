@@ -1,6 +1,8 @@
 import random
 import pygame
 from settings import *
+from classes.npc import Npc
+import texture
 import numpy as np
 
 #========================================
@@ -215,3 +217,18 @@ def draw_decoration(deco, screen, x, y, scale):
         pygame.draw.circle(screen, (139, 69, 19), (int(x), int(y)), 2 * scale)
     elif deco["type"] == "fountain":
         pygame.draw.circle(screen, (100, 149, 237), (int(x), int(y)), 6 * scale)
+
+def spawn_villageois(village, game_map):
+    """Génère des villageois autour du village."""
+    villagers = []
+    num_villagers = len(village.buildings) * 2
+    
+    for _ in range(num_villagers):
+        angle = random.uniform(0, 2 * 3.14159)
+        distance = random.uniform(5, village.radius)
+        vx = int(village.x + distance * np.cos(angle))
+        vy = int(village.y + distance * np.sin(angle))
+        
+        villagers.append(Npc(texture.texture_old_npc, game_map, ["Salut je ne suis un pas trop npc", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
+
+    return villagers

@@ -97,19 +97,31 @@ texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(spr
 texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
 
 texture_chicken = []
-for i in range(len(texture_chicken_base)):
-    texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))
-    
+for t in texture_chicken_base:
+    texture_chicken.append(pygame.transform.scale(t, (
+        int(t.get_width() * 1.5),
+        int(t.get_height() * 1.5)
+    )))
+
 texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16), 
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 240, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 224, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False)]
 
 texture_chicken_corrupted = []
-for i in range(len(texture_chicken_corrupted_base)):
-    texture_chicken_corrupted.append(pygame.transform.scale(texture_chicken_corrupted_base[i], (texture_chicken_corrupted_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))    
+for t in texture_chicken_corrupted_base:
+    texture_chicken_corrupted.append(pygame.transform.scale(t, (
+        int(t.get_width() * 1.5),
+        int(t.get_height() * 1.5)
+    )))
 
-texture_cow = create_texture_mirrored(32, 288, 3)
+texture_cow_base = create_texture_mirrored(32, 288, 3)
+texture_cow = []
+for t in texture_cow_base:
+    texture_cow.append(pygame.transform.scale(t, (
+        int(t.get_width() * 1.5),
+        int(t.get_height() * 1.5)
+    )))
 
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
