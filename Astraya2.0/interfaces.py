@@ -1,36 +1,7 @@
 import pygame
 import settings
 
-# Creer une quete
-class Quest_PopUp():
-    def __init__(self, content, color="white", font_size=24,):
-        self.content = content
-        self.color = color
-        self.print_interval = 25
-        self.last_print_interval = pygame.time.get_ticks()
-        self.letter_index = 0
-        self.content_sliced = ""
-        self.PADDING = 2
-        self.font_size = font_size
-        self.font = pygame.font.SysFont(None, self.font_size)
-        
-        
-    def draw(self, x, y, screen):
-        width = self.font.size(self.content_sliced)[0] + self.PADDING * 2
-        height = self.font.size(self.content_sliced)[1] + self.PADDING * 2
-        now = pygame.time.get_ticks()
-        if self.letter_index <= len(self.content):
-            if now - self.last_print_interval >= self.print_interval:
-                self.last_print_interval = now
-                self.content_sliced = self.content[:self.letter_index]
-                self.letter_index += 1
-        else: self.content_sliced = self.content
-        toast = pygame.Surface((width, height))
-        toast.fill("white")
-        pygame.draw.rect(toast, self.color, (0, 0, width, height))
-        content = self.font.render(self.content_sliced, True, "black")
-        toast.blit(content, (self.PADDING, self.PADDING))
-        screen.blit(toast, (x-width, y))
+
         
 
 class Button():
@@ -90,6 +61,10 @@ class FullscreenMenu():
         self.WINDOW_SCALE = self.info_display.current_w, self.info_display.current_h
         self.surface = pygame.Surface(self.WINDOW_SCALE)
     
+    def draw(self, window_scale):
+        self.WINDOW_SCALE = window_scale
+        self.surface = pygame.Surface(self.WINDOW_SCALE)
+    
 class MainMenu(FullscreenMenu):
     def __init__(self):
         super().__init__()
@@ -109,7 +84,14 @@ class MainMenu(FullscreenMenu):
         self.launch_first_time = False
         self.in_settings= False
         
-    def draw(self, screen):
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
+        self.buttons = {
+            "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2],
+            "close" : [self.close_btn, 10, 10], 
+            "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
+            }
+        
         self.surface.fill("white")
         for button in self.buttons.values():
             button[0].draw(button[1], button[2], self.surface)
@@ -139,7 +121,8 @@ class LoadingScreen(FullscreenMenu):
         self.font = pygame.font.SysFont(None, 100)
         self.text = "Chargement..."
         
-    def draw(self, screen):
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
         self.surface.fill("white")
         text_surface = self.font.render(self.text, True, "black")   
         self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
@@ -183,8 +166,8 @@ class SettingsMenu(FullscreenMenu):
         
         self.event = None
     
-    def draw(self, screen, event, joystick_plugged):
-        
+    def draw(self, screen, event, joystick_plugged, window_scale):
+        super().draw(window_scale)
         self.event = event
         text_surface=""
         self.surface.fill("white")

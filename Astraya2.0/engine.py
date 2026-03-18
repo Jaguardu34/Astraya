@@ -17,30 +17,64 @@ import math
 from ui import debug
 from ui import ui_inventory
 from classes.items import get_item
+import numpy as np
 
 class Chunk:
     def __init__(self, chunk_size=32):
         self.chunk_size = chunk_size
         self.grid = {}
-        
-    def get_chunk(self, x ,y):
+        self._entity_chunk = {}  # entity → (cx, cy) dernier connu
+
+    def get_chunk(self, x, y):
         return (int(x // self.chunk_size), int(y // self.chunk_size))
-    
+
     def clear(self):
         self.grid.clear()
-    
+        self._entity_chunk.clear()
+
     def insert(self, entity):
         chunk = self.get_chunk(entity.x, entity.y)
         if chunk not in self.grid:
             self.grid[chunk] = []
         self.grid[chunk].append(entity)
-        
+        self._entity_chunk[id(entity)] = chunk
+
+    def update_entity(self, entity):
+        new_chunk = self.get_chunk(entity.x, entity.y)
+        old_chunk = self._entity_chunk.get(id(entity))
+
+        if old_chunk == new_chunk:
+            return  # pas bougé de chunk, rien à faire
+
+        if old_chunk is not None and old_chunk in self.grid:
+            try:
+                self.grid[old_chunk].remove(entity)
+            except ValueError:
+                pass
+            if not self.grid[old_chunk]:
+                del self.grid[old_chunk]
+
+        if new_chunk not in self.grid:
+            self.grid[new_chunk] = []
+        self.grid[new_chunk].append(entity)
+        self._entity_chunk[id(entity)] = new_chunk
+
+    def remove_entity(self, entity):
+        old_chunk = self._entity_chunk.pop(id(entity), None)
+        if old_chunk and old_chunk in self.grid:
+            try:
+                self.grid[old_chunk].remove(entity)
+            except ValueError:
+                pass
+            if not self.grid[old_chunk]:
+                del self.grid[old_chunk]
+
     def get_nearby(self, x, y):
         cx, cy = self.get_chunk(x, y)
         nearby = []
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
-                chunk = (cx +dx, cy+dy)
+                chunk = (cx + dx, cy + dy)
                 if chunk in self.grid:
                     nearby.extend(self.grid[chunk])
         return nearby
@@ -94,7 +128,6 @@ class Game():
         self.in_menu = False
 
         self.quest_manager = quest_module.QuestManager()
-        self.quest = interfaces.Quest_PopUp("ceci est une quete de test tres tres longue pour voir si ca tient dans ce tout petit carré", "red", 30)
         
         #interface
         self.menu = interfaces.MainMenu()
@@ -111,6 +144,8 @@ class Game():
         self.music_playing = False
         
         self.joystick = False
+        
+        self.quest_init = False
         
         
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
@@ -154,7 +189,8 @@ class Game():
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.entity_grp.add(self.player)
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
-        self.npc_grp.add(npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512))
+        self.old_npc = npc.Npc(texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
+        self.npc_grp.add(self.old_npc)
         
         
         #quelques items :
@@ -168,24 +204,35 @@ class Game():
         
         
         
-        for i in range(100000):
-            x_plant=random.randint(0, 5000)
-            y_plant=random.randint(0, 5000)
-            if entity.veriftile(x_plant, y_plant, self.game_map) is True:
-                if self.game_map[y_plant, x_plant] in [2, 3, 4]:
-                    
-                    self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=x_plant, y=y_plant))
+
+        valid_mask = np.isin(self.game_map, [2, 3, 4])
+        valid_positions = np.argwhere(valid_mask)  
+
+
+        rng = np.random.default_rng()
+        indices = rng.choice(len(valid_positions), size=min(5000, len(valid_positions)), replace=False)
+
+        for idx in indices:
+            y_plant, x_plant = valid_positions[idx]
+            self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
 
         for i in range(20):
-            self.ennemy_grp.add(ennemy.Ennemy(texture.texture_chicken, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
+            self.ennemy_grp.add(ennemy.Corrupted_Chicken(texture.texture_chicken_corrupted, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
             x=random.randint(1300, 1600)
             y=random.randint(1300, 1600)
             if entity.veriftile(x, y, self.game_map) is True:
                 self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
+                
+        for i in range(100):
+            x=random.randint(1300, 1600)
+            y=random.randint(1300, 1600)
+            if entity.veriftile(x, y, self.game_map) is True:
+                self.entity_grp.add(animals.Cow(texture.texture_cow, self.game_map, alt, x=x, y=y))
             
-
+        self.plant_index_built = False
+        self._chunk_registered = False
     #changer de map 
     def change_map(self):
         import generate_map
@@ -210,12 +257,20 @@ class Game():
 
 
     #update les chunk aux alentours
-    def update_chunk(self, sprite_group_to_add):
+    def register_all_entities(self, sprite_group_to_add):
+
         self.chunk_grid.clear()
         self.chunk_grid.insert(self.player)
-        for sprite_group in sprite_group_to_add:
-            for sprite in sprite_group:
+        for group in sprite_group_to_add:
+            for sprite in group:
                 self.chunk_grid.insert(sprite)
+
+    def update_chunk(self, sprite_group_to_add):
+
+        self.chunk_grid.update_entity(self.player)
+        for group in sprite_group_to_add:
+            for sprite in group:
+                self.chunk_grid.update_entity(sprite)
                 
     def get_tile_by_mouse_pos(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -312,17 +367,36 @@ class Game():
                 self.player.inventory.select_hotbar(index)
                 
         for sprite in self.npc_grp:
-            sprite.update(self.game_map, self.player, event)
+            sprite.update(self.game_map, self.player, event, self.quest_manager)
                 
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
             return 0.0
         return value
+    
+    
+    def init_quest(self):
+        self.first_quest = quest_module.Quest(
+            title="Allez voir le vieux sage",
+            content="Parlez au vieux npc",
+            type="idk",
+            objectives=[
+                quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
+            ]
+        )
+        self.quest_manager.add_quest(self.first_quest)
+        self.quest_manager.accept_quest(self.first_quest)
+        self.quest_init = True
 
     #boucle principale
     def update(self):
 
         self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()
+        
+        settings.WINDOW_HEIGTH = self.WINDOW_SCALE[1]
+        settings.WINDOW_WIDTH = self.WINDOW_SCALE[0]
+        
+        self.render_distance = self.WINDOW_SCALE[0]
         
         now = pygame.time.get_ticks()
         if self.info_swipe[0]:
@@ -373,19 +447,19 @@ class Game():
             if not self.music_playing:
                 pygame.mixer.music.play()
                 self.music_playing = True
-            self.menu.draw(self.screen)
+            self.menu.draw(self.screen, self.WINDOW_SCALE)
             
         
         elif self.menu.in_settings:
             waiting_for_key = any(btn[1] for btn in self.settings_menu.controls.values())
-            self.settings_menu.draw(self.screen, events, self.joystick)  # peut modifier button[1]
+            self.settings_menu.draw(self.screen, events, self.joystick, self.WINDOW_SCALE)  # peut modifier button[1]
             for event in events:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     if not waiting_for_key:  # état avant le draw
                         self.menu.in_menu = True
                         self.menu.in_settings = False
         elif not self.world_ready:
-            self.loadingscreen.draw(self.screen)
+            self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
             
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:
@@ -394,7 +468,17 @@ class Game():
                 self.minimap = map_render.Minimap(self.WINDOW_SCALE[1] - 200, 1000, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 self.minimap_left_corner = map_render.Minimap(240, 200, self.screen, [self.entity_grp, self.ennemy_grp, self.npc_grp])
                 
+                self.main_map.build_plant_index(self.plant_grp)
+                self.plant_index_built = True
+                
                 self.sprites_initialized = True
+            if self.sprites_initialized and not getattr(self, '_chunk_registered', False):
+                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
+                self._chunk_registered = True
+                
+            
+            if not self.quest_init:
+                self.init_quest()
                 
             self.main_map.resize(
                 int(self.screen.get_width() // 32),
@@ -404,6 +488,7 @@ class Game():
             
             for sprite in self.dropped_grp:
                 sprite.update(self.dt, self.chunk_grid, self.current_map)
+                
             for d in list(self.dropped_grp):
                 if entity.check_box_collide(self.player.hitbox, d.hitbox):
                     self.player.inventory.add_item(d.item, d.quantity)
@@ -433,7 +518,9 @@ class Game():
                     if entity.check_box_collide(sprite.hitbox, ent.hitbox):
                         if hasattr(ent, 'life_point'):
                             ent.life_point -= 1
+                        self.chunk_grid.remove_entity(sprite)
                         sprite.kill()
+                        
                         break
 
             
@@ -455,8 +542,6 @@ class Game():
 
 
             self.draw_infos(20, 20, self.player.position)
-            
-            self.quest.draw(self.WINDOW_SCALE[0] - 10, 10, self.screen)
 
 
             if keys[settings.KEY_MAP]:
@@ -476,7 +561,8 @@ class Game():
                     self.screen, self.player.inventory, pygame.mouse.get_pos(),
                     self.panel_selected_slot,
                 )
-                
+            
+            self.quest_manager.update(self.screen)
             
             
             if self.info_swipe[0]:

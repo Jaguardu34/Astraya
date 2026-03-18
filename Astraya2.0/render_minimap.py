@@ -5,14 +5,14 @@ import os
 import texture
 
 minimap_path = "Astraya2.0/assets/minimap.png"
-world_path = "world_data.pkl"
+world_path = "Astraya2.0/assets/world_data.pkl"
 
 def generate_minimap():
     if (not os.path.exists(minimap_path) or 
         os.path.getmtime(world_path) > os.path.getmtime(minimap_path)):
         # régénère
 
-        with open("world_data.pkl", "rb") as f:
+        with open(world_path, "rb") as f:
             world_data = pickle.load(f)
 
         world_array = np.array(world_data['biome_map'])

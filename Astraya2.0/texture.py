@@ -28,6 +28,7 @@ def create_texture_mirrored(posx, posy, nbr):
     tab_return = []
         
     for i in range(len(tab)):
+        tab_return.append(tab[i])
         tab_return.append(pygame.transform.flip(tab[i], True, False))
         
     return tab_return
@@ -73,7 +74,7 @@ texture_plant = create_texture_basic(0, 64, 9)
 #+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
 
 
-texture_chicken = create_texture_mirrored(0, 48, 3)
+
 texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 get_sprite(sprite_sheet_player, 32, 0, 32, 32),
                 get_sprite(sprite_sheet_player, 0, 32, 32, 32),
@@ -93,9 +94,22 @@ texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(spr
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 288, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False)]
 
+texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
+
 texture_chicken = []
 for i in range(len(texture_chicken_base)):
     texture_chicken.append(pygame.transform.scale(texture_chicken_base[i], (texture_chicken_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))
+    
+texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16), 
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 240, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 224, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False)]
+
+texture_chicken_corrupted = []
+for i in range(len(texture_chicken_corrupted_base)):
+    texture_chicken_corrupted.append(pygame.transform.scale(texture_chicken_corrupted_base[i], (texture_chicken_corrupted_base[i].get_width() * 1.5, texture_chicken_base[i].get_height()* 1.5)))    
+
+texture_cow = create_texture_mirrored(32, 288, 3)
 
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
