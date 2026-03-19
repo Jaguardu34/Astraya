@@ -1,5 +1,6 @@
 import os
 import pygame
+import random
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -101,24 +102,28 @@ FORBIDDEN_VILLAGE_BIOMES = [
     BIOME_IDS["wet_sand"],   # 101
 ]
  
- 
+#random building version
+def random_temple():
+    templescoords=[(0,1920),(160,1920),(0,2080),(160,2080)]
+    r=random.randint(0,3)
+    return templescoords[r]
 # ==============================================================================
 # TYPES DE BÂTIMENTS (6 types seulement)
 # ==============================================================================
  
 BUILDING_TYPES = {
-    "domus": {"size": (3, 3), "rarity": "common"},
+    "domus": {"size": (3, 3), "rarity": "common","xycoord":(0,0)},
     
-    "villa": {"size": (5, 5), "rarity": "rare"},
+    "villa": {"size": (5, 5), "rarity": "rare","xycoord":(192,224)},
 
-    "forum": {"size": (10, 10), "rarity": "common"},
+    "forum": {"size": (8, 8), "rarity": "common","xycoord":(0,832)},
     
     # Stockage
-    "stock": {"size": (3, 3), "rarity": "common"},
+    "stock": {"size": (3, 3), "rarity": "common","xycoord":(0,608)},
 
-    "temple": {"size": (6, 6), "rarity": "uncommon"},
+    "temple": {"size": (5, 5), "rarity": "uncommon","xycoord":random_temple()},
 
-    "puteus": {"size": (1, 1), "rarity": "common"},
+    "puteus": {"size": (1, 1), "rarity": "common","xycoord":(0,1633)},
 }
  
  
@@ -154,3 +159,5 @@ VILLAGE_TYPES = {
         ]
     }
 }
+
+    

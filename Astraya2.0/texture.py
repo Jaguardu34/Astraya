@@ -7,6 +7,7 @@ import random
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
 sprite_sheet_player = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'player_texture.png'))
+sprite-sheet_buildings = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'batiment_texture_Pyxel.png'))
 
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -54,9 +55,9 @@ def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=
 
     return tab
 
-def create_single_texture_by_coords(x, y, w, h):
+def create_single_texture_by_coords(sheet,x, y, w, h):
     
-    texture = [get_sprite(sprite_sheet, x, y, w, h)]
+    texture = [get_sprite(sheet, x, y, w, h)]
         
 
     return texture
@@ -86,6 +87,7 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
                 ]
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
+
 
 texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
 
