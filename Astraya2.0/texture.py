@@ -7,6 +7,9 @@ import random
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
 sprite_sheet_player = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'player_texture.png'))
+sprite_sheet_buildings = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'batiment_texture_Pyxel.png'))
+sprite_sheet_terrain = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png'))
+
 
 def get_sprite(sheet, x, y, width, height):
     sprite = pygame.Surface((width, height), pygame.SRCALPHA)
@@ -54,9 +57,9 @@ def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=
 
     return tab
 
-def create_single_texture_by_coords(x, y, w, h):
+def create_single_texture_by_coords(sheet,x, y, w, h):
     
-    texture = [get_sprite(sprite_sheet, x, y, w, h)]
+    texture = [get_sprite(sheet, x, y, w, h)]
         
 
     return texture
@@ -87,7 +90,8 @@ texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
 
-texture_grotte = create_single_texture_by_coords(100, 100, 0, 0)
+
+texture_grotte = create_single_texture_by_coords(sprite_sheet_terrain,0, 143, 32, 32)
 
 texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16), 
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 304, 16, 16), True, False),
@@ -140,7 +144,7 @@ TILE_COLORS = {
     14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
     15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
     71: (133, 34, 155),     # donjon_collide - ID 71 au lieu de "donjon_collide"
-    800: (255, 0 , 0)
+    800: (178, 102 , 255)
 }
 
 # CHANGEMENT : IDs numériques pour les textures
