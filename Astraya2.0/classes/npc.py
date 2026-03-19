@@ -4,7 +4,7 @@ from ui import debug
 import settings
 
 class Npc(entity.Entity):
-    def __init__(self, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
+    def __init__(self, type,  sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab
         self.index_dialog = 0

@@ -301,9 +301,8 @@ def map_generate():
     # ==============================================================================
 
     def generate_villages(biome_map, nb_villages=NB_VILLAGES):
-        """Place des villages en évitant l'océan."""
+        """Place des villages en évitant l'océan et les biomes interdits."""
         coord_vil = []
-        ocean_id = BIOME_IDS["ocean"]
 
         for _ in range(nb_villages):
             attempts = 0
@@ -312,57 +311,59 @@ def map_generate():
                 x = random.randint(0, SIZE - 1)
                 y = random.randint(0, SIZE - 1)
                 
-                if biome_map[y][x] != ocean_id:
+                # Vérifier que le biome n'est pas interdit
+                if biome_map[y][x] not in FORBIDDEN_VILLAGE_BIOMES:
                     coord_vil.append([x, y])
                     trouve = True
                 attempts += 1
 
         return coord_vil
 
-    def classify_villages(coord_vil, biome_map, nb_villes=3, rayon_proximite=1000):
-        """Classe les villages en 3 grandes villes, 10 grands villages, le reste villages."""
-
+    def classify_villages(coord_vil, biome_map, nb_villes=3):
+        """Classe les villages : 3 grandes villes (dont une fixe en 1500,1600), le reste en hameaux."""
+        
         villes = []
-        villes.append((1500, 1600))  # Ajouter la ville centrale
-        densites = []
-        for i, (vx, vy) in enumerate(coord_vil):
-            densite = sum(
-                1 for ox, oy in coord_vil
-                if (ox - vx)**2 + (oy - vy)**2 < rayon_proximite**2
-            )
-            densites.append((densite, vx, vy))
+        villes.append((1500, 1600))
+        
+        distances = []
+        for vx, vy in coord_vil:
+            dist = (vx - 1500)**2 + (vy - 1600)**2
+            distances.append((dist, vx, vy))
 
-        densites.sort(key=lambda x: x[0])
+        distances.sort(reverse=True, key=lambda x: x[0])
 
-        candidats = densites[:20]
-
-        _, vx0, vy0 = candidats[0]
-        villes.append((vx0, vy0))
-
-        # Sélection des autres villes
-        while len(villes) < nb_villes:
+        if len(distances) >= 2:
+            _, vx1, vy1 = distances[0]
+            villes.append((vx1, vy1))
             meilleur = None
             meilleure_dist = -1
-
-            for _, vx, vy in candidats:
-                # distance minimale à une ville déjà choisie
+            for _, vx, vy in distances[1:]:
                 dist_min = min(
                     (vx - cx)**2 + (vy - cy)**2
                     for cx, cy in villes
                 )
-
                 if dist_min > meilleure_dist:
                     meilleure_dist = dist_min
                     meilleur = (vx, vy)
-
-            villes.append(meilleur)
-
-        # Création des objets Village
+            
+            if meilleur:
+                villes.append(meilleur)
+        
+        # Créer les objets Village
         resultat = []
+        
+        # Ajouter les 3 villes
         for vx, vy in villes:
             biome = biome_map[vy, vx]
             resultat.append(Village(vx, vy, "city", biome))
-
+        
+        # Ajouter les hameaux (tous les villages non sélectionnés comme villes)
+        villes_coords = set(villes)
+        for vx, vy in coord_vil:
+            if (vx, vy) not in villes_coords:
+                biome = biome_map[vy, vx]
+                resultat.append(Village(vx, vy, "hamlet", biome))
+        
         return resultat
             
 
@@ -372,9 +373,8 @@ def map_generate():
     # ==============================================================================
 
     def generate_grottes(biome_map, nb_grottes=NB_VILLAGES):
-        """Place des entrées de grottes en évitant l'océan."""
+        """Place des entrées de grottes en évitant l'océan et les biomes interdits."""
         coord_grottes = [[1500, 1501]]
-        ocean_id = BIOME_IDS["ocean"]
 
         for _ in range(nb_grottes):
             attempts = 0
@@ -383,7 +383,8 @@ def map_generate():
                 x = random.randint(0, SIZE - 1)
                 y = random.randint(0, SIZE - 1)
                 
-                if biome_map[y][x] != ocean_id:
+                # Vérifier que le biome n'est pas interdit
+                if biome_map[y][x] not in FORBIDDEN_VILLAGE_BIOMES:
                     coord_grottes.append([x, y])
                     trouve = True
                 attempts += 1
@@ -397,7 +398,7 @@ def map_generate():
 
     def add_texture_variants(biome_map):
         """Ajoute des variations de textures pour beach et plains."""
-        # Créer un array de variations (0-255 pour chaque tile) avnt c'était 16 mais c'est trop borring
+        # Créer un array de variations (0-255 pour chaque tile)
         texture_variants = np.random.randint(0, 255, size=(SIZE, SIZE), dtype=np.uint32)
 
         # Retourner les deux arrays séparément
@@ -546,7 +547,6 @@ def map_generate():
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         world_map = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         world_map, texture_variants = add_texture_variants(world_map)
-        #world_map = generer_corruption(world_map)
 
         # 2. Falaises et passages
         print("🏔️ Détection des falaises...")
@@ -562,17 +562,19 @@ def map_generate():
         # 4. Spawn point
         world_map[1510, 1510] = BIOME_IDS["collide"]
 
-        # 5. Sauvegarder (AVEC les passages)
+        # 5. Sauvegarder
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
         print(f"🎮 Monde généré : {SIZE}x{SIZE}")
 
-        # Classification des villages (s'exécute toujours)
     print("\n Classification et génération des villages...")
-    villages = classify_villages(coord_vil, world_map, nb_villes=3, rayon_proximite=1000)
+    villages = classify_villages(coord_vil, world_map, nb_villes=3)
 
-    # Appliquer les bâtiments
+    # Appliquer les bâtiments sur la carte
     for village in villages:
-        village.generate()
+        # Passer la biome_map pour vérifier les biomes interdits
+        village.generate(world_map)
+        
+        # Marquer les bâtiments comme obstacles sur la carte
         for building in village.buildings:
             size = building.size
             for dy in range(size[1]):
@@ -580,9 +582,12 @@ def map_generate():
                     bx = building.x + dx
                     by = building.y + dy
                     if 0 <= bx < SIZE and 0 <= by < SIZE:
-                        world_map[by, bx] = BIOME_IDS["collide"]
+                        # Vérifier qu'on ne remplace pas un biome interdit
+                        if world_map[by, bx] not in FORBIDDEN_VILLAGE_BIOMES:
+                            world_map[by, bx] = BIOME_IDS["collide"]
 
     print(f"   → {sum(1 for v in villages if v.type == 'city')} villes")
+    print(f"   → {sum(1 for v in villages if v.type == 'hamlet')} hameaux")
 
     # Gérer altitude_map si absent
     if altitude_map is None:
