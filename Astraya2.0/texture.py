@@ -144,7 +144,7 @@ TILE_COLORS = {
     14: (0, 200, 255),    # cave_crystal - ID 14 au lieu de "cave_crystal"
     15: (255, 80, 0),     # cave_lava - ID 15 au lieu de "cave_lava"
     71: (133, 34, 155),     # donjon_collide - ID 71 au lieu de "donjon_collide"
-    800: (255, 0 , 0)
+    800: (178, 102 , 255)
 }
 
 # CHANGEMENT : IDs numériques pour les textures
