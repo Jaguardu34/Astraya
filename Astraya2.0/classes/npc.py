@@ -4,9 +4,10 @@ from ui import debug
 import settings
 
 class Npc(entity.Entity):
-    def __init__(self, type,  sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
+    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab
+        self.type = type
         self.index_dialog = 0
         self.is_static = True
         self.range_action = 200
@@ -35,7 +36,7 @@ class Npc(entity.Entity):
             
             if self.in_dialog:
                 
-                self.quest_manager.on_talk(self)
+                
                 if self.toast.finished_anim():
                     surface.blit(self.text_continue_surface, (px+16+(self.toast.width//2)-self.little_font.size("Espace")[0], py-40+self.toast.height))
                     if self.index_dialog == len(self.dialog_tab) - 1:
@@ -69,15 +70,19 @@ class Npc(entity.Entity):
                     self.in_dialog = True
             
             if event.key == pygame.K_SPACE:
-                if self.close_to_player:
-                    if self.in_dialog:
-                        if self.index_dialog + 1 >= len(self.dialog_tab):
-                            self.toast.reset()
-                            self.in_dialog = False
-                            self.index_dialog = 0
-                        else:
-                            self.toast.reset()
-                            self.index_dialog += 1
+                if self.close_to_player and self.in_dialog:
+                    if self.index_dialog + 1 >= len(self.dialog_tab):
+                        # Fin du dialogue → valider la quête
+                        self.has_talk_to_player = True
+                        self.quest_manager.on_talk(self)
+
+                        self.toast.reset()
+                        self.in_dialog = False
+                        self.index_dialog = 0
+            
+                    else:
+                        self.toast.reset()
+                        self.index_dialog += 1
 
             
         
