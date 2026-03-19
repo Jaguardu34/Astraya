@@ -2,7 +2,7 @@ import random
 import pygame
 from settings import *
 from classes.npc import Npc
-import texture
+from texture import *
 import numpy as np
  
 #========================================
@@ -162,8 +162,9 @@ def spawn_villageois(village, game_map):
         distance = random.uniform(5, village.radius)
         vx = int(village.x + distance * np.cos(angle))
         vy = int(village.y + distance * np.sin(angle))
-        type = random.choice(["fermier", "marchant", "garde"])
-        
-        villagers.append(Npc(type, texture.texture_old_npc, game_map, [f"Salut je ne suis un pas trop npc, je suis {type}", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
+        type = random.choice(["fermier"]) # , "marchant", "garde"
+        texture = texture_chicken_corrupted  
+
+        villagers.append(Npc(type, texture, game_map, [f"Salut je ne suis un pas trop npc, je suis {type}", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
 
     return villagers

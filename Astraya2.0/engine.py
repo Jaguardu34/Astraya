@@ -192,8 +192,9 @@ class Game():
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
         self.old_npc = npc.Npc("spawn NPC", texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
         self.npc_grp.add(self.old_npc)
-        self.npc_grp.add(village.spawn_villageois(world_data.villages[0], self.game_map))
-        
+        for villager in village.spawn_villageois(world_data.villages[0], self.game_map):
+            self.npc_grp.add(villager)
+
         
         #quelques items :
         self.player.inventory.add_item(get_item("wood_sword"), 1)
@@ -378,19 +379,33 @@ class Game():
     
     
     def init_quest(self):
-        self.first_quest = quest_module.Quest(
+        farmer_npc = next((npc for npc in self.npc_grp if npc.type == "fermier"), None)
+
+        quest_list = [quest_module.Quest(
             title="Allez voir le vieux sage",
             content="Parlez au vieux npc",
-            type="idk",
+            type="principale",
             objectives=[
                 quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
             ]
-        )
-        self.quest_manager.add_quest(self.first_quest)
-        self.quest_manager.accept_quest(self.first_quest)
-        self.quest_init = True
+        ), 
+            
+            quest_module.Quest(
+    title="Aide au fermier",
+    content="Le fermier a besoin d'aide, va lui parler.",
+    type="principale",
+    objectives=[
+        quest_module.TalkObjective("Parler au fermier", farmer_npc) 
+    ])]
 
-    #boucle principale
+        # On ajoute ttes les quêtes dans available
+        for q in quest_list:
+            self.quest_manager.add_quest(q)
+
+        # On active seulement la première au début
+        self.quest_manager.accept_quest(quest_list[0])
+        self.quest_init = True
+        #boucle principale
     def update(self):
 
         self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()

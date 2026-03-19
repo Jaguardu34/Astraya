@@ -132,8 +132,10 @@ class TalkObjective(Objective):
         return self.talked
 
     def on_talk(self, npc):
-        if npc.has_talk_to_player:
+        if npc is self.npc and npc.has_talk_to_player:
             self.talked = True
+            npc.has_talk_to_player = False 
+
 
 
 class QuestManager:
@@ -159,7 +161,7 @@ class QuestManager:
         if quest in self.active and quest.type == "principale":
             self.active.remove(quest)
             self.completed.append(quest)
-            self.active.append(quest)
+            self.active.append()
             self.font_last_on_screen = pygame.time.get_ticks()
             print(f" Quete termine : {quest.title}")
 
@@ -171,13 +173,20 @@ class QuestManager:
         for quest in self.active:
             quest.update(screen)
             
-        """Appelé à chaque frame."""
+        # Détection des quêtes terminées
         newly_done = [q for q in self.active if q.done]
         for quest in newly_done:
             self.active.remove(quest)
             self.completed.append(quest)
             self.font_last_on_screen = now
-            print(f" Quete termine : {quest.title}")
+            print(f" Quete terminée : {quest.title}")
+
+            # --- ACTIVER LA PROCHAINE QUÊTE PRINCIPALE ---
+            next_main = next((q for q in self.available if q.type == "principale"), None)
+            if next_main:
+                self.available.remove(next_main)
+                self.active.append(next_main)
+                print(f" Nouvelle quête principale activée : {next_main.title}")
 
     # --- Événements globaux, à appeler depuis ton jeu ---
 
@@ -198,6 +207,7 @@ class QuestManager:
             for obj in quest.objectives:
                 if isinstance(obj, TalkObjective):
                     obj.on_talk(npc)
+
 
     def on_player_move(self, player_x, player_y):
         for quest in self.active:
