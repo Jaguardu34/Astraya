@@ -4,6 +4,7 @@ from settings import *
 def generer_corruption(biome_map, nb_zones=5):
     taille_min = 8000
     taille_max = 15000
+    f_origin_donjon_coords = []
     corruptibles = {
         BIOME_IDS["plains"],
         BIOME_IDS["forest"],
@@ -37,19 +38,22 @@ def generer_corruption(biome_map, nb_zones=5):
             biome_map[y, x] = BIOME_IDS["corrupted"]
 
         donjon_coords = create_donjon(centre_x, centre_y, taille=15)
+        f_origin_donjon_coords.append(donjon_coords[0])
         for x, y in donjon_coords:
             biome_map[y, x] = BIOME_IDS["donjon_collide"]
 
+        return f_origin_donjon_coords
+
    
     taille_fixe = random.randint(taille_min, taille_max)
-    corrompre_zone(biome_map, 1400, 1400, taille_fixe)
+    f_origin_donjon_coords = corrompre_zone(biome_map, 1400, 1400, taille_fixe)
 
 
     for _ in range(nb_zones):
         taille_zone = random.randint(taille_min, taille_max)
         attempts = 0
 
-        while attempts < 1000:
+        while attempts < 10000:
             centre_x = random.randint(50, SIZE - 50)
             centre_y = random.randint(50, SIZE - 50)
 
@@ -57,12 +61,10 @@ def generer_corruption(biome_map, nb_zones=5):
                 attempts += 1
                 continue
 
-            corrompre_zone(biome_map, centre_x, centre_y, taille_zone)
+            f_origin_donjon_coords = corrompre_zone(biome_map, centre_x, centre_y, taille_zone)
             break
 
-            attempts += 1
-
-    return biome_map
+    return biome_map, f_origin_donjon_coords
 
 
 def create_donjon(center_x, center_y, taille):

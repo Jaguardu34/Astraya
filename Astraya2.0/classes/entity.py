@@ -296,3 +296,27 @@ class DroppedItem(pygame.sprite.Sprite):
         self.hitbox[0].x = self.x - 12
         self.hitbox[0].y = self.y - 12
         
+
+
+class DungeonDoor(Entity):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500):
+        super().__init__(sprite, game_map, altitude_map, x, y)
+
+        self.show_on_minimap = False
+        self.has_hitbox = True
+        self.hitbox = [pygame.Rect(self.x, self.y, 32, 32)]
+        self.vx = 0
+        self.vy = 0
+
+        self.interact_zone = pygame.Rect(
+            self.x - 48,   # 1.5 blocs à gauche
+            self.y - 48,   # 1.5 blocs au-dessus
+            96,            # 3 blocs de large
+            96             # 3 blocs de haut
+        )
+
+    def player_can_enter(self, player_hitbox):
+        return self.interact_zone.colliderect(player_hitbox)
+
+    def update(self, dt, chunk_grid, actual_map):
+        super().update(actual_map)

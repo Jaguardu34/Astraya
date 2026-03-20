@@ -155,7 +155,7 @@ class Game():
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
 
-        world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages = generate_map.map_generate()
+        world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages, world_data.origin_donjon_coords = generate_map.map_generate()
 
         render_minimap.generate_minimap()
 
@@ -167,6 +167,8 @@ class Game():
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
+        print("DONJONS =", world_data.origin_donjon_coords)
+
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
         self.ennemy_grp = pygame.sprite.Group()
@@ -189,12 +191,20 @@ class Game():
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.entity_grp.add(self.player)
-        self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1520))
+        self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1450))
         self.old_npc = npc.Npc("spawn NPC", texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
         self.npc_grp.add(self.old_npc)
         for villager in village.spawn_villageois(world_data.villages[0], self.game_map):
             self.npc_grp.add(villager)
 
+        door_surface = pygame.Surface((32, 32))
+        door_surface.fill((150, 75, 0))  # marron
+
+        self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=1502, y=1500))
+
+        for donjons in world_data.origin_donjon_coords:
+            self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
+        
         
         #quelques items :
         self.player.inventory.add_item(get_item("wood_sword"), 1)
@@ -306,6 +316,13 @@ class Game():
                     drop = entity.DroppedItem(self.player.x, self.player.y, item, qty, self.current_map)
                     self.dropped_grp.add(drop)
                 handled = True
+
+            if event.key == settings.KEY_NPC:
+                for sprite in self.entity_grp:
+                    if isinstance(sprite, entity.DungeonDoor): ###
+                        if sprite.player_can_enter(self.player.hitbox[0]):
+                            print("Entré dans le donjon")
+                            break
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             tx, ty = self.get_tile_by_mouse_pos()
