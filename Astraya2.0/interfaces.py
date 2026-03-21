@@ -86,11 +86,18 @@ class MainMenu(FullscreenMenu):
         
     def draw(self, screen, window_scale):
         super().draw(window_scale)
-        self.buttons = {
-            "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2],
-            "close" : [self.close_btn, 10, 10], 
-            "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
-            }
+        if not self.launch_first_time:
+            self.buttons = {
+                "play" : [self.play_btn, (self.WINDOW_SCALE[0]//2)-(self.play_btn.width//2), self.WINDOW_SCALE[1]//2],
+                "close" : [self.close_btn, 10, 10], 
+                "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
+                }
+        elif self.launch_first_time:
+            self.buttons = {
+                "play" : [self.resume_btn, (self.WINDOW_SCALE[0]//2)-(self.resume_btn.width//2), self.WINDOW_SCALE[1]//2],
+                "close" : [self.close_btn, 10, 10], 
+                "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
+                }
         
         self.surface.fill("white")
         for button in self.buttons.values():
