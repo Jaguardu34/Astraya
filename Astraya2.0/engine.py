@@ -368,6 +368,35 @@ class Game():
                     self.info_swipe[1] = angle
                     self.info_swipe[0] = True
                     self.info_swipe[3] = pygame.time.get_ticks()
+                    nearby = self.chunk_grid.get_nearby(self.player.x, self.player.y)
+                    nearby = self.chunk_grid.get_nearby(self.player.x, self.player.y)
+                    for ent in nearby:
+                        if ent is self.player:
+                            continue
+                        if not hasattr(ent, 'has_life') or not ent.has_life:
+                            continue
+                        dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
+                        if dist > 600:
+                            continue
+
+                        tile_cx = int(self.player.x // 32)
+                        tile_cy = int(self.player.y // 32)
+                        offset_x = int(self.player.x % 32)
+                        offset_y = int(self.player.y % 32)
+
+                        px = (ent.x - (tile_cx - self.main_map.scale_x // 2) * 32)
+                        py = (ent.y - (tile_cy - self.main_map.scale_y // 2) * 32)
+
+                        screen_x = px + 8 - offset_x
+                        screen_y = py + 8 - offset_y
+
+                        ent_rect = pygame.Rect(screen_x, screen_y, ent.hitbox_size, ent.hitbox_size)
+                        if ent_rect.collidepoint(pygame.mouse.get_pos()):
+                            ent.life_point -= 1
+                            ent.hit_flash_until = pygame.time.get_ticks() + 200
+                            print("entité frappée")
+                            break
+                        
         
         if event.type == pygame.KEYDOWN:
             for i, key in enumerate([pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]):
@@ -457,6 +486,7 @@ class Game():
                         self.main_map.show_hitbox = False
                     else:
                         self.main_map.show_hitbox = True
+                        
             if event.type == self.MUSIC_END:
                 # passe à la suivante (aléatoire ou séquentielle)
                 
@@ -496,6 +526,7 @@ class Game():
             self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
             
         elif self.world_ready and world_data.world_map is not None:
+            
             if not self.sprites_initialized:
                 self.init_sprites()
                 self.main_map = map_render.Map(self.scale_main_map, self.screen, [self.entity_grp, self.projectile_grp, self.ennemy_grp, self.block_grp, self.plant_grp, self.npc_grp])
