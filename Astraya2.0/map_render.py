@@ -1,13 +1,16 @@
+#Classes pour affichage de la map et minimap
+
+#Imports
 import pygame
-import settings
 from texture import *
 import world_data
 from classes.items import ItemType
 import render_minimap
-from classes import (entity, objects)
+from classes import (objects)
 
-
+#class minimap
 class Minimap():
+    #init variables
     def __init__(self, scale: int, zoom: int, screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale = scale        
         self.zoom = zoom         
@@ -17,6 +20,7 @@ class Minimap():
         self.distance_de_vue = 250
         self.minimap_image = pygame.image.load(render_minimap.minimap_path)
 
+    #recuperer la minimap.png coupée pr afficher le bon endroit
     def get_minimap_croped(self, tile_cx: int, tile_cy: int) -> pygame.Surface:
         src_x = tile_cx - self.zoom // 2
         src_y = tile_cy - self.zoom // 2
@@ -25,14 +29,17 @@ class Minimap():
         minimap_croped_upscaled = pygame.transform.scale(minimap_croped, (self.scale, self.scale))
         return minimap_croped_upscaled
 
+    #afficher la minimap a l'écran
     def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show) -> None:
+        #transformer pos joueur en pos tile
         posx, posy = player_position
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
         
-
+        #creer la surface de la minimap
         self.minimap_surface.blit(self.get_minimap_croped(tile_cx, tile_cy), (0, 0))
 
+        #afficher les entitées
         for sprite_group in self.sprites_to_show:
             for sprite in sprite_group:
                 if sprite.game_map is map_to_show:
@@ -40,10 +47,13 @@ class Minimap():
                         if abs(posx - sprite.x) < self.distance_de_vue and abs(posy - sprite.y) < self.distance_de_vue:
                             sprite.draw_minimap(self.scale / self.zoom, self.minimap_surface, tile_cx, tile_cy, self.zoom)
 
+        #afficher la minimap avec bords oranges
         pygame.draw.rect(self.screen, "orange", (x, y, self.scale + 20, self.scale + 20))
         self.screen.blit(self.minimap_surface, (x + 10, y + 10))
 
+#class map principale
 class Map():
+    #init variables
     def __init__(self, scale: tuple[int, int], screen: pygame.Surface, sprites_to_show: list) -> None:
         self.scale_x = scale[0]
         self.scale_y = scale[1]
@@ -66,11 +76,13 @@ class Map():
         self.static_cache_cy = None
         self._init_surfaces()
 
+    #init surface principale avec cache pr performances
     def _init_surfaces(self) -> None:
         m = self._cache_margin
         self.map_cache = pygame.Surface((self.scale_x * 32, self.scale_y * 32))
         self.static_cache = pygame.Surface(((self.scale_x + m * 2) * 32, (self.scale_y + m * 2) * 32))
 
+    #creer l'emplacement des plantes et le garder en memoire dans un tableau
     def build_plant_index(self, plant_grp, chunk_size: int = 16) -> None:
         self.plant_chunk_index = {}
         self.plant_chunk_size = chunk_size
@@ -82,24 +94,32 @@ class Map():
                 self.plant_chunk_index[key] = []
             self.plant_chunk_index[key].append(plant)
 
+    #afficher les tiles du fond ou couleur si pas de texture
     def _draw_tile(self, surface: pygame.Surface, draw_x: int, draw_y: int, map_i: int, map_j: int, map_to_show) -> None:
+        #on itere chaque tile a l'écran
         if map_i < 0 or map_j < 0 or map_j >= SIZE or map_i >= SIZE:
             pygame.draw.rect(surface, "blue", (draw_x, draw_y, 32, 32))
             return
-
+        
+        #recuperer l'id du biome de la tile
         biome_id = map_to_show[map_j, map_i]
 
+        #animer tile si animée
         if biome_id in TILE_ANIMATED:
             pygame.draw.rect(surface, "blue", (draw_x, draw_y, 32, 32))
             self.animated_positions.append((draw_x, draw_y, map_i, map_j, biome_id))
+        #si texture afficher texture
         elif biome_id in TILE_TEXTURE:
             variant = world_data.texture_variants[map_j, map_i] % len(TILE_TEXTURE[biome_id])
             surface.blit(TILE_TEXTURE[biome_id][variant], (draw_x, draw_y))
+        #sinon couleur
         elif biome_id in TILE_COLORS:
             pygame.draw.rect(surface, TILE_COLORS[biome_id], (draw_x, draw_y, 32, 32))
+        #ou sinon dernier recour bleu pr pas crash
         else:
             pygame.draw.rect(surface, "blue", (draw_x, draw_y, 32, 32))
 
+        #afficher les bords des biomes
         for direction, (dj, di) in {"N": (-1, 0), "S": (1, 0), "E": (0, 1), "O": (0, -1)}.items():
             nj, ni = map_j + dj, map_i + di
             if 0 <= nj < SIZE and 0 <= ni < SIZE:
@@ -108,6 +128,7 @@ class Map():
                     if edge:
                         surface.blit(edge, (draw_x, draw_y))
 
+    #afficher les plantes en fonction du tab crée plus tot
     def _blit_plants(self, tile_cx: int, tile_cy: int, map_to_show) -> None:
         if not self.plant_chunk_index:
             return
@@ -120,6 +141,7 @@ class Map():
         origin_x = (tile_cx - self.scale_x // 2 - m) * 32
         origin_y = (tile_cy - self.scale_y // 2 - m) * 32
 
+
         for cx in range(cx_min, cx_max + 1):
             for cy in range(cy_min, cy_max + 1):
                 for plant in self.plant_chunk_index.get((cx, cy), []):
@@ -130,6 +152,7 @@ class Map():
                         (plant.x - origin_x, plant.y - origin_y)
                     )
 
+    #recréer le cache
     def _rebuild_static_cache(self, tile_cx: int, tile_cy: int, map_to_show, cliff_edges: list) -> None:
         m = self._cache_margin
         self.static_cache.fill("blue")
@@ -146,6 +169,7 @@ class Map():
         self._blit_plants(tile_cx, tile_cy, map_to_show)
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
+
 
     def _scroll_cache(self, old_cx: int, old_cy: int, new_cx: int, new_cy: int, map_to_show) -> None:
         m = self._cache_margin
@@ -190,6 +214,7 @@ class Map():
         self.static_cache_cx = new_cx
         self.static_cache_cy = new_cy
 
+    #afficher la map
     def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show, player, cliff_edges: list, mouse_pos: tuple[int, int] | None, selected_item, in_inventory: bool, block_grp) -> None:
         now = pygame.time.get_ticks()
         if now - self.anim_timer >= self.anim_speed:
@@ -238,6 +263,7 @@ class Map():
             highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32, (ty - tile_cy + self.scale_y // 2) * 32)
             self.map_cache.blit(self._highlight_surface_white, highlight_pos)
 
+        #afficher les entités
         for sprite in sprites_to_draw:
             if sprite is player:
                 self.map_cache.blit(
@@ -247,10 +273,12 @@ class Map():
             else:
                 sprite.draw(self.scale_x, self.scale_y, posx, posy, self.map_cache)
 
+        #afficher le highlight des blocs
         if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
             highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32, (ty - tile_cy + self.scale_y // 2) * 32)
             self.map_cache.blit(self._highlight_surface_red, highlight_pos)
 
+        #afficher hitbox pr debug
         if self.show_hitbox:
             for sprite in sprites_to_draw:
                 if hasattr(sprite, 'hitbox'):
@@ -261,12 +289,14 @@ class Map():
                             hb.width, hb.height
                         ), 1)
 
+        #afficher la surface de la map 
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
         pygame.draw.rect(self.screen, "white", (x + self.scale_x * 32 - 32, y - 32, 32, self.scale_x * 32))
 
+    #fonction pr resize la map si besoin
     def resize(self, new_scale_x: int, new_scale_y: int) -> None:
         if new_scale_x == self.scale_x and new_scale_y == self.scale_y:
             return

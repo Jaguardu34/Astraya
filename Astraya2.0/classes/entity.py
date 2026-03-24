@@ -66,6 +66,7 @@ class Entity(pygame.sprite.Sprite):
         self.actual_map = game_map
         self.is_static = False
         self.hitbox_size, self.hitbox_offset_x, self.hitbox_offset_y = calculate_hitbox_size(sprite)
+        self.hit_flash_until = 0
 
         if altitude_map is not None:
             self.altitude = altitude_map[int(y), int(x)]
@@ -85,6 +86,8 @@ class Entity(pygame.sprite.Sprite):
         self.texture_index = self.texture_index % len(self.sprite)
         self.actual_map = actual_map
 
+            
+
     def generate_minimap_sprite(self):
         for i in range(len(self.sprite)):
             self.sprite_minimap.append(pygame.transform.scale(self.sprite[i], (self.sprite[i].get_width() // 2, self.sprite[i].get_height() // 2)))
@@ -95,7 +98,13 @@ class Entity(pygame.sprite.Sprite):
         px = (self.x - (tile_cx - scalex//2) * 32)
         py = (self.y - (tile_cy - scaley//2) * 32)
         if 0 <= px < scalex*32 and 0 <= py < scaley*32:
-            surface.blit(self.sprite[self.texture_index], (px, py))
+            now = pygame.time.get_ticks()
+            if now < self.hit_flash_until:
+                tinted = self.sprite[self.texture_index].copy()
+                tinted.fill((255, 0, 0, 120), special_flags=pygame.BLEND_RGBA_MULT)
+                surface.blit(tinted, (px, py))
+            else:
+                surface.blit(self.sprite[self.texture_index], (px, py))
 
     def draw_minimap(self, resolution_minimap, screen, tile_cx, tile_cy, zoom):
         ptile_x = int(self.x // 32)

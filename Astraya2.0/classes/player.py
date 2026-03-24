@@ -86,6 +86,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         elif dx < -0.1:
             self.last_orientation = "right"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
+    
 
 
                         
