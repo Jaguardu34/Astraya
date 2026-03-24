@@ -96,8 +96,7 @@ class Map():
 
     #afficher les tiles du fond ou couleur si pas de texture
     def _draw_tile(self, surface: pygame.Surface, draw_x: int, draw_y: int, map_i: int, map_j: int, map_to_show) -> None:
-        #on itere chaque tile a l'écran
-        if map_i < 0 or map_j < 0 or map_j >= SIZE or map_i >= SIZE:
+        if map_i < 0 or map_j < 0 or map_j >= map_to_show.shape[0] or map_i >= map_to_show.shape[1]:
             pygame.draw.rect(surface, "blue", (draw_x, draw_y, 32, 32))
             return
         
@@ -122,7 +121,8 @@ class Map():
         #afficher les bords des biomes
         for direction, (dj, di) in {"N": (-1, 0), "S": (1, 0), "E": (0, 1), "O": (0, -1)}.items():
             nj, ni = map_j + dj, map_i + di
-            if 0 <= nj < SIZE and 0 <= ni < SIZE:
+            h, w = map_to_show.shape
+            if 0 <= nj < h and 0 <= ni < w:
                 if map_to_show[nj, ni] != biome_id:
                     edge = TILE_EDGE.get((biome_id, direction))
                     if edge:
@@ -147,13 +147,17 @@ class Map():
                 for plant in self.plant_chunk_index.get((cx, cy), []):
                     if plant.game_map is not map_to_show:
                         continue
-                    self.static_cache.blit(
-                        plant.sprite[plant.texture_index],
-                        (plant.x - origin_x, plant.y - origin_y)
-                    )
 
-    #recréer le cache
-    def _rebuild_static_cache(self, tile_cx: int, tile_cy: int, map_to_show, cliff_edges: list) -> None:
+                    px = plant.x - origin_x
+                    py = plant.y - origin_y
+
+                    if px < -32 or py < -32 or px > self.static_cache.get_width() or py > self.static_cache.get_height():
+                        continue
+
+                    self.static_cache.blit(
+                        plant.sprite[plant.texture_index],(px, py))
+
+    def _rebuild_static_cache(self, tile_cx: int, tile_cy: int, map_to_show, cliff_edges: list, is_dungeon) -> None:
         m = self._cache_margin
         self.static_cache.fill("blue")
         self.animated_positions = []
@@ -166,12 +170,12 @@ class Map():
                 map_j = tile_cy - self.scale_y // 2 - m + j
                 self._draw_tile(self.static_cache, i * 32, j * 32, map_i, map_j, map_to_show)
 
-        self._blit_plants(tile_cx, tile_cy, map_to_show)
+        if not is_dungeon:
+            self._blit_plants(tile_cx, tile_cy, map_to_show)
         self.static_cache_cx = tile_cx
         self.static_cache_cy = tile_cy
 
-
-    def _scroll_cache(self, old_cx: int, old_cy: int, new_cx: int, new_cy: int, map_to_show) -> None:
+    def _scroll_cache(self, old_cx, old_cy, new_cx, new_cy, map_to_show, is_dungeon):
         m = self._cache_margin
         dx = new_cx - old_cx
         dy = new_cy - old_cy
@@ -210,41 +214,51 @@ class Map():
                 for i in range(total_x):
                     self._draw_tile(self.static_cache, i * 32, j * 32, new_cx - self.scale_x // 2 - m + i, map_j, map_to_show)
 
-        self._blit_plants(new_cx, new_cy, map_to_show)
+        if not is_dungeon:
+            self._blit_plants(new_cx, new_cy, map_to_show)
         self.static_cache_cx = new_cx
         self.static_cache_cy = new_cy
 
     #afficher la map
     def draw(self, x: int, y: int, player_position: tuple[float, float], map_to_show, player, cliff_edges: list, mouse_pos: tuple[int, int] | None, selected_item, in_inventory: bool, block_grp) -> None:
         now = pygame.time.get_ticks()
+        is_dungeon = map_to_show.shape[0] < 300
+
         if now - self.anim_timer >= self.anim_speed:
             self.anim_frame = (self.anim_frame + 1) % 256
             self.anim_timer = now
 
+        # Position du joueur (celle passée par Game, cohérente avec le rendu)
         posx, posy = player_position
         tile_cx = int(posx // 32)
         tile_cy = int(posy // 32)
+
+        # Offset pixel à l'intérieur de la tuile centrale
+        # IMPORTANT : basé sur player_position, pas sur player.x / player.y
         offset_x = int(posx % 32)
         offset_y = int(posy % 32)
 
+        # Gestion du cache statique
         if self.static_cache_cx is None:
-            self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges)
+            self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges, is_dungeon)
         elif tile_cx != self.static_cache_cx or tile_cy != self.static_cache_cy:
             dx = abs(tile_cx - self.static_cache_cx)
             dy = abs(tile_cy - self.static_cache_cy)
             if dx <= 2 and dy <= 2:
-                self._scroll_cache(self.static_cache_cx, self.static_cache_cy, tile_cx, tile_cy, map_to_show)
+                self._scroll_cache(self.static_cache_cx, self.static_cache_cy, tile_cx, tile_cy, map_to_show, is_dungeon)
             else:
-                self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges)
+                self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges, is_dungeon)
 
         m = self._cache_margin
         self.map_cache.blit(self.static_cache, (-m * 32, -m * 32))
 
+        # Tuiles animées
         for (draw_x, draw_y, map_i, map_j, biome_id) in self.animated_positions:
             frames = TILE_ANIMATED[biome_id]
             frame = (int(self.anim_frame) + world_data.texture_variants[map_j, map_i]) % len(frames)
             self.map_cache.blit(frames[frame], (draw_x - m * 32, draw_y - m * 32))
 
+        # Sprites
         sprites_to_draw = [
             sprite for group in self.sprites_to_show
             for sprite in group
@@ -259,38 +273,53 @@ class Map():
                 tx = tile_cx - self.scale_x // 2 + int((mouse_x + offset_x - x) // 32)
                 ty = tile_cy - self.scale_y // 2 + int((mouse_y + offset_y - y) // 32)
 
+        # Highlight placement
         if not in_inventory and player.inventory.can_place(map_to_show, tx, ty, block_grp, player.position, entity_groups=self.sprites_to_show):
-            highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32, (ty - tile_cy + self.scale_y // 2) * 32)
+            highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32,
+                            (ty - tile_cy + self.scale_y // 2) * 32)
             self.map_cache.blit(self._highlight_surface_white, highlight_pos)
 
         #afficher les entités
+        # Dessin des sprites
         for sprite in sprites_to_draw:
             if sprite is player:
+                # Le joueur est toujours centré dans la map_cache, avec l'offset fin
                 self.map_cache.blit(
                     player.sprite[player.texture_index],
-                    (self.scale_x // 2 * 32 + offset_x, self.scale_y // 2 * 32 + offset_y)
+                    (self.scale_x // 2 * 32 + offset_x,
+                    self.scale_y // 2 * 32 + offset_y)
                 )
             else:
                 sprite.draw(self.scale_x, self.scale_y, posx, posy, self.map_cache)
 
         #afficher le highlight des blocs
+        # Highlight break
         if not in_inventory and player.inventory.can_break(map_to_show, tx, ty, block_grp, player.position):
-            highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32, (ty - tile_cy + self.scale_y // 2) * 32)
+            highlight_pos = ((tx - tile_cx + self.scale_x // 2) * 32,
+                            (ty - tile_cy + self.scale_y // 2) * 32)
             self.map_cache.blit(self._highlight_surface_red, highlight_pos)
 
-        #afficher hitbox pr debug
+        # Hitbox debug
         if self.show_hitbox:
             for sprite in sprites_to_draw:
                 if hasattr(sprite, 'hitbox'):
                     for hb in sprite.hitbox:
-                        pygame.draw.rect(self.map_cache, (255, 0, 0), (
-                            hb.x - (tile_cx - self.scale_x // 2) * 32,
-                            hb.y - (tile_cy - self.scale_y // 2) * 32,
-                            hb.width, hb.height
-                        ), 1)
+                        pygame.draw.rect(
+                            self.map_cache,
+                            (255, 0, 0),
+                            (
+                                hb.x - (tile_cx - self.scale_x // 2) * 32,
+                                hb.y - (tile_cy - self.scale_y // 2) * 32,
+                                hb.width,
+                                hb.height
+                            ),
+                            1
+                        )
 
-        #afficher la surface de la map 
+        # Blit final : on applique l'offset pixel fin
         self.screen.blit(self.map_cache, (x - offset_x, y - offset_y))
+
+        # Bordures blanches
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y + self.scale_y * 32 - 32, self.scale_x * 32 + 32, 32))
         pygame.draw.rect(self.screen, "white", (x - 32, y - 32, 32, self.scale_x * 32))
