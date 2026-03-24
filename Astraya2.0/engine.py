@@ -18,6 +18,7 @@ import math
 from ui import debug
 from ui import ui_inventory
 from classes.items import get_item
+from corruption import generer_corruption
 import numpy as np
 
 class Chunk:
@@ -127,6 +128,10 @@ class Game():
         self.font_to_write = pygame.font.SysFont(None, 24)
         self.chunk_grid = Chunk(chunk_size=64)
         self.in_menu = False
+        self.in_dungeon = False
+        self.dungeon_map = None
+
+
 
         self.quest_manager = quest_module.QuestManager()
         
@@ -155,9 +160,15 @@ class Game():
     #charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
 
-        world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages, world_data.origin_donjon_coords = generate_map.map_generate()
+        world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages, world_data.origin_donjon_coords, world_data.donjons_maps = generate_map.map_generate()
+
+        if not world_data.donjons_maps:
+            print("⚠️ Ancienne sauvegarde sans donjons, régénération...")
+            _, _, world_data.donjons_maps = generer_corruption(world_data.world_map, nb_zones=5)
+
 
         render_minimap.generate_minimap()
+        self.dungeon_map = world_data.donjons_maps[0]
 
         
         if world_data.world_map is not None:
@@ -167,7 +178,7 @@ class Game():
 
     #creer tt les entity et les mettre dans un sprite.group
     def init_sprites(self):
-        print("DONJONS =", world_data.origin_donjon_coords)
+        print("Initialisation des sprites...")
 
         self.projectile_grp = pygame.sprite.Group()
         self.entity_grp = pygame.sprite.Group()
@@ -180,14 +191,16 @@ class Game():
         game_map = world_data.world_map
         alt = world_data.altitude_map
         
+        self.alt = alt
+
         if game_map is None or alt is None:
             return
         
-        
-            
-        
         self.game_map = game_map     
         self.current_map = self.game_map
+        
+        # Charger les maps de donjons
+        self.dungeon_maps = world_data.donjons_maps
         
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
         self.entity_grp.add(self.player)
@@ -197,30 +210,27 @@ class Game():
         for villager in village.spawn_villageois(world_data.villages[0], self.game_map):
             self.npc_grp.add(villager)
 
+        # Surface pour la porte d'entrée
         door_surface = pygame.Surface((32, 32))
         door_surface.fill((150, 75, 0))  # marron
 
         self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=1502, y=1500))
 
-        for donjons in world_data.origin_donjon_coords:
-            self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
-        
-        
-        #quelques items :
+        #for donjons in world_data.origin_donjon_coords:
+        #    self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
+    
+
+        # Items de départ
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("truc_rouge"), 6)
         self.player.inventory.add_item(get_item("forest_block"), 53)
         self.player.inventory.add_item(get_item("sand_block"), 64)
         self.player.inventory.add_item(get_item("water_block"), 12)
         self.player.inventory.add_item(get_item("bread"), 3)
-        self.player.inventory.add_item(get_item("wood_sword"), 1)
-        
-        
-        
 
+        # Plantes
         valid_mask = np.isin(self.game_map, [2, 3, 4])
         valid_positions = np.argwhere(valid_mask)  
-
 
         rng = np.random.default_rng()
         indices = rng.choice(len(valid_positions), size=min(5000, len(valid_positions)), replace=False)
@@ -229,26 +239,26 @@ class Game():
             y_plant, x_plant = valid_positions[idx]
             self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
 
+        # Ennemis et animaux
         for i in range(20):
             self.ennemy_grp.add(ennemy.Corrupted_Chicken(texture.texture_chicken_corrupted, self.current_map, self.player, self.projectile_grp, alt, 1410, 1400))
 
         for i in range(100):
-            x=random.randint(1300, 1600)
-            y=random.randint(1300, 1600)
+            x = random.randint(1300, 1600)
+            y = random.randint(1300, 1600)
             if entity.veriftile(x, y, self.game_map) is True:
                 self.entity_grp.add(animals.Chicken(texture.texture_chicken, self.game_map, alt, x=x, y=y))
                 
         for i in range(100):
-            x=random.randint(1300, 1600)
-            y=random.randint(1300, 1600)
+            x = random.randint(1300, 1600)
+            y = random.randint(1300, 1600)
             if entity.veriftile(x, y, self.game_map) is True:
                 self.entity_grp.add(animals.Cow(texture.texture_cow, self.game_map, alt, x=x, y=y))
             
         self.plant_index_built = False
-        self._chunk_registered = False
-    #changer de map 
+        self._chunk_registered = False  #changer de map
+
     def change_map(self):
-        import generate_map
         change_cooldown = 2000
         now = pygame.time.get_ticks()
         if now - self.last_map_change >= change_cooldown:
@@ -287,18 +297,18 @@ class Game():
                 
     def get_tile_by_mouse_pos(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        tile_cx = int(self.player.x // 32)
-        tile_cy = int(self.player.y // 32)
+        tile_cx = self.player.x - (self.main_map.scale_x * 32) // 2
+        tile_cy = self.player.y - (self.main_map.scale_y * 32) // 2
         offset_x = self.player.x % 32
         offset_y = self.player.y % 32
-        tx = tile_cx - self.main_map.scale_x // 2 + int((mouse_x + offset_x - 8) // 32)
-        ty = tile_cy - self.main_map.scale_y // 2 + int((mouse_y + offset_y - 8) // 32)
+        tx = int((mouse_x + tile_cx) // 32)
+        ty = int((mouse_y + tile_cy) // 32)
         return tx, ty
         
                 
 
     def handle_event(self, event):
-        
+       
         if not self.world_ready: return
 
         handled = False
@@ -319,10 +329,65 @@ class Game():
 
             if event.key == settings.KEY_NPC:
                 for sprite in self.entity_grp:
-                    if isinstance(sprite, entity.DungeonDoor): ###
+                    if isinstance(sprite, entity.DungeonDoor) and sprite.game_map is self.current_map:
                         if sprite.player_can_enter(self.player.hitbox[0]):
-                            print("Entré dans le donjon")
+                            
+                             # ENTRER dans un donjon
+                            if not sprite.is_exit:
+                                print(f"Entrée dans le donjon {sprite.dungeon_index}")
+
+                                # 1) Changer de map
+                                self.current_map = self.dungeon_maps[sprite.dungeon_index]
+                                self.player.game_map = self.current_map
+
+                                # 2) ALTITUDE MAP DU DONJON — OBLIGATOIRE ET IMMÉDIAT
+                                self.player.altitude_map = np.zeros_like(self.current_map)
+
+                                # 3) Créer la porte de sortie si nécessaire
+                                exit_door_exists = any(
+                                    isinstance(e, entity.DungeonDoor) and e.is_exit and e.game_map is self.current_map
+                                    for e in self.entity_grp
+                                )
+
+                                if not exit_door_exists:
+                                    door_surface = pygame.Surface((32, 32))
+                                    door_surface.fill((150, 75, 0))
+
+                                    exit_door = entity.DungeonDoor(
+                                        [door_surface],
+                                        self.current_map,
+                                        self.player.altitude_map,   # <── IMPORTANT AUSSI
+                                        x=35, y=35
+                                    )
+                                    exit_door.is_exit = True
+                                    exit_door.exit_position = (1500, 1500)
+                                    self.entity_grp.add(exit_door)
+
+                                # 4) Positionner le joueur
+                                self.player.x = 25 * 32
+                                self.player.y = 25 * 32
+
+                                # 5) Maintenant seulement : rebuild chunks
+                                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
+
+                            
+                            # SORTIR d'un donjon
+                            else:
+                                print(f"Sortie du donjon {sprite.dungeon_index}")
+                                self.current_map = self.game_map
+                                self.player.game_map = self.current_map
+                                exit_x, exit_y = sprite.exit_position
+                                self.player.x = exit_x * 32
+                                self.player.y = exit_y * 32
+                                
+                            
+                            # Rebuild chunks
+                            self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
                             break
+
+            for sprite in self.npc_grp:
+                sprite.update(self.current_map, self.player, event, self.quest_manager)
+
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             tx, ty = self.get_tile_by_mouse_pos()
@@ -386,8 +451,9 @@ class Game():
                     index = 0
                 self.player.inventory.select_hotbar(index)
                 
-        for sprite in self.npc_grp:
-            sprite.update(self.game_map, self.player, event, self.quest_manager)
+        for sprite in self.entity_grp:
+            if isinstance(sprite, entity.DungeonDoor):
+                sprite.update(self.game_map, self.player, event)
                 
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
@@ -533,11 +599,11 @@ class Game():
             
             
             for sprite in self.entity_grp:
-                    if sprite is not self.player:
-                        dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
-                        if dist < self.render_distance:
-                            sprite.update(self.dt, self.chunk_grid, self.current_map) 
-                            
+                if sprite is not self.player:
+                    dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
+                    if dist < self.render_distance:
+                        sprite.update(self.dt, self.chunk_grid, self.current_map)
+
             for sprite in self.ennemy_grp:
                 sprite.update(self.chunk_grid, self.current_map, self.dt)
                             

@@ -1,10 +1,12 @@
 import random
+import numpy as np
 from settings import *
 
 def generer_corruption(biome_map, nb_zones=5):
     taille_min = 8000
     taille_max = 15000
     f_origin_donjon_coords = []
+    maps_donjon = []
     corruptibles = {
         BIOME_IDS["plains"],
         BIOME_IDS["forest"],
@@ -37,7 +39,7 @@ def generer_corruption(biome_map, nb_zones=5):
         for x, y in corrompus:
             biome_map[y, x] = BIOME_IDS["corrupted"]
 
-        donjon_coords = create_donjon(centre_x, centre_y, taille=15)
+        donjon_coords = create_donjon_coords(centre_x, centre_y, taille=15)
         f_origin_donjon_coords.append(donjon_coords[0])
         for x, y in donjon_coords:
             biome_map[y, x] = BIOME_IDS["donjon_collide"]
@@ -61,13 +63,15 @@ def generer_corruption(biome_map, nb_zones=5):
                 attempts += 1
                 continue
 
+
             f_origin_donjon_coords = corrompre_zone(biome_map, centre_x, centre_y, taille_zone)
             break
 
-    return biome_map, f_origin_donjon_coords
+    maps_donjon.append(create_inside_donjon_map())
+    return biome_map, f_origin_donjon_coords, maps_donjon
 
 
-def create_donjon(center_x, center_y, taille):
+def create_donjon_coords(center_x, center_y, taille):
     
     if taille % 2 == 0:
         taille += 1
@@ -81,3 +85,16 @@ def create_donjon(center_x, center_y, taille):
 
     return donjon_coords
 
+
+# TODO mettre les textures + 
+def create_inside_donjon_map(): # Peut etre ajouter type de donjon en parametre
+
+    dungeon_size = 50
+    dungeon_map = np.full((dungeon_size, dungeon_size), BIOME_IDS["donjon_collide"], dtype=np.uint32)
+
+    for y in range(1, dungeon_size - 1):
+        for x in range(1, dungeon_size - 1):
+            dungeon_map[y, x] = BIOME_IDS["plains"]
+
+
+    return dungeon_map
