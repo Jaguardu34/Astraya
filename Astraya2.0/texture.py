@@ -167,6 +167,16 @@ TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé
 }
 
+
+BUILDING_TEXTURE = {
+    "domus": create_single_texture_by_coords(sprite_sheet_buildings,96, 96, 0, 0),
+    "villa": create_single_texture_by_coords(sprite_sheet_buildings,160, 160, 192,224),
+    "forum": create_single_texture_by_coords(sprite_sheet_buildings,256,256,0,832),
+    "stock": create_single_texture_by_coords(sprite_sheet_buildings,96,96,0,608),
+    "temple": create_single_texture_by_coords(sprite_sheet_buildings,160,160,(0+(random.randint(0,1)*160)),(1920+(random.randint(0,1)*160))),
+    "puteus": create_single_texture_by_coords(sprite_sheet_buildings,32,32,0,1633)
+}
+
 cliff_plain = create_texture_with_rotation(32,0, cols=1, rows=1, rotation=True)
 cliff_forest_diagonal = create_texture_with_rotation(64,0, cols=1, rows=1, rotation=True)
 
