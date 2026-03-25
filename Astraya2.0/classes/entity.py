@@ -103,12 +103,14 @@ class Entity(pygame.sprite.Sprite):
         py = (self.y - (tile_cy - scaley//2) * 32)
         if 0 <= px < scalex*32 and 0 <= py < scaley*32:
             now = pygame.time.get_ticks()
+            frame = int(self.texture_index) % len(self.sprite)
             if now < self.hit_flash_until:
-                tinted = self.sprite[self.texture_index].copy()
+                tinted = self.sprite[frame].copy()
                 tinted.fill((255, 0, 0, 120), special_flags=pygame.BLEND_RGBA_MULT)
                 surface.blit(tinted, (px, py))
             else:
-                surface.blit(self.sprite[self.texture_index], (px, py))
+                surface.blit(self.sprite[frame], (px, py))
+
 
     def draw_minimap(self, resolution_minimap, screen, tile_cx, tile_cy, zoom):
         ptile_x = int(self.x // 32)
@@ -117,7 +119,10 @@ class Entity(pygame.sprite.Sprite):
         rel_y = ptile_y - tile_cy + zoom // 2
         px = int(rel_x * resolution_minimap)
         py = int(rel_y * resolution_minimap)
-        texture = self.sprite_minimap[self.texture_index]
+
+        frame = int(self.texture_index) % len(self.sprite_minimap)
+        texture = self.sprite_minimap[frame]
+
         px -= texture.get_width() // 2
         py -= texture.get_height() // 2
         screen.blit(texture, (px, py))
