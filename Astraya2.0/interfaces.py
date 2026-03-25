@@ -254,3 +254,20 @@ class SettingsMenu(FullscreenMenu):
     
             
         
+class DeathScreen(FullscreenMenu):
+    def __init__(self):
+        super().__init__()
+        self.quit_btn = Button("gray", "Quitter")
+        self.font = pygame.font.SysFont(None, 100)
+        self.text = "Game Over"
+    
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
+        self.surface.fill("white")
+        text_surface = self.font.render(self.text, True, "red")   
+        self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
+        self.quit_btn.draw((self.WINDOW_SCALE[0]//2)-(self.quit_btn.width//2), self.WINDOW_SCALE[1]//2+300, screen)
+        screen.blit(self.surface, (0, 0))
+        Button.update_cursor()
+        
+    
