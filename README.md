@@ -62,14 +62,14 @@ Face aux limitations de Pyxel en matière de performances et de flexibilité, le
 
 Astraya 2.0 repose sur plusieurs systèmes interconnectés :
 
-| Système | Description |
-|---|---|
-| Rendu | Cache statique par chunk, séparation des tuiles animées, Y-sorting pour la profondeur |
-| Génération | Bruit de Perlin multi-octaves, biomes, zones de corruption, donjons |
-| Spatial | Index de chunks pour les entités et la végétation, collision O(1) par ensemble |
-| Entités | Classe de base commune, héritage pour joueur / ennemi / PNJ |
-| Quêtes | Architecture événementielle, objectifs vérifiables, manager centralisé |
-| Threading | Génération du monde en arrière-plan, accès partagé protégé via module `world_data` |
+| Système    | Description                                                                           |
+| ---------- | ------------------------------------------------------------------------------------- |
+| Rendu      | Cache statique par chunk, séparation des tuiles animées, Y-sorting pour la profondeur |
+| Génération | Bruit de Perlin multi-octaves, biomes, zones de corruption, donjons                   |
+| Spatial    | Index de chunks pour les entités et la végétation, collision O(1) par ensemble        |
+| Entités    | Classe de base commune, héritage pour joueur / ennemi / PNJ                           |
+| Quêtes     | Architecture événementielle, objectifs vérifiables, manager centralisé                |
+| Threading  | Génération du monde en arrière-plan, accès partagé protégé via module `world_data`    |
 
 ---
 
@@ -119,14 +119,14 @@ Le fichier `main.py` se trouve à la racine du dossier `Astraya2.0`.
 
 ## Contrôles
 
-| Action | Clavier |
-|---|---|
-| Se déplacer | `Z` `Q` `S` `D` |
-| Interagir / Attaquer | `E` |
-| Placer un bloc | Clic gauche |
-| Détruire un bloc | Clic droit |
-| Ouvrir le menu | `Echap` |
-| Zoom | Molette souris |
+| Action               | Clavier         |
+| -------------------- | --------------- |
+| Se déplacer          | `Z` `Q` `S` `D` |
+| Interagir / Attaquer | `E`             |
+| Placer un bloc       | Clic gauche     |
+| Détruire un bloc     | Clic droit      |
+| Ouvrir le menu       | `Echap`         |
+| Zoom                 | Molette souris  |
 
 Les touches sont reconfigurables depuis le menu des paramètres. La manette est également supportée.
 
@@ -170,30 +170,23 @@ Astraya2.0/
 
 La carte est générée via le **bruit de Perlin** (bibliothèque `noise`), qui produit un tableau 2D de valeurs continues entre -1 et 1. Ces valeurs sont ensuite mappées vers des biomes selon des seuils définis :
 
-| Valeur | Biome |
-|---|---|
-| < -0.3 | Océan |
-| -0.3 à -0.1 | Plage |
-| -0.1 à 0.2 | Plaine |
-| 0.2 à 0.5 | Forêt |
-| 0.5 à 0.75 | Montagne |
-| > 0.75 | Neige |
+| Valeur      | Biome    |
+| ----------- | -------- |
+| < -0.3      | Océan    |
+| -0.3 à -0.1 | Plage    |
+| -0.1 à 0.2  | Plaine   |
+| 0.2 à 0.5   | Forêt    |
+| 0.5 à 0.75  | Montagne |
+| > 0.75      | Neige    |
 
 Les transitions entre biomes sont gérées par un système de tuiles de bordure (`TILE_EDGE`) indexées par `(biome_id, direction)`, permettant des rendus de bords et de coins cohérents visuellement. Des zones de corruption et des donjons sont ensuite injectés dans la carte via des passes de post-traitement.
 
----
+### Utilisation
+
+Pour lancer le jeu il s'uffit de lancer le fichier **start.bat** (sur Windows Uniquement) dans le dosssier **Astraya2.0**
 
 ## Roadmap
 
-- [ ] Système d'inventaire et d'items droppables
-- [ ] Crafting et recettes
-- [ ] Sauvegarde / chargement de partie (JSON ou SQLite)
-- [ ] Contenu de quêtes principal
-- [ ] Effets sonores et musique d'ambiance par biome
-- [ ] Boss de donjon
-- [ ] Écran titre et menu principal complet
-- [ ] Optimisation mobile / portage éventuel
-
----
+**Modules requis** : lancer un cmd dans requirement.txt -> _pip install requierement.txt_
 
 > Projet en développement actif. Les contributions et retours sont les bienvenus.
