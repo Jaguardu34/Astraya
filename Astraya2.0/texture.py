@@ -6,8 +6,6 @@ import random
 
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
-sprite_sheet_player = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'player_texture.png'))
-sprite_sheet_buildings = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'batiment_texture_Pyxel.png'))
 sprite_sheet_terrain = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png'))
 
 
@@ -82,11 +80,9 @@ texture_player = [
     get_sprite(sprite_sheet, 0,  320, 13, 35),
     get_sprite(sprite_sheet, 15, 320, 17, 34),
     get_sprite(sprite_sheet, 32, 320, 14, 36),
-    get_sprite(sprite_sheet, 47, 320, 18, 35),
     pygame.transform.flip(get_sprite(sprite_sheet, 0,  320, 13, 35), True, False),
     pygame.transform.flip(get_sprite(sprite_sheet, 15, 320, 17, 34), True, False),
     pygame.transform.flip(get_sprite(sprite_sheet, 32, 320, 14, 36), True, False),
-    pygame.transform.flip(get_sprite(sprite_sheet, 47, 320, 18, 35), True, False),
 ]
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
@@ -170,16 +166,6 @@ texture_ocean = create_texture_basic(576, 0, 4)
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé
-}
-
-
-BUILDING_TEXTURE = {
-    "domus": create_single_texture_by_coords(sprite_sheet_buildings,96, 96, 0, 0),
-    "villa": create_single_texture_by_coords(sprite_sheet_buildings,160, 160, 192,224),
-    "forum": create_single_texture_by_coords(sprite_sheet_buildings,256,256,0,832),
-    "stock": create_single_texture_by_coords(sprite_sheet_buildings,96,96,0,608),
-    "temple": create_single_texture_by_coords(sprite_sheet_buildings,160,160,(0+(random.randint(0,1)*160)),(1920+(random.randint(0,1)*160))),
-    "puteus": create_single_texture_by_coords(sprite_sheet_buildings,32,32,0,1633)
 }
 
 cliff_plain = create_texture_with_rotation(32,0, cols=1, rows=1, rotation=True)

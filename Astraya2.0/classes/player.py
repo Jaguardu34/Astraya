@@ -42,44 +42,33 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
         now = pygame.time.get_ticks()
-        self.anim_speed = 200-abs(self.vx)*15
-        
+
         if self.life_point <= 0:
             self.dead = True
-        if now - self.anim_timer >= self.anim_speed:
-            if self.vx > 0.1:
-                if self.texture_index < 3:
-                    self.texture_index += 1
-                else:
-                    self.texture_index = 0
-                self.anim_timer = now
-            elif self.vx < -0.1:
-                if self.texture_index < 4: self.texture_index = 4
-                if self.texture_index < 7:
-                    self.texture_index += 1
-                else:
-                    self.texture_index = 4
-                self.anim_timer = now
-            else:
-                self.anim_frame = 0
-            self.anim_timer = now
-        if self.vx > 0.1:
-            self.anim_speed = 200
-            self.texture_index = 2 + self.anim_frame
-        elif self.vx < -0.1:
-            self.anim_speed = 200
-            self.texture_index = 6 + self.anim_frame
-        else:
-            self.anim_speed = 400
-            if self.last_orientation == "left":
-                self.texture_index = 0 + self.anim_frame
-            elif self.last_orientation == "right":
-                self.texture_index = 4 + self.anim_frame
 
-    def apply_deadzone(self, value, threshold=0.1):
-        if abs(value) < threshold:
-            return 0.0
-        return value
+        self.anim_speed = max(80, 200 - abs(self.vx) * 15)
+
+        if self.vx > 0.1:
+            self.last_orientation = "right"
+            if now - self.anim_timer >= self.anim_speed:
+                self.anim_timer = now
+                self.texture_index = (self.texture_index % 3 + 1) % 3
+        elif self.vx < -0.1:
+            self.last_orientation = "left"
+            if now - self.anim_timer >= self.anim_speed:
+                self.anim_timer = now
+                base = self.texture_index - 3 if self.texture_index >= 3 else 0
+                self.texture_index = 3 + (base + 1) % 3
+        else:
+            if self.last_orientation == "right":
+                self.texture_index = 0
+            else:
+                self.texture_index = 3
+
+        def apply_deadzone(self, value, threshold=0.1):
+            if abs(value) < threshold:
+                return 0.0
+            return value
 
     def input(self, keys, dt, joystick):
         dx, dy = 0, 0
