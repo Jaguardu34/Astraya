@@ -105,127 +105,6 @@ def map_generate():
         
         return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map  
 
-    def poser_falaises(biome_map, nb_falaises=100):
-
-        autorises = {
-        BIOME_IDS["plains"],
-        BIOME_IDS["forest"],
-        BIOME_IDS["jungle"],
-        BIOME_IDS["mountains"],
-        BIOME_IDS["beach"]
-    }
-        
-        for _ in range(nb_falaises):
-            attempts = 0
-            trouve = False
-            while attempts < 10000 and not trouve:
-                x = random.randint(0, SIZE - 1)
-                y = random.randint(0, SIZE - 1)
-
-                falaises = create_falaise(x, y)
-
-                valide = True
-                for xx, yy in falaises:
-                    if biome_map[yy][xx] not in autorises:
-                        valide = False
-                        break
-
-                if valide:
-                    coins = []
-                    for i in range(1, len(falaises) - 1):
-                        x1, y1 = falaises[i][0], falaises[i][1]
-
-                        if (x1 + 1, y1) in falaises and (x1, y1 + 1) in falaises:
-                            coins.append((x1, y1))
-                        if (x1 + 1, y1) in falaises and (x1, y1 - 1) in falaises:
-                            coins.append((x1, y1))
-                        if (x1 - 1, y1) in falaises and (x1, y1 + 1) in falaises:
-                            coins.append((x1, y1))
-                        if (x1 - 1, y1) in falaises and (x1, y1 - 1) in falaises:
-                            coins.append((x1, y1))
-
-                    pos_deb = random.randint(0, len(coins) - 1)
-                    falaises = falaises[pos_deb:] + falaises[:pos_deb]
-
-                    for i in range(len(falaises)): 
-                        current_x, current_y = falaises[i][0], falaises[i][1]
-                        currrnt_orientation = "N"
-                        if (current_x - 1, current_y) in falaises and (current_x + 1, current_y) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_x += 1
-
-                        elif (current_x, current_y - 1) in falaises and (current_x, current_y + 1) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_y += 1
-
-                        elif (current_x + 1, current_y) in falaises and (current_x, current_y + 1) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_NE"]
-                            current_x -= 1
-                            current_y -= 1
-                            if currrnt_orientation == "N":
-                                currrnt_orientation = "E"
-                            if currrnt_orientation == "E":
-                                currrnt_orientation = "N"
-                        
-                        elif (current_x - 1, current_y) in falaises and (current_x, current_y + 1) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_NO"]
-                            current_x += 1
-                            current_y -= 1
-                            if currrnt_orientation == "N":
-                                currrnt_orientation = "O"
-                            if currrnt_orientation == "O":
-                                currrnt_orientation = "N"
-
-                        elif (current_x + 1, current_y) in falaises and (current_x, current_y - 1) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_SE"]
-                            current_x -= 1
-                            current_y += 1
-                            if currrnt_orientation == "S":
-                                currrnt_orientation = "E"
-                            if currrnt_orientation == "E":
-                                currrnt_orientation = "S"
-
-                        elif (current_x - 1, current_y) in falaises and (current_x, current_y - 1) in falaises :
-                            biome_map[current_y, current_x] = BIOME_IDS["cliff_SO"]
-                            current_x += 1
-                            current_y += 1
-                            if currrnt_orientation == "S":
-                                currrnt_orientation = "O"
-                            if currrnt_orientation == "O":
-                                currrnt_orientation = "S"
-
-                        # gauche a droite
-                        elif (current_x - 1, current_y) in falaises and (current_x + 1, current_y) not in falaises and (current_x, current_y - 1) not in falaises and (current_x, current_y + 1) not in falaises:
-                            biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
-                            biome_map[current_y, current_x + 2] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
-                            biome_map[current_y, current_x + 3] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_x += 3
-
-                        # gauche a droite
-                        elif (current_x + 1, current_y) in falaises and (current_x - 1, current_y) not in falaises and (current_x, current_y - 1) not in falaises and (current_x, current_y + 1) not in falaises:
-                            biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
-                            biome_map[current_y, current_x - 2] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
-                            biome_map[current_y, current_x - 3] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_x -= 3
-                        
-                        # bas en haut
-                        elif (current_x, current_y - 1) in falaises and (current_x, current_y + 1) not in falaises and (current_x - 1, current_y) not in falaises and (current_x + 1, current_y + 1) not in falaises:
-                            biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
-                            biome_map[current_y + 2, current_x ] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
-                            biome_map[current_y + 3, current_x ] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_y += 3
-
-                        # haut en bas
-                        elif (current_x, current_y + 1) in falaises and (current_x, current_y - 1) not in falaises and (current_x - 1, current_y) not in falaises and (current_x + 1, current_y) not in falaises:
-                            biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
-                            biome_map[current_y - 2, current_x ] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
-                            biome_map[current_y - 3, current_x ] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_y -= 3             
-                    trouve = True
-
-        return biome_map
-
-
     def compute_biomes_vectorized(heightmap, humiditymap, temperaturemap):
         """Calcule les biomes avec NumPy"""
         biomes = np.zeros((SIZE, SIZE), dtype=np.uint32)
@@ -254,7 +133,6 @@ def map_generate():
         biomes[mountains_mask] = BIOME_IDS["mountains"]
         biomes[snow_mask] = BIOME_IDS["snow_peak"]
 
-        biomes = poser_falaises(biomes, nb_falaises=100)
         biomes, origin_donjon_coords, donjons_maps = generer_corruption(biomes, nb_zones=5)
         
         return biomes, origin_donjon_coords, donjons_maps

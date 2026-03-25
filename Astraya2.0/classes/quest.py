@@ -118,20 +118,26 @@ class ReachObjective(Objective):
 
 
 class TalkObjective(Objective):
-    """Parler à un PNJ."""
-    def __init__(self, description, npc):
+    """Parler à un ou plusieurs PNJ."""
+    def __init__(self, description, npcs):
         super().__init__(description)
-        self.npc = npc
+
+        # Autoriser un seul NPC ou une liste
+        if isinstance(npcs, list):
+            self.npcs = npcs
+        else:
+            self.npcs = [npcs]
+
         self.talked = False
 
     def is_complete(self):
         return self.talked
 
     def on_talk(self, npc):
-        if npc is self.npc and npc.has_talk_to_player:
+        # Si le PNJ qui a parlé est dans la liste → objectif validé
+        if npc in self.npcs and npc.has_talk_to_player:
             self.talked = True
-            npc.has_talk_to_player = False 
-
+            npc.has_talk_to_player = False
 
 
 class QuestManager:

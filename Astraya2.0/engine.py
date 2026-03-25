@@ -499,24 +499,89 @@ class Game():
     
     
     def init_quest(self):
-        farmer_npc = next((npc for npc in self.npc_grp if npc.type == "fermier"), None)
+        farmers = [n for n in self.npc_grp if isinstance(n, npc.Npc) and n.type == "fermier"]
+        quest_list = [
 
-        quest_list = [quest_module.Quest(
+        # 1) Parler au vieux sage
+        quest_module.Quest(
             title="Allez voir le vieux sage",
-            content="Parlez au vieux npc",
+            content="Le vieux sage souhaite vous parler.",
             type="principale",
             objectives=[
-                quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
+                quest_module.TalkObjective("Parlez au vieux sage", self.old_npc)
             ]
-        ), 
-            
-            quest_module.Quest(
-    title="Aide au fermier",
-    content="Le fermier a besoin d'aide, va lui parler.",
-    type="principale",
-    objectives=[
-        quest_module.TalkObjective("Parler au fermier", farmer_npc) 
-    ])]
+        ),
+
+        # 2) Parler à un fermier
+        quest_module.Quest(
+            title="Aide au fermier",
+            content="Un fermier du village a besoin d'aide.",
+            type="principale",
+            objectives=[
+                quest_module.TalkObjective("Parler à un fermier", farmers)
+            ]
+        ),
+
+        # 3) Collecter du blé
+        quest_module.Quest(
+            title="Récolte de blé",
+            content="Le fermier vous demande de lui rapporter 5 blés.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Collecter 5 blés", "wheat", 5)
+            ]
+        ),
+
+        # 4) Fabriquer une arme
+        quest_module.Quest(
+            title="Forger une arme",
+            content="Fabriquez une arme pour vous défendre.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Obtenir une épée en bois", "wood_sword", 1)
+            ]
+        ),
+
+        # 5) Tuer 3 poulets corrompus
+        quest_module.Quest(
+            title="Purge locale",
+            content="Les poulets corrompus deviennent agressifs. Éliminez-en 3.",
+            type="principale",
+            objectives=[
+                quest_module.KillObjective("Tuer 3 poulets corrompus", "corrupted_chicken", 3)
+            ]
+        ),
+
+        # 6) Parler au garde
+        #quest_module.Quest(
+        #    title="Avertir le garde",
+        #    content="Informez le garde de la présence de corruption.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.TalkObjective("Parler au garde", guard)
+        #    ]
+        #),
+#
+        # 7) Atteindre la zone corrompue
+        #quest_module.Quest(
+        #    title="Explorer la corruption",
+        #    content="Rendez-vous près de la zone corrompue.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.ReachObjective("Atteindre la zone corrompue", corrupt_x, corrupt_y, radius=80)
+        #    ]
+        #),
+
+        # 8) Entrer dans le donjon
+        quest_module.Quest(
+            title="Entrer dans le donjon",
+            content="La corruption provient d'un donjon. Trouvez l'entrée.",
+            type="principale",
+            objectives=[
+                quest_module.ReachObjective("Trouver l'entrée du donjon", 1500, 1500, radius=60)
+            ]
+        ),
+    ]
 
         # On ajoute ttes les quêtes dans available
         for q in quest_list:
