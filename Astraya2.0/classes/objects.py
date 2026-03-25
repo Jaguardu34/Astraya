@@ -42,5 +42,4 @@ class Tree(entity.Object):
         super().__init__(sprite, game_map, altitude_map, x, y, speed)
         self.has_hitbox = True
         self.has_life = False
-
         self.hitbox = [pygame.Rect(self.x+10, self.y+30, 44, 34)]
