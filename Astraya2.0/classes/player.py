@@ -27,7 +27,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.anim_speed = 0
         self.last_orientation = "left"
         self.has_life = True
-        self.lifepoint = 10
+        self.life_point = 20
         self.inventory = inv.Inventory(size=20, hotbar_size=5)
        
         
