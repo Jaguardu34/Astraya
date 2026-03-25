@@ -21,12 +21,14 @@ def check_box_collide(box1, box2):
     return False
 
 def veriftile(x, y, game_map, altitude_map=None, current_altitude=0):
-    if x < 0 or y < 0 or y >= settings.SIZE or x >= settings.SIZE:
+    h, w = game_map.shape  # ← au lieu de settings.SIZE
+    if x < 0 or y < 0 or y >= h or x >= w:
         return "ocean"
     biome_id = game_map[y, x]
     if biome_id in settings.COLLIDE_TILES:
         return biome_id
     return True
+
 
 def calculate_hitbox_size(sprite, shrink=2):
     surf = sprite[0]
@@ -79,8 +81,10 @@ class Entity(pygame.sprite.Sprite):
         if self.altitude_map is not None:
             tile_x = int(self.x // 32)
             tile_y = int(self.y // 32)
-            if 0 <= tile_x < settings.SIZE and 0 <= tile_y < settings.SIZE:
+            h, w = self.altitude_map.shape  
+            if 0 <= tile_x < w and 0 <= tile_y < h:
                 self.altitude = self.altitude_map[tile_y, tile_x]
+
 
     def update(self, actual_map):
         self.texture_index = self.texture_index % len(self.sprite)
@@ -316,12 +320,17 @@ class DungeonDoor(Entity):
         self.hitbox = [pygame.Rect(self.x, self.y, 32, 32)]
         self.vx = 0
         self.vy = 0
+        
+        # Nouveaux attributs
+        self.dungeon_index = 0
+        self.is_exit = False
+        self.exit_position = (0, 0)
 
         self.interact_zone = pygame.Rect(
-            self.x - 48,   # 1.5 blocs à gauche
-            self.y - 48,   # 1.5 blocs au-dessus
-            96,            # 3 blocs de large
-            96             # 3 blocs de haut
+            self.x - 48,
+            self.y - 48,
+            96,
+            96
         )
 
     def player_can_enter(self, player_hitbox):

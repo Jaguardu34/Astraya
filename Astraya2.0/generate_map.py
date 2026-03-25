@@ -254,9 +254,9 @@ def map_generate():
         biomes[snow_mask] = BIOME_IDS["snow_peak"]
 
         biomes = poser_falaises(biomes, nb_falaises=100)
-        biomes, origin_donjon_coords = generer_corruption(biomes, nb_zones=5)
+        biomes, origin_donjon_coords, donjons_maps = generer_corruption(biomes, nb_zones=5)
         
-        return biomes, origin_donjon_coords
+        return biomes, origin_donjon_coords, donjons_maps
 
 
     # ==============================================================================
@@ -437,7 +437,8 @@ def map_generate():
         
         print(f" Monde chargé depuis : {filename}")
         return (data['biome_map'], data['texture_variants'], data['cave_biomes'], 
-                data['coord_vil'], data['coord_grottes'], data.get('altitude_map'), data.get('origin_donjon_coords', []))
+                data['coord_vil'], data['coord_grottes'], data.get('altitude_map'), 
+                data.get('origin_donjon_coords', []), data.get('donjons_maps', []))
 
 
     # ==============================================================================
@@ -502,7 +503,7 @@ def map_generate():
     def main():
         print("🌍 Génération du monde...")
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
-        biome_map, origin_donjon_coords = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
+        biome_map, origin_donjon_coords, donjons_maps = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         
         print("🏘️ Villages et grottes...")
         villages = generate_villages(biome_map)
@@ -539,7 +540,7 @@ def map_generate():
     loaded = load_world(WORLD_FILE)
 
     if loaded:
-        world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, origin_donjon_coords = loaded
+        world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, origin_donjon_coords, donjons_maps = loaded
         print(f"🎮 Monde chargé : {SIZE}x{SIZE}")
 
     else:
@@ -547,7 +548,7 @@ def map_generate():
 
         # 1. Génération terrain de base
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
-        world_map, origin_donjon_coords = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
+        world_map, origin_donjon_coords, donjons_maps = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         world_map, texture_variants = add_texture_variants(world_map)
 
         # 2. Falaises et passages
@@ -599,9 +600,9 @@ def map_generate():
     
     # Filtrer cliff_edges pour enlever les passages
     cliff_edges = []
-    print(f"   → {len(cliff_edges)} cliffs après passages")
+    print(f" {len(cliff_edges)} cliffs après passages")
 
-    print(f"\n✅ Monde prêt :")
+    print(f"\n Monde prêt :")
     print(f"   → {len(coord_vil)} villages")
     print(f"   → {len(coord_grottes)} grottes")
     print(f"   → {len(cliff_edges)} falaises")
@@ -609,6 +610,6 @@ def map_generate():
     if __name__ == "__main__":
         main()
 
-    return world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages, origin_donjon_coords
+    return world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages, origin_donjon_coords, donjons_maps
 
 
