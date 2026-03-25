@@ -36,3 +36,11 @@ class Plant(entity.Object):
         self.has_hitbox = False
         self.has_life = False
         self.texture_index = random.randint(0, nbr_texture)
+        
+class Tree(entity.Object):
+    def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
+        super().__init__(sprite, game_map, altitude_map, x, y, speed)
+        self.has_hitbox = True
+        self.has_life = False
+
+        self.hitbox = [pygame.Rect(self.x+10, self.y+30, 44, 34)]

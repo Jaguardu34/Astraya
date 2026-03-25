@@ -237,15 +237,28 @@ class Game():
         self.player.inventory.add_item(get_item("bread"), 3)
 
         # Plantes
-        valid_mask = np.isin(self.game_map, [2, 3, 4])
-        valid_positions = np.argwhere(valid_mask)
+        valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_plant = np.argwhere(valid_mask_plant)
 
-        rng = np.random.default_rng()
-        indices = rng.choice(len(valid_positions), size=min(5000, len(valid_positions)), replace=False)
+        rng_plant = np.random.default_rng()
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
+        
+        
 
-        for idx in indices:
-            y_plant, x_plant = valid_positions[idx]
+        for idx in indices_plant:
+            y_plant, x_plant = valid_positions_plant[idx]
             self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
+            
+        # Arbres
+        valid_mask_tree = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_tree = np.argwhere(valid_mask_tree)
+
+        rng_tree = np.random.default_rng()
+        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(5000, len(valid_positions_tree)), replace=False)
+        
+        for idx in indices_tree:
+            y_tree, x_tree = valid_positions_tree[idx]
+            self.plant_grp.add(objects.Tree(texture.texture_tree, self.game_map, alt, x=int(x_tree), y=int(y_tree)))
 
         # Ennemis et animaux
         for i in range(20):
@@ -677,7 +690,7 @@ class Game():
 
                 self.sprites_initialized = True
             if self.sprites_initialized and not getattr(self, '_chunk_registered', False):
-                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
+                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp])
                 self._chunk_registered = True
 
 
@@ -699,7 +712,7 @@ class Game():
                     d.kill()
 
 
-            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp])
+            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp])
 
 
             for sprite in self.entity_grp:

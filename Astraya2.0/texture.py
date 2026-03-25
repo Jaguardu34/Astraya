@@ -123,6 +123,8 @@ for t in texture_chicken_corrupted_base:
         int(t.get_height() * 1.5)
     )))
 
+texture_tree = [pygame.transform.scale(get_sprite(sprite_sheet, 0, 96, 32, 32), (64, 64))]
+
 texture_cow_base = create_texture_mirrored(32, 288, 3)
 texture_cow = []
 for t in texture_cow_base:
