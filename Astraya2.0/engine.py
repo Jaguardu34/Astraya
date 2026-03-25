@@ -14,6 +14,7 @@ import generate_map
 from classes import player as player_class
 from classes import quest as quest_module 
 from classes import village as village
+from classes import boss
 import math
 from ui import debug
 from ui import ui_inventory
@@ -163,7 +164,6 @@ class Game():
         world_data.world_map, world_data.texture_variants, world_data.cave, world_data.coord_vil, world_data.coord_grottes, world_data.altitude_map, world_data.cliff_edges, world_data.villages, world_data.origin_donjon_coords, world_data.donjons_maps = generate_map.map_generate()
 
         if not world_data.donjons_maps:
-            print("⚠️ Ancienne sauvegarde sans donjons, régénération...")
             _, _, world_data.donjons_maps = generer_corruption(world_data.world_map, nb_zones=5)
 
 
@@ -209,6 +209,14 @@ class Game():
         self.npc_grp.add(self.old_npc)
         for villager in village.spawn_villageois(world_data.villages[0], self.game_map):
             self.npc_grp.add(villager)
+
+        surf = pygame.Surface((64, 64))
+        surf.fill((15, 75, 0))
+
+        self.boss = boss.Boss([surf], self.game_map, altitude_map=None, x=1550, y=1500)
+        self.boss.set_target(self.player)
+        self.boss.projectile_grp = self.projectile_grp
+        self.entity_grp.add(self.boss)
 
         # Surface pour la porte d'entrée
         door_surface = pygame.Surface((32, 32))

@@ -1,10 +1,6 @@
 import pygame
 import settings
 
-"""
-En gros t'as les quetes et les objectives
-"""
-# Creer une quete
 
 class Quest_Toast():
     def __init__(self, content, color="white", font_size=24,):

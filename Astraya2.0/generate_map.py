@@ -86,10 +86,11 @@ def map_generate():
 
     def generate_overworld():
         """Génère les cartes de hauteur, humidité et température avec masque d'île."""
-        heightmap = fractal_noise(scale=300, seed=1)
+        seed = random.randint(0, 10000)
+        heightmap = fractal_noise(scale=300, seed=seed)
         altitude_map = np.zeros((SIZE, SIZE), dtype=np.int8) # On a des niveaux d'altitude
-        humiditymap = fractal_noise(scale=500, seed=2)
-        temperaturemap = fractal_noise(scale=500, seed=3)
+        humiditymap = fractal_noise(scale=500, seed=seed+1)
+        temperaturemap = fractal_noise(scale=500, seed=seed+2)
         
         island_mask = create_island_mask(SIZE, falloff=0.4)
         
@@ -424,7 +425,7 @@ def map_generate():
         }
         with open(filename, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"✅ Monde sauvegardé : {filename}")
+        print(f" Monde sauvegardé : {filename}")
 
 
     def load_world(filename):
@@ -505,16 +506,16 @@ def map_generate():
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         biome_map, origin_donjon_coords, donjons_maps = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
         
-        print("🏘️ Villages et grottes...")
+        print("Villages et grottes...")
         villages = generate_villages(biome_map)
         grottes = generate_grottes(biome_map)
         print(f"   → {len(villages)} villages")
         print(f"   → {len(grottes)} grottes")
         
-        print("🕳️ Système souterrain...")
+        print("Système souterrain...")
         cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
         
-        print("🎨 Rendu...")
+        print(" Rendu...")
         img_over = render_overworld_map(biome_map, villages, grottes)
         img_cave = render_cave_map(cave_biomes)
         
@@ -541,10 +542,10 @@ def map_generate():
 
     if loaded:
         world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, origin_donjon_coords, donjons_maps = loaded
-        print(f"🎮 Monde chargé : {SIZE}x{SIZE}")
+        print(f" Monde chargé : {SIZE}x{SIZE}")
 
     else:
-        print("🌍 Génération du monde (première fois, ~5-10 secondes)...")
+        print(" Génération du monde (première fois, ~5-10 secondes)...")
 
         # 1. Génération terrain de base
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
@@ -552,11 +553,11 @@ def map_generate():
         world_map, texture_variants = add_texture_variants(world_map)
 
         # 2. Falaises et passages
-        print("🏔️ Détection des falaises...")
+        print("Détection des falaises...")
         cliff_edges = []
         print(f"   → {len(cliff_edges)} tiles de cliff détectées")
 
-        print("🚪 Création des passages...")
+        print(" Création des passages...")
         # 3. Grottes et villages
         cave = generate_cave_system()[2]
         coord_vil = generate_villages(world_map)
@@ -567,7 +568,7 @@ def map_generate():
 
         # 5. Sauvegarder
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
-        print(f"🎮 Monde généré : {SIZE}x{SIZE}")
+        print(f" Monde généré : {SIZE}x{SIZE}")
 
     print("\n Classification et génération des villages...")
     villages = classify_villages(coord_vil, world_map, nb_villes=3)
@@ -594,7 +595,7 @@ def map_generate():
 
     # Gérer altitude_map si absent
     if altitude_map is None:
-        print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
+        print(" Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
     
@@ -603,13 +604,10 @@ def map_generate():
     print(f" {len(cliff_edges)} cliffs après passages")
 
     print(f"\n Monde prêt :")
-    print(f"   → {len(coord_vil)} villages")
-    print(f"   → {len(coord_grottes)} grottes")
-    print(f"   → {len(cliff_edges)} falaises")
+    print(f"{len(coord_vil)} villages")
+    print(f"{len(coord_grottes)} grottes")
+    print(f"{len(cliff_edges)} falaises")
 
-    if __name__ == "__main__":
-        main()
+   
 
     return world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages, origin_donjon_coords, donjons_maps
-
-
