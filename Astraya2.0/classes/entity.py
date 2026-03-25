@@ -108,7 +108,7 @@ class Entity(pygame.sprite.Sprite):
                 tinted.fill((255, 0, 0, 120), special_flags=pygame.BLEND_RGBA_MULT)
                 surface.blit(tinted, (px, py))
             else:
-                surface.blit(self.sprite[self.texture_index], (px, py))
+                surface.blit(self.sprite[int(self.texture_index)], (px, py))
 
     def draw_minimap(self, resolution_minimap, screen, tile_cx, tile_cy, zoom):
         ptile_x = int(self.x // 32)
@@ -117,7 +117,7 @@ class Entity(pygame.sprite.Sprite):
         rel_y = ptile_y - tile_cy + zoom // 2
         px = int(rel_x * resolution_minimap)
         py = int(rel_y * resolution_minimap)
-        texture = self.sprite_minimap[self.texture_index]
+        texture = self.sprite_minimap[int(self.texture_index)]
         px -= texture.get_width() // 2
         py -= texture.get_height() // 2
         screen.blit(texture, (px, py))
@@ -147,6 +147,8 @@ class Entity_That_Move_And_Has_Collision(Entity):
         self.has_hitbox = True
         self.vx = 0
         self.vy = 0
+        self.anim_timer = 0
+
 
     def update(self, chunk_grid, actual_map):
         self.hitbox[0].x = self.x + self.hitbox_offset_x

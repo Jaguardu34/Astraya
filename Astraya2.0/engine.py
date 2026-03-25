@@ -20,6 +20,7 @@ from classes import animals, ennemy, entity, items, npc, objects
 from classes import player as player_class
 from classes import quest as quest_module
 from classes import village as village
+from classes import boss
 from classes.items import get_item
 from corruption import generer_corruption
 from ui import debug, ui_inventory
@@ -256,6 +257,14 @@ class Game:
         self.entity_grp.add(
             entity.DungeonDoor([door_surface], self.game_map, alt, x=1502, y=1500)
         )
+
+        surf = pygame.Surface((64, 64))
+        surf.fill((15, 75, 0))
+
+        self.boss = boss.Boss([surf], self.game_map, altitude_map=None, x=1550, y=1500)
+        self.boss.set_target(self.player)
+        self.boss.projectile_grp = self.projectile_grp
+        self.entity_grp.add(self.boss)
 
         # for donjons in world_data.origin_donjon_coords:
         #    self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
