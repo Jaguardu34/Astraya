@@ -1,6 +1,5 @@
 from enum import Enum
-from classes import entity
-
+from classes.entity import Entity
 import pygame
 
 
