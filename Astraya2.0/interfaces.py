@@ -83,6 +83,9 @@ class MainMenu(FullscreenMenu):
         self.in_menu = True
         self.launch_first_time = False
         self.in_settings= False
+
+        self.request_intro = False
+
         
     def draw(self, screen, window_scale):
         super().draw(window_scale)
@@ -114,6 +117,8 @@ class MainMenu(FullscreenMenu):
             self.in_menu = False
             if not self.launch_first_time:
                 self.launch_first_time = True
+                self.request_intro = True
+
                 self.buttons["play"] = [self.resume_btn, (self.WINDOW_SCALE[0]//2)-(self.resume_btn.width//2), self.WINDOW_SCALE[1]//2]
         if self.buttons["settings"][0].state():
             self.in_menu = False

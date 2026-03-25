@@ -6,6 +6,7 @@ from classes import (animals, objects, ennemy, entity, items, npc)
 import texture
 import settings
 import map_render
+from intro_screen import IntroScreen
 import threading
 import render_minimap
 import interfaces
@@ -101,6 +102,10 @@ class Game():
         self.current_music_index = 0
         self.MUSIC_END = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.MUSIC_END)
+
+        self.show_intro = True
+        self.intro_screen = None
+
 
         # lance la première
         pygame.mixer.music.load(self.playlist[random.randint(0, len(self.playlist)-1)])
@@ -657,6 +662,27 @@ class Game():
                         self.menu.in_settings = False
         elif not self.world_ready:
             self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
+            # --- INTRO CINEMATIQUE ---
+            if self.show_intro:
+                # --- LANCEMENT DE L’INTRO ---
+                if self.menu.request_intro:
+                    self.menu.request_intro = False
+                    self.show_intro = True
+                    self.intro_screen = IntroScreen()
+
+                for event in events:
+                    self.intro_screen.handle_event(event)
+
+                self.intro_screen.update()
+                self.intro_screen.draw(self.screen)
+
+                if self.intro_screen.finished:
+                    self.show_intro = False
+                    self.intro_screen = None
+
+                pygame.display.flip()
+                return
+
 
         elif self.world_ready and world_data.world_map is not None:
 
