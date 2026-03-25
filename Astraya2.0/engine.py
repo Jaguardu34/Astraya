@@ -2,7 +2,13 @@ import math
 import os
 import random
 import threading
+<<<<<<< HEAD
 
+=======
+import render_minimap
+from ui import interfaces
+import world_data
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 import generate_map
 import interfaces
 import map_render
@@ -16,6 +22,14 @@ from classes import animals, ennemy, entity, items, npc, objects
 from classes import player as player_class
 from classes import quest as quest_module
 from classes import village as village
+<<<<<<< HEAD
+=======
+from classes import boss
+import math
+from ui import debug
+from ui import ui_inventory
+from ui import coeurs
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 from classes.items import get_item
 from corruption import generer_corruption
 from ui import debug, ui_inventory
@@ -138,9 +152,14 @@ class Game:
         self.in_dungeon = False
         self.dungeon_map = None
 
+<<<<<<< HEAD
         self.quest_manager = quest_module.QuestManager()
 
         # interface
+=======
+
+        #interface
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
         self.settings_menu = interfaces.SettingsMenu()
@@ -159,6 +178,8 @@ class Game:
         self.quest_init = False
 
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
+        
+        self.coeurs = coeurs.Coeurs()
 
     # charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -216,9 +237,16 @@ class Game:
         # Charger les maps de donjons
         self.dungeon_maps = world_data.donjons_maps
 
+<<<<<<< HEAD
         self.player = player_class.Player(
             texture.texture_player, self.game_map, alt, x=1500, y=1500
         )
+=======
+        self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
+        self.quest_manager = quest_module.QuestManager(self.player)
+
+        
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         self.entity_grp.add(self.player)
         self.entity_grp.add(
             objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1450)
@@ -246,15 +274,19 @@ class Game:
         # for donjons in world_data.origin_donjon_coords:
         #    self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
 
+<<<<<<< HEAD
         # Items de départ
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("bread"), 3)
         self.player.inventory.add_item(get_item("inoxible_axe", 1))
+=======
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 
         # Plantes
-        valid_mask = np.isin(self.game_map, [2, 3, 4])
-        valid_positions = np.argwhere(valid_mask)
+        valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_plant = np.argwhere(valid_mask_plant)
 
+<<<<<<< HEAD
         rng = np.random.default_rng()
         indices = rng.choice(
             len(valid_positions), size=min(5000, len(valid_positions)), replace=False
@@ -272,6 +304,27 @@ class Game:
                     y=int(y_plant),
                 )
             )
+=======
+        rng_plant = np.random.default_rng()
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
+        
+        
+
+        for idx in indices_plant:
+            y_plant, x_plant = valid_positions_plant[idx]
+            self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
+            
+        # Arbres
+        valid_mask_tree = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_tree = np.argwhere(valid_mask_tree)
+
+        rng_tree = np.random.default_rng()
+        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(5000, len(valid_positions_tree)), replace=False)
+        
+        for idx in indices_tree:
+            y_tree, x_tree = valid_positions_tree[idx]
+            self.plant_grp.add(objects.Tree(texture.texture_tree, self.game_map, alt, x=int(x_tree), y=int(y_tree)))
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 
         # Ennemis et animaux
         for i in range(20):
@@ -583,8 +636,10 @@ class Game:
         return value
 
     def init_quest(self):
-        farmer_npc = next((npc for npc in self.npc_grp if npc.type == "fermier"), None)
+        farmers = [n for n in self.npc_grp if isinstance(n, npc.Npc) and n.type == "fermier"]
+        quest_list = [
 
+<<<<<<< HEAD
         quest_list = [
             quest_module.Quest(
                 title="Allez voir le vieux sage",
@@ -603,6 +658,90 @@ class Game:
                 ],
             ),
         ]
+=======
+        # 1) Parler au vieux sage
+        quest_module.Quest(
+            title="Allez voir le vieux sage",
+            content="Le vieux sage souhaite vous parler.",
+            type="principale",
+            objectives=[
+                quest_module.TalkObjective("Parlez au vieux sage", self.old_npc)
+            ]
+        ),
+
+        # 2) Parler à un fermier
+        quest_module.Quest(
+            title="Aide au fermier",
+            content="Un fermier du village a besoin d'aide.",
+            type="principale",
+            objectives=[
+                quest_module.TalkObjective("Parler à un fermier", farmers)
+            ],
+            rewards=[("axe", 1)]
+
+        ),
+
+        # 3) Collecter du blé
+        quest_module.Quest(
+            title="Récolte du bois pour le fermier",
+            content="Le fermier vous demande de lui rapporter 5 bois.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Collecter 5 blés", "wood", 5)
+            ]
+        ),
+
+        # 4) Fabriquer une arme
+        quest_module.Quest(
+            title="Forger une arme",
+            content="Fabriquez une arme pour vous défendre.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Obtenir une épée en bois", "wood_sword", 1)
+            ]
+        ),
+
+        # 5) Tuer 3 poulets corrompus
+        quest_module.Quest(
+            title="Purge locale",
+            content="Les poulets corrompus deviennent agressifs. Éliminez-en 3.",
+            type="principale",
+            objectives=[
+                quest_module.KillObjective("Tuer 3 poulets corrompus", "corrupted_chicken", 3)
+            ]
+        ),
+
+        # 6) Parler au garde
+        #quest_module.Quest(
+        #    title="Avertir le garde",
+        #    content="Informez le garde de la présence de corruption.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.TalkObjective("Parler au garde", guard)
+        #    ]
+        #),
+#
+        # 7) Atteindre la zone corrompue
+        #quest_module.Quest(
+        #    title="Explorer la corruption",
+        #    content="Rendez-vous près de la zone corrompue.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.ReachObjective("Atteindre la zone corrompue", corrupt_x, corrupt_y, radius=80)
+        #    ]
+        #),
+
+        # 8) Entrer dans le donjon
+        quest_module.Quest(
+            title="Entrer dans le donjon",
+            content="La corruption provient d'un donjon. Trouvez l'entrée.",
+            type="principale",
+            objectives=[
+                quest_module.ReachObjective("Trouver l'entrée du donjon", 1500, 1500, radius=60)
+            ]
+        ),
+    ]
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 
         # On ajoute ttes les quêtes dans available
         for q in quest_list:
@@ -729,12 +868,17 @@ class Game:
                 self.plant_index_built = True
 
                 self.sprites_initialized = True
+<<<<<<< HEAD
             if self.sprites_initialized and not getattr(
                 self, "_chunk_registered", False
             ):
                 self.register_all_entities(
                     [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp]
                 )
+=======
+            if self.sprites_initialized and not getattr(self, '_chunk_registered', False):
+                self.register_all_entities([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp])
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
                 self._chunk_registered = True
 
             if not self.quest_init:
@@ -753,9 +897,15 @@ class Game:
                     self.player.inventory.add_item(d.item, d.quantity)
                     d.kill()
 
+<<<<<<< HEAD
             self.update_chunk(
                 [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp]
             )
+=======
+
+            self.update_chunk([self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp])
+
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 
             for sprite in self.entity_grp:
                 if sprite is not self.player:
@@ -770,6 +920,7 @@ class Game:
                 sprite.update(self.current_map)
                 nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
                 for ent in nearby:
+<<<<<<< HEAD
                     if ent is sprite:
                         continue
                     if ent is self.player:
@@ -778,6 +929,11 @@ class Game:
                         continue
                     if not hasattr(ent, "hitbox"):
                         continue
+=======
+                    if ent is sprite: continue
+                    if ent is sprite.launcher: continue
+                    if not hasattr(ent, 'hitbox'): continue
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
                     if entity.check_box_collide(sprite.hitbox, ent.hitbox):
                         if hasattr(ent, "life_point"):
                             ent.life_point -= 1
@@ -838,6 +994,7 @@ class Game:
             self.quest_manager.update(self.screen)
 
             if self.info_swipe[0]:
+<<<<<<< HEAD
                 texture_swipe_rotate = pygame.transform.rotate(
                     texture.texture_swipe_weapon[0], self.info_swipe[1] + 90
                 )
@@ -849,6 +1006,13 @@ class Game:
                     ),
                 )
 
+=======
+                texture_swipe_rotate = pygame.transform.rotate(texture.texture_swipe_weapon[0], self.info_swipe[1]+90)
+                self.screen.blit(texture_swipe_rotate, (self.main_map.scale_x*32//2+8, self.main_map.scale_y*32//2+8))
+            
+            self.coeurs.draw(10, self.WINDOW_SCALE[1]-64, self.player.life_point, self.screen)
+                
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
             debug.draw(self.screen)
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000

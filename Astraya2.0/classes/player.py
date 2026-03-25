@@ -24,21 +24,47 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.hitbox_size = sprite[0].get_width()
         self.show_on_minimap = True
         self.anim_timer = 0
-        self.anim_frame = 0
-        self.anim_speed = 400
+
+        self.anim_speed = 0
         self.last_orientation = "left"
         self.has_life = True
+<<<<<<< HEAD
         self.lifepoint = 10
         self.inventory = Inventory(size=20, hotbar_size=5)
+=======
+        self.life_point = 20
+        self.inventory = inv.Inventory(size=20, hotbar_size=5)
+       
+        
+        
+        
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
         now = pygame.time.get_ticks()
+<<<<<<< HEAD
 
+=======
+        self.anim_speed = 200-abs(self.vx)*15
+        
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         if now - self.anim_timer >= self.anim_speed:
-            if self.anim_frame == 0:
-                self.anim_frame = 1
+            if self.vx > 0.1:
+                if self.texture_index < 3:
+                    self.texture_index += 1
+                else:
+                    self.texture_index = 0
+                self.anim_timer = now
+            elif self.vx < -0.1:
+                if self.texture_index < 4: self.texture_index = 4
+                if self.texture_index < 7:
+                    self.texture_index += 1
+                else:
+                    self.texture_index = 4
+                self.anim_timer = now
             else:
+<<<<<<< HEAD
                 self.anim_frame = 0
             self.anim_timer = now
         if self.vx > 0.1:
@@ -54,6 +80,13 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
             elif self.last_orientation == "right":
                 self.texture_index = 4 + self.anim_frame
 
+=======
+                if self.last_orientation == "left":
+                    self.texture_index = 4
+                elif self.last_orientation == "right":
+                    self.texture_index = 0
+                
+>>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
             return 0.0
@@ -83,7 +116,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
             dy /= length
 
         if dx > 0.1:
-            self.last_orientation = "left"
-        elif dx < -0.1:
             self.last_orientation = "right"
+        elif dx < -0.1:
+            self.last_orientation = "left"
         self.move(dx * self.speed * dt, dy * self.speed * dt)

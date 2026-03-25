@@ -189,8 +189,8 @@ class SettingsMenu(FullscreenMenu):
         for i in range(len(self.button_fps)):
             self.button_fps[i][0].draw(200+i*80, self.WINDOW_SCALE[1]//2-200, self.surface)
             
-        for i in range(len(self.tab_display_button)):
-            self.tab_display_button[i].draw(self.WINDOW_SCALE[0]-400, 10+i*30, self.surface)
+
+        
         
         fps_text = "FPS :"
         text_fps_surface = self.font.render(fps_text, True, "black")
