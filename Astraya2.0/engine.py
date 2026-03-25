@@ -133,9 +133,6 @@ class Game():
         self.dungeon_map = None
 
 
-
-        self.quest_manager = quest_module.QuestManager()
-
         #interface
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
@@ -203,6 +200,9 @@ class Game():
         self.dungeon_maps = world_data.donjons_maps
 
         self.player = player_class.Player(texture.texture_player, self.game_map, alt, x=1500, y=1500)
+        self.quest_manager = quest_module.QuestManager(self.player)
+
+        
         self.entity_grp.add(self.player)
         self.entity_grp.add(objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1450))
         self.old_npc = npc.Npc("spawn NPC", texture.texture_old_npc, self.game_map, ["Salut je suis un npc", "C'est tout ce que j'ai a dire"], x=1512, y=1512)
@@ -227,14 +227,6 @@ class Game():
         #for donjons in world_data.origin_donjon_coords:
         #    self.entity_grp.add(entity.DungeonDoor([door_surface], self.game_map, alt, x=donjons[0], y=donjons[1]))
 
-
-        # Items de départ
-        self.player.inventory.add_item(get_item("wood_sword"), 1)
-        self.player.inventory.add_item(get_item("truc_rouge"), 6)
-        self.player.inventory.add_item(get_item("forest_block"), 53)
-        self.player.inventory.add_item(get_item("sand_block"), 64)
-        self.player.inventory.add_item(get_item("water_block"), 12)
-        self.player.inventory.add_item(get_item("bread"), 3)
 
         # Plantes
         valid_mask = np.isin(self.game_map, [2, 3, 4])
@@ -519,16 +511,18 @@ class Game():
             type="principale",
             objectives=[
                 quest_module.TalkObjective("Parler à un fermier", farmers)
-            ]
+            ],
+            rewards=[("axe", 1)]
+
         ),
 
         # 3) Collecter du blé
         quest_module.Quest(
-            title="Récolte de blé",
-            content="Le fermier vous demande de lui rapporter 5 blés.",
+            title="Récolte du bois pour le fermier",
+            content="Le fermier vous demande de lui rapporter 5 bois.",
             type="principale",
             objectives=[
-                quest_module.CollectObjective("Collecter 5 blés", "wheat", 5)
+                quest_module.CollectObjective("Collecter 5 blés", "wood", 5)
             ]
         ),
 
