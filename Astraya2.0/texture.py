@@ -78,14 +78,14 @@ texture_plant = create_texture_basic(0, 64, 9)
 
 
 
-texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
-                get_sprite(sprite_sheet_player, 32, 0, 32, 32),
-                get_sprite(sprite_sheet_player, 0, 32, 32, 32),
-                get_sprite(sprite_sheet_player, 32, 32, 32, 32),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 0, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 0, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 32, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
+texture_player=[get_sprite(sprite_sheet, 0, 320, 11, 354),
+                get_sprite(sprite_sheet, 15, 320, 31, 354),
+                get_sprite(sprite_sheet, 32, 320, 46, 354),
+                get_sprite(sprite_sheet, 47, 320, 64, 354),
+                pygame.transform.flip(get_sprite(sprite_sheet, 0, 0, 32, 32), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet, 15, 320, 31, 354), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet, 32, 320, 46, 354), True, False),
+                pygame.transform.flip(get_sprite(sprite_sheet, 47, 320, 64, 354), True, False)
                 ]
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
