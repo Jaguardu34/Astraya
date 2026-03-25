@@ -8,7 +8,7 @@ import settings
 import map_render
 import threading
 import render_minimap
-import interfaces
+from ui import interfaces
 import world_data
 import generate_map
 from classes import player as player_class
@@ -17,6 +17,7 @@ from classes import village as village
 import math
 from ui import debug
 from ui import ui_inventory
+from ui import coeurs
 from classes.items import get_item
 from corruption import generer_corruption
 import numpy as np
@@ -155,6 +156,8 @@ class Game():
         
         
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
+        
+        self.coeurs = coeurs.Coeurs()
 
 
     #charger la map gigantesque de Pau en arriere plan
@@ -643,7 +646,6 @@ class Game():
                 nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
                 for ent in nearby:
                     if ent is sprite: continue
-                    if ent is self.player: continue
                     if ent is sprite.launcher: continue
                     if not hasattr(ent, 'hitbox'): continue
                     if entity.check_box_collide(sprite.hitbox, ent.hitbox):
@@ -699,6 +701,8 @@ class Game():
             if self.info_swipe[0]:
                 texture_swipe_rotate = pygame.transform.rotate(texture.texture_swipe_weapon[0], self.info_swipe[1]+90)
                 self.screen.blit(texture_swipe_rotate, (self.main_map.scale_x*32//2+8, self.main_map.scale_y*32//2+8))
+            
+            self.coeurs.draw(10, self.WINDOW_SCALE[1]-64, self.player.life_point, self.screen)
                 
             debug.draw(self.screen)
         pygame.display.flip()
