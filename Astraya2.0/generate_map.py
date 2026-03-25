@@ -88,15 +88,9 @@ def map_generate():
         """Génère les cartes de hauteur, humidité et température avec masque d'île."""
         heightmap = fractal_noise(scale=300, seed=1)
         altitude_map = np.zeros((SIZE, SIZE), dtype=np.int8) # On a des niveaux d'altitude
-<<<<<<< HEAD
         humiditymap = fractal_noise(scale=500, seed=2)
         temperaturemap = fractal_noise(scale=500, seed=3)
 
-=======
-        humiditymap = fractal_noise(scale=500, seed=seed+1)
-        temperaturemap = fractal_noise(scale=500, seed=seed+2)
-        
->>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         island_mask = create_island_mask(SIZE, falloff=0.4)
 
         heightmap = norm(heightmap)
@@ -388,30 +382,17 @@ def map_generate():
         print("🌍 Génération du monde...")
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         biome_map, origin_donjon_coords, donjons_maps = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
-<<<<<<< HEAD
 
         print("🏘️ Villages et grottes...")
-=======
-        
-        print("Villages et grottes...")
->>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         villages = generate_villages(biome_map)
         grottes = generate_grottes(biome_map)
         print(f"   → {len(villages)} villages")
         print(f"   → {len(grottes)} grottes")
-<<<<<<< HEAD
 
         print("🕳️ Système souterrain...")
         cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
 
         print("🎨 Rendu...")
-=======
-        
-        print("Système souterrain...")
-        cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
-        
-        print(" Rendu...")
->>>>>>> 39d9375cb81f537a442fb71b425971ddd46b270b
         img_over = render_overworld_map(biome_map, villages, grottes)
         img_cave = render_cave_map(cave_biomes)
 
