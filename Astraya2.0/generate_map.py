@@ -9,7 +9,7 @@ from falaises import *
 from corruption import generer_corruption
 
 def map_generate():
-    
+
     # ==============================================================================
     # CONFIGURATION
     # ==============================================================================
@@ -70,13 +70,13 @@ def map_generate():
         """Crée un masque radial pour forcer les bords à être de l'océan."""
         y, x = np.ogrid[0:size, 0:size]
         center = size / 2
-        
+
         dx = (x - center) / center
         dy = (y - center) / center
         distance = np.sqrt(dx**2 + dy**2)
-        
+
         mask = np.clip(1 - (distance - (1 - falloff)) / falloff, 0, 1)
-        
+
         return mask
 
 
@@ -90,19 +90,19 @@ def map_generate():
         altitude_map = np.zeros((SIZE, SIZE), dtype=np.int8) # On a des niveaux d'altitude
         humiditymap = fractal_noise(scale=500, seed=2)
         temperaturemap = fractal_noise(scale=500, seed=3)
-        
+
         island_mask = create_island_mask(SIZE, falloff=0.4)
-        
+
         heightmap = norm(heightmap)
         heightmap = heightmap * island_mask
 
         altitude_map[heightmap < 0.40] = 0  # Plaines
-        altitude_map[(heightmap >= 0.40) & (heightmap < 0.58)] = 2  # Niveau 1 
+        altitude_map[(heightmap >= 0.40) & (heightmap < 0.58)] = 2  # Niveau 1
         altitude_map[(heightmap >= 0.58) & (heightmap < 0.70)] = 4  # Niveau 2 (plaines, jungle, forêt selon humidité/température)
         altitude_map[(heightmap >= 0.70) & (heightmap < 0.85)] = 6  # Montagnes
         altitude_map[heightmap >= 0.85] = 8  # Pics enneigés
-        
-        return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map  
+
+        return heightmap, norm(humiditymap), norm(temperaturemap), altitude_map
 
     def poser_falaises(biome_map, nb_falaises=100):
 
@@ -113,7 +113,7 @@ def map_generate():
         BIOME_IDS["mountains"],
         BIOME_IDS["beach"]
     }
-        
+
         for _ in range(nb_falaises):
             attempts = 0
             trouve = False
@@ -146,7 +146,7 @@ def map_generate():
                     pos_deb = random.randint(0, len(coins) - 1)
                     falaises = falaises[pos_deb:] + falaises[:pos_deb]
 
-                    for i in range(len(falaises)): 
+                    for i in range(len(falaises)):
                         current_x, current_y = falaises[i][0], falaises[i][1]
                         currrnt_orientation = "N"
                         if (current_x - 1, current_y) in falaises and (current_x + 1, current_y) in falaises :
@@ -165,7 +165,7 @@ def map_generate():
                                 currrnt_orientation = "E"
                             if currrnt_orientation == "E":
                                 currrnt_orientation = "N"
-                        
+
                         elif (current_x - 1, current_y) in falaises and (current_x, current_y + 1) in falaises :
                             biome_map[current_y, current_x] = BIOME_IDS["cliff_NO"]
                             current_x += 1
@@ -206,7 +206,7 @@ def map_generate():
                             biome_map[current_y, current_x - 2] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
                             biome_map[current_y, current_x - 3] = BIOME_IDS["cliff_" + currrnt_orientation]
                             current_x -= 3
-                        
+
                         # bas en haut
                         elif (current_x, current_y - 1) in falaises and (current_x, current_y + 1) not in falaises and (current_x - 1, current_y) not in falaises and (current_x + 1, current_y + 1) not in falaises:
                             biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
@@ -219,7 +219,7 @@ def map_generate():
                             biome_map[current_y, current_x] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_1"]
                             biome_map[current_y - 2, current_x ] = BIOME_IDS["passage_cliff_" + currrnt_orientation + "_2"]
                             biome_map[current_y - 3, current_x ] = BIOME_IDS["cliff_" + currrnt_orientation]
-                            current_y -= 3             
+                            current_y -= 3
                     trouve = True
 
         return biome_map
@@ -230,19 +230,19 @@ def map_generate():
         biomes = np.zeros((SIZE, SIZE), dtype=np.uint32)
         origin_donjon_coords = []
 
-        
+
         # Masques booléens pour chaque biome
         ocean_mask = heightmap < 0.25
         beach_mask = (heightmap >= 0.28) & (heightmap < 0.32)
-        wet_sand_mask = (heightmap >= 0.25) & (heightmap < 0.28) 
-        
+        wet_sand_mask = (heightmap >= 0.25) & (heightmap < 0.28)
+
         jungle_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.6) & (temperaturemap > 0.5)
         forest_mask = (heightmap >= 0.32) & (heightmap < 0.65) & (humiditymap > 0.4) & (temperaturemap > 0.3) & ~jungle_mask
         plains_mask = (heightmap >= 0.32) & (heightmap < 0.65) & ~jungle_mask & ~forest_mask
-        
+
         mountains_mask = (heightmap >= 0.65) & (heightmap < 0.80)
         snow_mask = heightmap >= 0.80
-        
+
         # Attribution en une seule opération vectorisée
         biomes[ocean_mask] = BIOME_IDS["ocean"]
         biomes[beach_mask] = BIOME_IDS["beach"]
@@ -255,7 +255,7 @@ def map_generate():
 
         biomes = poser_falaises(biomes, nb_falaises=100)
         biomes, origin_donjon_coords, donjons_maps = generer_corruption(biomes, nb_zones=5)
-        
+
         return biomes, origin_donjon_coords, donjons_maps
 
 
@@ -284,10 +284,10 @@ def map_generate():
 
         # Cave biomes (vectorisé)
         cave_biomes = np.copy(cave_map)
-        
+
         # Masque pour les zones d'air uniquement
         air_mask = cave_map == BIOME_IDS["air"]
-        
+
         # Attribution des biomes souterrains (vectorisé)
         cave_biomes[air_mask & (biome_noise < 0.20)] = BIOME_IDS["cave_ice"]
         cave_biomes[air_mask & (biome_noise >= 0.20) & (biome_noise < 0.40)] = BIOME_IDS["cave_mushroom"]
@@ -312,7 +312,7 @@ def map_generate():
             while attempts < 10000 and not trouve:
                 x = random.randint(0, SIZE - 1)
                 y = random.randint(0, SIZE - 1)
-                
+
                 # Vérifier que le biome n'est pas interdit
                 if biome_map[y][x] not in FORBIDDEN_VILLAGE_BIOMES:
                     coord_vil.append([x, y])
@@ -323,10 +323,10 @@ def map_generate():
 
     def classify_villages(coord_vil, biome_map, nb_villes=3):
         """Classe les villages : 3 grandes villes (dont une fixe en 1500,1600), le reste en hameaux."""
-        
+
         villes = []
         villes.append((1500, 1600))
-        
+
         distances = []
         for vx, vy in coord_vil:
             dist = (vx - 1500)**2 + (vy - 1600)**2
@@ -347,27 +347,27 @@ def map_generate():
                 if dist_min > meilleure_dist:
                     meilleure_dist = dist_min
                     meilleur = (vx, vy)
-            
+
             if meilleur:
                 villes.append(meilleur)
-        
+
         # Créer les objets Village
         resultat = []
-        
+
         # Ajouter les 3 villes
         for vx, vy in villes:
             biome = biome_map[vy, vx]
             resultat.append(Village(vx, vy, "city", biome))
-        
+
         # Ajouter les hameaux (tous les villages non sélectionnés comme villes)
         villes_coords = set(villes)
         for vx, vy in coord_vil:
             if (vx, vy) not in villes_coords:
                 biome = biome_map[vy, vx]
                 resultat.append(Village(vx, vy, "hamlet", biome))
-        
+
         return resultat
-            
+
 
 
     # ==============================================================================
@@ -384,7 +384,7 @@ def map_generate():
             while attempts < 10000 and not trouve:
                 x = random.randint(0, SIZE - 1)
                 y = random.randint(0, SIZE - 1)
-                
+
                 # Vérifier que le biome n'est pas interdit
                 if biome_map[y][x] not in FORBIDDEN_VILLAGE_BIOMES:
                     coord_grottes.append([x, y])
@@ -419,7 +419,7 @@ def map_generate():
             'cave_biomes': cave_biomes,
             'coord_vil': coord_vil,
             'coord_grottes': coord_grottes,
-            'altitude_map': altitude_map, 
+            'altitude_map': altitude_map,
             'size': SIZE
         }
         with open(filename, 'wb') as f:
@@ -431,13 +431,13 @@ def map_generate():
         """Charge un monde sauvegardé."""
         if not os.path.exists(filename):
             return None
-        
+
         with open(filename, 'rb') as f:
             data = pickle.load(f)
-        
+
         print(f" Monde chargé depuis : {filename}")
-        return (data['biome_map'], data['texture_variants'], data['cave_biomes'], 
-                data['coord_vil'], data['coord_grottes'], data.get('altitude_map'), 
+        return (data['biome_map'], data['texture_variants'], data['cave_biomes'],
+                data['coord_vil'], data['coord_grottes'], data.get('altitude_map'),
                 data.get('origin_donjon_coords', []), data.get('donjons_maps', []))
 
 
@@ -504,29 +504,29 @@ def map_generate():
         print("🌍 Génération du monde...")
         heightmap, humiditymap, temperaturemap, altitude_map = generate_overworld()
         biome_map, origin_donjon_coords, donjons_maps = compute_biomes_vectorized(heightmap, humiditymap, temperaturemap)
-        
+
         print("🏘️ Villages et grottes...")
         villages = generate_villages(biome_map)
         grottes = generate_grottes(biome_map)
         print(f"   → {len(villages)} villages")
         print(f"   → {len(grottes)} grottes")
-        
+
         print("🕳️ Système souterrain...")
         cave_map, cave_noise, cave_biomes, biome_noise = generate_cave_system()
-        
+
         print("🎨 Rendu...")
         img_over = render_overworld_map(biome_map, villages, grottes)
         img_cave = render_cave_map(cave_biomes)
-        
+
         fig, axes = plt.subplots(1, 2, figsize=(20, 10))
         axes[0].imshow(img_over)
         axes[0].set_title("Surface (villages=rouge, grottes=cyan)")
         axes[0].axis("off")
-        
+
         axes[1].imshow(img_cave)
         axes[1].set_title("Souterrain")
         axes[1].axis("off")
-        
+
         plt.tight_layout()
         plt.show()
 
@@ -534,7 +534,7 @@ def map_generate():
     # ==============================================================================
     # GÉNÉRATION POUR LE JEU
     # ==============================================================================
-        
+
     WORLD_FILE = "Astraya2.0/assets/world_data.pkl"
 
     loaded = load_world(WORLD_FILE)
@@ -576,7 +576,7 @@ def map_generate():
     for village in villages:
         # Passer la biome_map pour vérifier les biomes interdits
         village.generate(world_map)
-        
+
         # Marquer les bâtiments comme obstacles sur la carte
         for building in village.buildings:
             size = building.size
@@ -597,7 +597,7 @@ def map_generate():
         print("⚠️ Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
         save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
-    
+
     # Filtrer cliff_edges pour enlever les passages
     cliff_edges = []
     print(f" {len(cliff_edges)} cliffs après passages")
@@ -611,5 +611,3 @@ def map_generate():
         main()
 
     return world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, cliff_edges, villages, origin_donjon_coords, donjons_maps
-
-

@@ -9,9 +9,8 @@ La map est générée grâce au fameux **Perlin noise** ou **bruit de Perlin** e
 Ce tableau est ensuite affiché sous formes de "tiles" ou tuiles en fonction de sa valeur dans le tableau *ex: "beach" afficheras une tile plage*.
 
 ### Utilisation
-Pour lancer le jeu il s'uffit de lancer le fichier **main.py** dans le dosssier **Astraya2.0**
+Pour lancer le jeu il s'uffit de lancer le fichier **start.bat** (sur Windows Uniquement) dans le dosssier **Astraya2.0**
 
 **Il est obligatoire pour le bon fonctionnement de Pygames d'utilise Python<=3.12**
 
-**Modules requis** : dans requirement.txt *pip install requierement.txt*
-
+**Modules requis** : lancer un cmd dans requirement.txt -> *pip install requierement.txt*

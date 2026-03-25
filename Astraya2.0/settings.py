@@ -3,8 +3,8 @@ import pygame
 import random
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
+print('dddddddd')
+print(BASE_DIR)
 PLAYER_PLACE_RANGE = 5
 #keys
 KEY_UP = pygame.K_z
@@ -17,7 +17,7 @@ KEY_INVENTORY = pygame.K_e
 KEY_DROP = pygame.K_g
 KEY_NPC = pygame.K_a
 
-WINDOW_WIDTH    = 1280	
+WINDOW_WIDTH    = 1280
 WINDOW_HEIGTH   = 720
 FPS      = 60
 TILE_SIZE = 32
@@ -27,7 +27,7 @@ HITBOX_OFFSET = {
 	'grass': -10,
 	'invisible': 0}
 
-# ui 
+# ui
 BAR_HEIGHT = 20
 HEALTH_BAR_WIDTH = 200
 ENERGY_BAR_WIDTH = 140
@@ -101,7 +101,7 @@ FORBIDDEN_VILLAGE_BIOMES = [
     BIOME_IDS["beach"],      # 1
     BIOME_IDS["wet_sand"],   # 101
 ]
- 
+
 #random building version
 def random_temple():
     templescoords=[(0,1920),(160,1920),(0,2080),(160,2080)]
@@ -110,14 +110,14 @@ def random_temple():
 # ==============================================================================
 # TYPES DE BÂTIMENTS (6 types seulement)
 # ==============================================================================
- 
+
 BUILDING_TYPES = {
     "domus": {"size": (3, 3), "rarity": "common","xycoord":(0,0)},
-    
+
     "villa": {"size": (5, 5), "rarity": "rare","xycoord":(192,224)},
 
     "forum": {"size": (8, 8), "rarity": "common","xycoord":(0,832)},
-    
+
     # Stockage
     "stock": {"size": (3, 3), "rarity": "common","xycoord":(0,608)},
 
@@ -125,14 +125,14 @@ BUILDING_TYPES = {
 
     "puteus": {"size": (1, 1), "rarity": "common","xycoord":(0,1633)},
 }
- 
- 
+
+
 # ====================
-# TYPES DE VILLAGES 
+# TYPES DE VILLAGES
 # ====================
- 
+
 nb_cities = 3
- 
+
 VILLAGE_TYPES = {
     "hamlet": {  # Hameau (5-8 maisons)
         "min_houses": 5,
@@ -144,7 +144,7 @@ VILLAGE_TYPES = {
             ("puteus", 1, 1),       # Puits central
         ]
     },
-    
+
     "city": {  # Grande ville (20-35 bâtiments)
         "min_houses": 20,
         "max_houses": 35,
@@ -159,5 +159,3 @@ VILLAGE_TYPES = {
         ]
     }
 }
-
-    
