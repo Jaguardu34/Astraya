@@ -97,11 +97,11 @@ texture_grotte = create_single_texture_by_coords(sprite_sheet_terrain,0, 143, 32
 texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 304, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 288, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 272, 16, 16), True, False)]
-
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False)]
 
 texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
+
+texture_coeur = [get_sprite(sprite_sheet, 0, 944, 16, 16), get_sprite(sprite_sheet, 16, 944, 16, 16), get_sprite(sprite_sheet, 32, 944, 16, 16)]
 
 texture_chicken = []
 for t in texture_chicken_base:
@@ -113,8 +113,7 @@ for t in texture_chicken_base:
 texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 240, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 224, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 256, 16, 16), True, False)]
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False)]
 
 texture_chicken_corrupted = []
 for t in texture_chicken_corrupted_base:
@@ -122,6 +121,8 @@ for t in texture_chicken_corrupted_base:
         int(t.get_width() * 1.5),
         int(t.get_height() * 1.5)
     )))
+
+texture_tree = [pygame.transform.scale(get_sprite(sprite_sheet, 0, 96, 32, 32), (64, 64))]
 
 texture_cow_base = create_texture_mirrored(32, 288, 3)
 texture_cow = []
