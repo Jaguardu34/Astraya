@@ -1,10 +1,12 @@
-import pygame
-from classes import (entity, items)
-import random
-import settings
 import math
+import random
+
+import pygame
+import settings
 import texture
-from classes import inventory as inv
+from classes import entity, items
+from classes.inventory import Inventory as inv
+
 
 
 class Player(entity.Entity_That_Move_And_Has_Collision):
@@ -17,9 +19,9 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.speed = speed
         self.hitbox_offset_x = 0
         self.hitbox_offset_y = 0
-        sw = sprite[0].get_width()-4
-        sh = sprite[0].get_height()-4
-        self.hitbox = [pygame.Rect(self.x+2, self.y+2, sw, sh)]
+        sw = sprite[0].get_width() - 4
+        sh = sprite[0].get_height() - 4
+        self.hitbox = [pygame.Rect(self.x + 2, self.y + 2, sw, sh)]
         self.hitbox_size = sprite[0].get_width()
         self.show_on_minimap = True
         self.anim_timer = 0
@@ -32,8 +34,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.dead = False
        
         
-        
-        
+
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
@@ -57,11 +58,21 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
                     self.texture_index = 4
                 self.anim_timer = now
             else:
-                if self.last_orientation == "left":
-                    self.texture_index = 4
-                elif self.last_orientation == "right":
-                    self.texture_index = 0
-                
+                self.anim_frame = 0
+            self.anim_timer = now
+        if self.vx > 0.1:
+            self.anim_speed = 200
+            self.texture_index = 2 + self.anim_frame
+        elif self.vx < -0.1:
+            self.anim_speed = 200
+            self.texture_index = 6 + self.anim_frame
+        else:
+            self.anim_speed = 400
+            if self.last_orientation == "left":
+                self.texture_index = 0 + self.anim_frame
+            elif self.last_orientation == "right":
+                self.texture_index = 4 + self.anim_frame
+
     def apply_deadzone(self, value, threshold=0.1):
         if abs(value) < threshold:
             return 0.0
@@ -69,17 +80,21 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
 
     def input(self, keys, dt, joystick):
         dx, dy = 0, 0
-        
+
         if joystick:
             joy_x = self.apply_deadzone(joystick.get_axis(0))
             joy_y = self.apply_deadzone(joystick.get_axis(1))
-            dx=joy_x
-            dy=joy_y
-        
-        if keys[settings.KEY_UP] or keys[pygame.K_UP]:    dy = -1
-        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:  dy = 1
-        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:  dx = -1
-        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]: dx = 1
+            dx = joy_x
+            dy = joy_y
+
+        if keys[settings.KEY_UP] or keys[pygame.K_UP]:
+            dy = -1
+        if keys[settings.KEY_DOWN] or keys[pygame.K_DOWN]:
+            dy = 1
+        if keys[settings.KEY_LEFT] or keys[pygame.K_LEFT]:
+            dx = -1
+        if keys[settings.KEY_RIGHT] or keys[pygame.K_RIGHT]:
+            dx = 1
 
         if dx != 0 and dy != 0:
             length = (dx**2 + dy**2) ** 0.5
@@ -91,10 +106,3 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         elif dx < -0.1:
             self.last_orientation = "left"
         self.move(dx * self.speed * dt, dy * self.speed * dt)
-    
-
-
-                        
-                        
-                    
-                    
