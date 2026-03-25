@@ -29,6 +29,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.has_life = True
         self.life_point = 20
         self.inventory = inv.Inventory(size=20, hotbar_size=5)
+        self.dead = False
        
         
         
@@ -39,6 +40,8 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         now = pygame.time.get_ticks()
         self.anim_speed = 200-abs(self.vx)*15
         
+        if self.life_point <= 0:
+            self.dead = True
         if now - self.anim_timer >= self.anim_speed:
             if self.vx > 0.1:
                 if self.texture_index < 3:

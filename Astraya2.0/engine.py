@@ -138,6 +138,7 @@ class Game():
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
         self.settings_menu = interfaces.SettingsMenu()
+        self.death_menu = interfaces.DeathScreen()
 
         #inventaire
         self.inventory_open = False
@@ -156,6 +157,8 @@ class Game():
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
         
         self.coeurs = coeurs.Coeurs()
+        
+        
 
 
     #charger la map gigantesque de Pau en arriere plan
@@ -249,7 +252,7 @@ class Game():
         valid_positions_tree = np.argwhere(valid_mask_tree)
 
         rng_tree = np.random.default_rng()
-        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(5000, len(valid_positions_tree)), replace=False)
+        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(3000, len(valid_positions_tree)), replace=False)
         
         for idx in indices_tree:
             y_tree, x_tree = valid_positions_tree[idx]
@@ -673,6 +676,9 @@ class Game():
                         self.menu.in_settings = False
         elif not self.world_ready:
             self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
+            
+        elif self.player.dead:
+            self.death_menu.draw(self.screen, self.WINDOW_SCALE)
 
         elif self.world_ready and world_data.world_map is not None:
 
