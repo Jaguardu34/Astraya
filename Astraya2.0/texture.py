@@ -96,7 +96,9 @@ texture_grotte = create_single_texture_by_coords(sprite_sheet_terrain,0, 143, 32
 texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16), 
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 304, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 288, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False)]
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 272, 16, 16), True, False)]
+
 
 texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
 
@@ -110,7 +112,8 @@ for t in texture_chicken_base:
 texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16), 
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 240, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 224, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False)]
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False),
+                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 256, 16, 16), True, False)]
 
 texture_chicken_corrupted = []
 for t in texture_chicken_corrupted_base:
