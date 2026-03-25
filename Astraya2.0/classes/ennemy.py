@@ -21,16 +21,14 @@ class Corrupted_Chicken(entity.Entity_That_Move_And_Has_Collision):
         self.trigger_distance = 1000
         self.last_direction = "right"
 
-    def update(self, dt, chunk_grid, actual_map):
+    def update(self, chunk_grid, actual_map, dt):
         super().update(chunk_grid, actual_map)
-        dist_x = float(self.player.x - self.x)
-        dist_y = float(self.player.y - self.y)
-
-
-        dist = float((dist_x**2 + dist_y**2) ** 0.5)
+        dist_x = self.player.x - self.x
+        dist_y = self.player.y - self.y
+        dist = (dist_x**2 + dist_y**2) ** 0.5
         if dist < self.trigger_distance:
-            dx = float((dist_x / dist) * self.speed * dt)
-            dy = float((dist_y / dist) * self.speed * dt)
+            dx = (dist_x / dist) * self.speed * dt
+            dy = (dist_y / dist) * self.speed * dt
             now = pygame.time.get_ticks()
             self.update_texture(dx, dy, now)
             if now - self.last_shoot >= self.firerate:
