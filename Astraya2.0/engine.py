@@ -3,7 +3,8 @@ import math
 import os
 import random
 import threading
-
+from intro_screen import IntroScreen
+from classes import coeurs
 import generate_map
 
 import generate_map
@@ -146,8 +147,6 @@ class Game:
         self.in_dungeon = False
         self.dungeon_map = None
 
-        self.quest_manager = quest_module.QuestManager()
-
         # interface
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
@@ -231,6 +230,9 @@ class Game:
         self.player = player_class.Player(
             texture.texture_player, self.game_map, alt, x=1500, y=1500
         )
+        self.quest_manager = quest_module.QuestManager(self.player)
+
+
         self.entity_grp.add(self.player)
         self.entity_grp.add(
             objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1450)
@@ -261,7 +263,7 @@ class Game:
         # Items de départ
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("bread"), 3)
-        self.player.inventory.add_item(get_item("inoxible_axe", 1))
+        self.player.inventory.add_item(get_item("inoxible_axe"), 1)
 
         # Plantes
         valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
@@ -596,7 +598,7 @@ class Game:
 
     def init_quest(self):
         farmers = [n for n in self.npc_grp if isinstance(n, npc.Npc) and n.type == "fermier"]
-
+        quest_list = [
         # 1) Parler au vieux sage
         quest_module.Quest(
             title="Allez voir le vieux sage",
@@ -616,13 +618,10 @@ class Game:
                 quest_module.TalkObjective("Parler à un fermier", farmers)
             ],
             rewards=[("axe", 1)]
-
             ),
 
         # 3) Collecter du blé
         quest_module.Quest(
-            title="Récolte de blé",
-            content="Le fermier vous demande de lui rapporter 5 blés.",
             title="Récolte du bois pour le fermier",
             content="Le fermier vous demande de lui rapporter 5 bois.",
             type="principale",

@@ -1,4 +1,5 @@
 from enum import Enum
+from classes import entity
 
 import pygame
 
@@ -62,7 +63,7 @@ class Tool(Item):
         self.range = range
         self.last_use = 0
 
-    def on_use(self, user: Entity) -> bool:
+    def on_use(self, user: entity.Entity) -> bool:
         now = pygame.time.get_ticks()
         if now - self.last_use >= self.cooldown:
             self.last_use = now

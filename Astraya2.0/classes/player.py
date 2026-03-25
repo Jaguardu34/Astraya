@@ -8,7 +8,7 @@ import pygame
 import settings
 import texture
 from classes import entity, items
-from classes.inventory import Inventory as inv
+from classes.inventory import Inventory 
 
 
 
@@ -33,7 +33,7 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.last_orientation = "left"
         self.has_life = True
         self.life_point = 20
-        self.inventory = inv.Inventory(size=20, hotbar_size=5)
+        self.inventory = Inventory(size=20, hotbar_size=5)
         self.dead = False
        
         
