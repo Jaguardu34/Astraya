@@ -268,6 +268,7 @@ class DeathScreen(FullscreenMenu):
     
     def draw(self, screen, window_scale):
         super().draw(window_scale)
+        self.update()
         self.surface.fill("white")
         text_surface = self.font.render(self.text, True, "red")   
         self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
@@ -275,4 +276,6 @@ class DeathScreen(FullscreenMenu):
         screen.blit(self.surface, (0, 0))
         Button.update_cursor()
         
-    
+    def update(self):
+        if self.quit_btn.state():
+            pygame.quit()

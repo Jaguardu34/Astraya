@@ -1,7 +1,11 @@
 import math
+import math
 import os
 import random
 import threading
+from intro_screen import IntroScreen
+from classes import coeurs
+import generate_map
 
 import generate_map
 import interfaces
@@ -19,6 +23,7 @@ from classes import village as village
 from classes.items import get_item
 from corruption import generer_corruption
 from ui import debug, ui_inventory
+from ui import interfaces
 
 
 class Chunk:
@@ -101,6 +106,10 @@ class Game:
         self.MUSIC_END = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.MUSIC_END)
 
+        self.show_intro = True
+        self.intro_screen = None
+
+
         # lance la première
         pygame.mixer.music.load(
             self.playlist[random.randint(0, len(self.playlist) - 1)]
@@ -138,12 +147,11 @@ class Game:
         self.in_dungeon = False
         self.dungeon_map = None
 
-        self.quest_manager = quest_module.QuestManager()
-
         # interface
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
         self.settings_menu = interfaces.SettingsMenu()
+        self.death_menu = interfaces.DeathScreen()
 
         # inventaire
         self.inventory_open = False
@@ -161,6 +169,7 @@ class Game:
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
         
         self.coeurs = coeurs.Coeurs()
+
 
     # charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -221,6 +230,9 @@ class Game:
         self.player = player_class.Player(
             texture.texture_player, self.game_map, alt, x=1500, y=1500
         )
+        self.quest_manager = quest_module.QuestManager(self.player)
+
+
         self.entity_grp.add(self.player)
         self.entity_grp.add(
             objects.Grotte(texture.texture_grotte, self.game_map, alt, x=1520, y=1450)
@@ -251,29 +263,29 @@ class Game:
         # Items de départ
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("bread"), 3)
-        self.player.inventory.add_item(get_item("inoxible_axe", 1))
+        self.player.inventory.add_item(get_item("inoxible_axe"), 1)
 
         # Plantes
         valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
         valid_positions_plant = np.argwhere(valid_mask_plant)
 
-        rng = np.random.default_rng()
-        indices = rng.choice(
-            len(valid_positions), size=min(5000, len(valid_positions)), replace=False
-        )
+        rng_plant = np.random.default_rng()
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
 
-        for idx in indices:
-            y_plant, x_plant = valid_positions[idx]
-            self.plant_grp.add(
-                objects.Plant(
-                    texture.texture_plant,
-                    self.game_map,
-                    8,
-                    alt,
-                    x=int(x_plant),
-                    y=int(y_plant),
-                )
-            )
+        for idx in indices_plant:
+            y_plant, x_plant = valid_positions_plant[idx]
+            self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
+            
+        # Arbres
+        valid_mask_tree = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_tree = np.argwhere(valid_mask_tree)
+
+        rng_tree = np.random.default_rng()
+        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(3000, len(valid_positions_tree)), replace=False)
+        
+        for idx in indices_tree:
+            y_tree, x_tree = valid_positions_tree[idx]
+            self.plant_grp.add(objects.Tree(texture.texture_tree, self.game_map, alt, x=int(x_tree), y=int(y_tree)))
 
         # Ennemis et animaux
         for i in range(20):
@@ -587,24 +599,86 @@ class Game:
     def init_quest(self):
         farmers = [n for n in self.npc_grp if isinstance(n, npc.Npc) and n.type == "fermier"]
         quest_list = [
+        # 1) Parler au vieux sage
+        quest_module.Quest(
+            title="Allez voir le vieux sage",
+            content="Le vieux sage souhaite vous parler.",
+            type="principale",
+            objectives=[
+                quest_module.TalkObjective("Parlez au vieux sage", self.old_npc)
+            ]
+        ),
 
-        quest_list = [
-            quest_module.Quest(
-                title="Allez voir le vieux sage",
-                content="Parlez au vieux npc",
-                type="principale",
-                objectives=[
-                    quest_module.TalkObjective("Parlez au Vieux NPC", self.old_npc)
-                ],
+        # 2) Parler à un fermier
+        quest_module.Quest(
+            title="Aide au fermier",
+            content="Un fermier du village a besoin d'aide.",
+            type="principale",
+            objectives=[
+                quest_module.TalkObjective("Parler à un fermier", farmers)
+            ],
+            rewards=[("axe", 1)]
             ),
-            quest_module.Quest(
-                title="Aide au fermier",
-                content="Le fermier a besoin d'aide, va lui parler.",
-                type="principale",
-                objectives=[
-                    quest_module.TalkObjective("Parler au fermier", farmer_npc)
-                ],
-            ),
+
+        # 3) Collecter du blé
+        quest_module.Quest(
+            title="Récolte du bois pour le fermier",
+            content="Le fermier vous demande de lui rapporter 5 bois.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Collecter 5 blés", "wood", 5)
+            ]
+        ),
+
+        # 4) Fabriquer une arme
+        quest_module.Quest(
+            title="Forger une arme",
+            content="Fabriquez une arme pour vous défendre.",
+            type="principale",
+            objectives=[
+                quest_module.CollectObjective("Obtenir une épée en bois", "wood_sword", 1)
+            ]
+        ),
+
+        # 5) Tuer 3 poulets corrompus
+        quest_module.Quest(
+            title="Purge locale",
+            content="Les poulets corrompus deviennent agressifs. Éliminez-en 3.",
+            type="principale",
+            objectives=[
+                quest_module.KillObjective("Tuer 3 poulets corrompus", "corrupted_chicken", 3)
+            ]
+        ),
+
+        # 6) Parler au garde
+        #quest_module.Quest(
+        #    title="Avertir le garde",
+        #    content="Informez le garde de la présence de corruption.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.TalkObjective("Parler au garde", guard)
+        #    ]
+        #),
+        #
+        # 7) Atteindre la zone corrompue
+        #quest_module.Quest(
+        #    title="Explorer la corruption",
+        #    content="Rendez-vous près de la zone corrompue.",
+        #    type="principale",
+        #    objectives=[
+        #        quest_module.ReachObjective("Atteindre la zone corrompue", corrupt_x, corrupt_y, radius=80)
+        #    ]
+        #),
+
+        # 8) Entrer dans le donjon
+        quest_module.Quest(
+            title="Entrer dans le donjon",
+            content="La corruption provient d'un donjon. Trouvez l'entrée.",
+            type="principale",
+            objectives=[
+                quest_module.ReachObjective("Trouver l'entrée du donjon", 1500, 1500, radius=60)
+            ]
+        ),
         ]
 
         # On ajoute ttes les quêtes dans available
@@ -614,7 +688,6 @@ class Game:
         # On active seulement la première au début
         self.quest_manager.accept_quest(quest_list[0])
         self.quest_init = True
-        # boucle principale
 
     def update(self):
 
@@ -699,6 +772,27 @@ class Game:
                         self.menu.in_settings = False
         elif not self.world_ready:
             self.loadingscreen.draw(self.screen, self.WINDOW_SCALE)
+            # --- INTRO CINEMATIQUE ---
+            if self.show_intro:
+                # --- LANCEMENT DE L’INTRO ---
+                if self.menu.request_intro:
+                    self.menu.request_intro = False
+                    self.show_intro = True
+                    self.intro_screen = IntroScreen()
+
+                for event in events:
+                    self.intro_screen.handle_event(event)
+
+                self.intro_screen.update()
+                self.intro_screen.draw(self.screen)
+
+                if self.intro_screen.finished:
+                    self.show_intro = False
+                    self.intro_screen = None
+
+                pygame.display.flip()
+                return
+
 
         elif self.world_ready and world_data.world_map is not None:
             if not self.sprites_initialized:

@@ -1,11 +1,15 @@
 import math
 import random
 
+import math
+import random
+
 import pygame
 import settings
 import texture
 from classes import entity, items
-from classes.inventory import Inventory
+from classes.inventory import Inventory 
+
 
 
 class Player(entity.Entity_That_Move_And_Has_Collision):
@@ -28,13 +32,20 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
         self.anim_speed = 0
         self.last_orientation = "left"
         self.has_life = True
-        self.lifepoint = 10
+        self.life_point = 20
         self.inventory = Inventory(size=20, hotbar_size=5)
+        self.dead = False
+       
+        
+
 
     def update(self, chunk_grid, actual_map):
         super().update(chunk_grid, actual_map)
         now = pygame.time.get_ticks()
-
+        self.anim_speed = 200-abs(self.vx)*15
+        
+        if self.life_point <= 0:
+            self.dead = True
         if now - self.anim_timer >= self.anim_speed:
             if self.vx > 0.1:
                 if self.texture_index < 3:
