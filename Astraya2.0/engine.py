@@ -1,7 +1,10 @@
 import math
+import math
 import os
 import random
 import threading
+
+import generate_map
 
 import generate_map
 import interfaces
@@ -19,6 +22,7 @@ from classes import village as village
 from classes.items import get_item
 from corruption import generer_corruption
 from ui import debug, ui_inventory
+from ui import interfaces
 
 
 class Chunk:
@@ -148,6 +152,7 @@ class Game:
         self.menu = interfaces.MainMenu()
         self.loadingscreen = interfaces.LoadingScreen()
         self.settings_menu = interfaces.SettingsMenu()
+        self.death_menu = interfaces.DeathScreen()
 
         # inventaire
         self.inventory_open = False
@@ -165,6 +170,7 @@ class Game:
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
         
         self.coeurs = coeurs.Coeurs()
+
 
     # charger la map gigantesque de Pau en arriere plan
     def _load_world(self):
@@ -261,23 +267,23 @@ class Game:
         valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
         valid_positions_plant = np.argwhere(valid_mask_plant)
 
-        rng = np.random.default_rng()
-        indices = rng.choice(
-            len(valid_positions), size=min(5000, len(valid_positions)), replace=False
-        )
+        rng_plant = np.random.default_rng()
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
 
-        for idx in indices:
-            y_plant, x_plant = valid_positions[idx]
-            self.plant_grp.add(
-                objects.Plant(
-                    texture.texture_plant,
-                    self.game_map,
-                    8,
-                    alt,
-                    x=int(x_plant),
-                    y=int(y_plant),
-                )
-            )
+        for idx in indices_plant:
+            y_plant, x_plant = valid_positions_plant[idx]
+            self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
+            
+        # Arbres
+        valid_mask_tree = np.isin(self.game_map, [2, 3, 4])
+        valid_positions_tree = np.argwhere(valid_mask_tree)
+
+        rng_tree = np.random.default_rng()
+        indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(3000, len(valid_positions_tree)), replace=False)
+        
+        for idx in indices_tree:
+            y_tree, x_tree = valid_positions_tree[idx]
+            self.plant_grp.add(objects.Tree(texture.texture_tree, self.game_map, alt, x=int(x_tree), y=int(y_tree)))
 
         # Ennemis et animaux
         for i in range(20):
@@ -590,7 +596,6 @@ class Game:
 
     def init_quest(self):
         farmers = [n for n in self.npc_grp if isinstance(n, npc.Npc) and n.type == "fermier"]
-        quest_list = [
 
         # 1) Parler au vieux sage
         quest_module.Quest(
