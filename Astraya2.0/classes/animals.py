@@ -140,6 +140,7 @@ class Chicken(Animal):
                 else:
                     self.texture_index = 3
             self.last_walking_animation = now
+            
     def play_sound(self):
         channel = pygame.mixer.find_channel()
         if channel:

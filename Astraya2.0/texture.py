@@ -63,6 +63,7 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
     return texture
 
 ###################SONNNSSNNSNSNSNSNSN##################################
+path_sound = "Astraya2.0/assets/sound/"
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
 
@@ -135,6 +136,8 @@ for t in texture_cow_base:
         int(t.get_width() * 1.5),
         int(t.get_height() * 1.5)
     )))
+
+texture_fermier = create_texture_basic(64, 320, 1)
 
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"

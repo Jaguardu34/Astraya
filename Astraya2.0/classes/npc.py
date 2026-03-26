@@ -5,7 +5,7 @@ import settings
 import texture
 
 class Npc(entity.Entity):
-    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
+    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500, sounds=None):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab
         self.type = type
@@ -71,6 +71,7 @@ class Npc(entity.Entity):
 
         if event.type == pygame.KEYDOWN:
             if event.key == settings.KEY_NPC:
+
                 if not self.in_dialog:
                     self.toast.reset()
                     self.in_dialog = True
@@ -90,6 +91,7 @@ class Npc(entity.Entity):
 
                     else:
                         self.toast.reset()
+
                         self.index_dialog += 1
     def play_sound(self,sound):
         if self.sound_channel:
