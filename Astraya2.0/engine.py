@@ -330,6 +330,7 @@ class Game:
         self.plant_index_built = False
         self._chunk_registered = False  # changer de map
 
+        print(f"donjons : {world_data.origin_donjon_coords}")
         corruption.spawn_dungeon_doors(
             world_data.origin_donjon_coords,
             world_data.world_map,
@@ -428,6 +429,19 @@ class Game:
                                 self.current_map = self.dungeon_maps[
                                     sprite.dungeon_index
                                 ]
+                                # Spawn du boss si pas déjà présent
+                                if not hasattr(self, "bosses"):
+                                    self.bosses = {}
+
+                                if sprite.dungeon_index not in self.bosses:
+                                    self.bosses[sprite.dungeon_index] = corruption.spawn_boss_in_dungeon(
+                                        self.current_map,
+                                        sprite.dungeon_index,
+                                        self.entity_grp,
+                                        self.player,
+                                        self.projectile_grp
+                                    )
+
                                 self.player.game_map = self.current_map
 
                                 # 2) ALTITUDE MAP DU DONJON — OBLIGATOIRE ET IMMÉDIAT
@@ -880,8 +894,8 @@ class Game:
                     if sprite is not self.player:
                         dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
                         if dist < self.render_distance:
-                            sprite.update(self.dt, self.chunk_grid, self.current_map)
-
+                            sprite.update(self.chunk_grid, self.current_map, self.dt)
+                
                 for sprite in self.ennemy_grp:
                     sprite.update(self.chunk_grid, self.current_map, self.dt)
 

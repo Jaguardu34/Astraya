@@ -33,7 +33,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
         self.cible_x = self.x
         self.cible_y = self.y
 
-    def update(self, dt, chunk_grid, actual_map):
+    def update(self, chunk_grid, actual_map, dt,):
         now = pygame.time.get_ticks()
 
         if self.state == "walking":

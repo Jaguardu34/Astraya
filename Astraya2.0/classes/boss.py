@@ -120,7 +120,7 @@ class Boss(entity.Entity_That_Move_And_Has_Collision):
     #   UPDATE GLOBAL
     # --------------------------
 
-    def update(self, dt, chunk_grid, actual_map):
+    def update(self, chunk_grid, actual_map, dt):
         self.update_ai()
 
         # Animation
