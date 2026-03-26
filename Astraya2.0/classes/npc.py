@@ -5,7 +5,7 @@ import settings
 import texture
 
 class Npc(entity.Entity):
-    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500, sounds=None):
+    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab
         self.type = type

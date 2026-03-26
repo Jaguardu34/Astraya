@@ -63,7 +63,6 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
     return texture
 
 ###################SONNNSSNNSNSNSNSNSN##################################
-path_sound = "Astraya2.0/assets/sound/"
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
 

@@ -105,7 +105,7 @@ class Entity(pygame.sprite.Sprite):
         if 0 <= px < scalex*32 and 0 <= py < scaley*32:
             now = pygame.time.get_ticks()
             if now < self.hit_flash_until:
-                tinted = self.sprite[int(self.texture_index)].copy()
+                tinted = self.sprite[self.texture_index].copy()
                 tinted.fill((255, 0, 0, 120), special_flags=pygame.BLEND_RGBA_MULT)
                 surface.blit(tinted, (px, py))
             else:
