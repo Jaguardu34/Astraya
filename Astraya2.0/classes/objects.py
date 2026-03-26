@@ -44,4 +44,4 @@ class Tree(entity.Object):
         self.has_life = True          # ← était False
         self.life_point = 5           # ← 5 coups de hache
         self.max_life_point = 5
-        self.hitbox = [pygame.Rect(self.x+10, self.y+30, 44, 34)]
+        self.hitbox = [pygame.Rect(self.x+10, self.y+30, 44, 20)]

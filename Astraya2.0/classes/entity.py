@@ -5,6 +5,7 @@ import math
 import texture
 from classes.inventory import Inventory
 
+
 def get_rect(x, y, size=12):
     return pygame.Rect(x - size//2, y - size//2, size, size)
 
@@ -181,7 +182,8 @@ class Entity_That_Move_And_Has_Collision(Entity):
                             break
                     elif p.has_hitbox and check_box_collide(p.hitbox, rect_x):
                         if veriftile_pixel(p.x + self.vx + p.hitbox_offset_x, p.y + p.hitbox_offset_y, self.actual_map, self.altitude_map, self.altitude, p.hitbox_size) is True:
-                            p.vx += self.vx * 1.05
+
+                            p.vx += self.vx * 1
                         blocked = True
                         break
                 if not blocked:
@@ -203,7 +205,8 @@ class Entity_That_Move_And_Has_Collision(Entity):
                             break
                     elif p.has_hitbox and check_box_collide(p.hitbox, rect_y):
                         if veriftile_pixel(p.x + p.hitbox_offset_x, p.y + self.vy + p.hitbox_offset_y, self.actual_map, self.altitude_map, self.altitude, p.hitbox_size) is True:
-                            p.vy += self.vy * 1.05
+
+                            p.vy += self.vy * 1
                         blocked = True
                         break
                 if not blocked:

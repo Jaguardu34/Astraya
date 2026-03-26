@@ -97,7 +97,7 @@ texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(spr
 
 texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
 
-texture_coeur = [get_sprite(sprite_sheet, 0, 944, 16, 16), get_sprite(sprite_sheet, 16, 944, 16, 16), get_sprite(sprite_sheet, 32, 944, 16, 16)]
+texture_coeur = [get_sprite(sprite_sheet, 0, 926, 16, 16), get_sprite(sprite_sheet, 16, 926, 16, 16), get_sprite(sprite_sheet, 0, 942, 16, 16)]
 
 texture_chicken = []
 for t in texture_chicken_base:

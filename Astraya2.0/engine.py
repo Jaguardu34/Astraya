@@ -8,7 +8,7 @@ from classes import coeurs
 import generate_map
 
 import generate_map
-import interfaces
+from ui import interfaces
 import map_render
 import numpy as np
 import pygame
@@ -556,6 +556,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             item = self.player.inventory.selected_item
             if isinstance(item, items.Weapon):
+                
                 if item.on_use(self.player) != 0:
                     center = (
                         self.main_map.scale_x * 32 // 2 + 8,
@@ -575,8 +576,10 @@ class Game:
                             continue
                         if not hasattr(ent, "has_life") or not ent.has_life:
                             continue
+                        if isinstance(ent, objects.Tree):  # ← ajout
+                            continue
                         dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
-                        if dist > 600:
+                        if dist > 1000:
                             continue
 
                         tile_cx = int(self.player.x // 32)
@@ -595,43 +598,47 @@ class Game:
                         )
                         if ent_rect.collidepoint(pygame.mouse.get_pos()):
                             ent.life_point -= 1
+                            if ent.life_point <= 0:
+                                ent.kill()
+                                self.chunk_grid.remove_entity(ent)
                             ent.hit_flash_until = pygame.time.get_ticks() + 200
-                            print("entité frappée")
                             break
             elif isinstance(item, items.Tool):
-                    if item.on_use(self.player):  # vérifie le cooldown
-                        nearby = self.chunk_grid.get_nearby(self.player.x, self.player.y)
-                        for ent in nearby:
-                            if ent is self.player:
-                                continue
-                            if not isinstance(ent, objects.Tree):
-                                continue
-                            if ent.game_map is not self.current_map:
-                                continue
-                            dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
-                            if dist > item.range * 4:   # range en pixels (hache  = courte portée)
-                                continue
-                            # Vérifier si la souris pointe sur l'arbre
-                            tile_cx = int(self.player.x // 32)
-                            tile_cy = int(self.player.y // 32)
-                            px = ent.x - (tile_cx - self.main_map.scale_x // 2) * 32
-                            py = ent.y - (tile_cy - self.main_map.scale_y // 2) * 32
-                            ent_rect = pygame.Rect(px, py, 64, 64)  # taille sprite arbre
-                            if ent_rect.collidepoint(pygame.mouse.get_pos()):
-                                ent.life_point -= 1
-                                ent.hit_flash_until = pygame.time.get_ticks() + 150
-                                if ent.life_point <= 0:
-                                    wood_item = items.get_item("wood")
-                                    qty = random.randint(2, 5)
-                                    self.player.inventory.add_item(wood_item, qty)
-                                    self.chunk_grid.remove_entity(ent)
-                                    ent.kill()
-                                    self.main_map.build_plant_index(self.plant_grp)
+                # ── AJOUT : seulement si c'est une hache ──
 
-                                    # Notifier la quête
-                                    for _ in range(qty):
-                                        self.quest_manager.on_collect("wood")
-                                break
+
+                if item.on_use(self.player):
+                    nearby = self.chunk_grid.get_nearby(self.player.x, self.player.y)
+                    for ent in nearby:
+                        if ent is self.player:
+                            continue
+                        if not isinstance(ent, objects.Tree):
+                            continue
+                        if ent.game_map is not self.current_map:
+                            continue
+                        dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
+                        if dist > item.range * 4:
+                            continue
+                        tile_cx = int(self.player.x // 32)
+                        tile_cy = int(self.player.y // 32)
+                        px = ent.x - (tile_cx - self.main_map.scale_x // 2) * 32
+                        py = ent.y - (tile_cy - self.main_map.scale_y // 2) * 32
+                        ent_rect = pygame.Rect(px, py, 64, 64)
+                        if ent_rect.collidepoint(pygame.mouse.get_pos()):
+                            ent.life_point -= 1
+                            ent.hit_flash_until = pygame.time.get_ticks() + 150
+                            if ent.life_point <= 0:
+                                wood_item = items.get_item("wood")
+                                qty = random.randint(2, 5)
+                                self.player.inventory.add_item(wood_item, qty)
+                                self.chunk_grid.remove_entity(ent)
+                                ent.kill()
+                                self.main_map.build_plant_index(self.plant_grp)
+                                # ── AJOUT : invalider le cache statique ──
+                                self.main_map._static_cache_dirty = True
+                                for _ in range(qty):
+                                    self.quest_manager.on_collect("wood")
+                            break
 
         if event.type == pygame.KEYDOWN:
             for i, key in enumerate(
@@ -1014,12 +1021,12 @@ class Game:
                         ),
                     )
 
-                self.coeurs_interface.draw(10, 10, self.player.life_point, self.screen)
+                self.coeurs_interface.draw(10, self.WINDOW_SCALE[1]- 64, self.player.life_point, self.screen)
 
                 debug.draw(self.screen)
 
-        else:
-            self.death_menu.draw(self.screen, self.WINDOW_SCALE)
+            else:
+                self.death_menu.draw(self.screen, self.WINDOW_SCALE)
 
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000

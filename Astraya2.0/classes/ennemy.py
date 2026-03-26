@@ -15,6 +15,8 @@ class Corrupted_Chicken(entity.Entity_That_Move_And_Has_Collision):
         self.show_on_minimap = True
         self.has_hitbox = True
         self.speed = 10
+        self.has_life = True
+        self.life_point = 3
         self.state = "walking"
         self.last_walking_animation = 0
         self.last_shoot_anim = 0
@@ -46,6 +48,8 @@ class Corrupted_Chicken(entity.Entity_That_Move_And_Has_Collision):
                 self.state = "walking"
         else:
             self.state = "static"
+            
+
             
 
     def shoot(self):

@@ -239,7 +239,10 @@ class Map():
         offset_y = int(posy % 32)
 
         # Gestion du cache statique
-        if self.static_cache_cx is None:
+        if getattr(self, '_static_cache_dirty', False):
+            self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges, is_dungeon)
+            self._static_cache_dirty = False
+        elif self.static_cache_cx is None:
             self._rebuild_static_cache(tile_cx, tile_cy, map_to_show, cliff_edges, is_dungeon)
         elif tile_cx != self.static_cache_cx or tile_cy != self.static_cache_cy:
             dx = abs(tile_cx - self.static_cache_cx)

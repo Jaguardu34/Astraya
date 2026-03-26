@@ -65,9 +65,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
 
         super().update(chunk_grid, actual_map)
 
-        if self.life_point <= 0:
-            self.kill()
-            return
+
 
     def check_blocked(self, dx, dy, prev_x, prev_y):
         real_dist = ((self.x - prev_x)**2 + (self.y - prev_y)**2) ** 0.5
