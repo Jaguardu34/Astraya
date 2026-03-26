@@ -65,9 +65,13 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
 ###################SONNNSSNNSNSNSNSNSN##################################
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
+
 sound_chicken = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/poule.mp3")
 sound_chicken.set_volume(0.1)
 
+sound_npc_bonjour = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/js_fermier.wav")
+sound_npc_aurevoir = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/bonne_journe.mp3")
+######################################################################
 texture_herbe = create_texture_basic(96, 0, 1)
 texture_sand = create_texture_basic(192, 0, 4)
 texture_wet_wand = create_texture_basic(384, 0 ,4)
