@@ -239,8 +239,11 @@ class Game:
         self.old_npc = npc.Npc(
             "spawn NPC",
             texture.texture_old_npc,
-            self.game_map,
-            ["Salut je suis un npc", "C'est tout ce que j'ai a dire"],
+            self.game_map,[
+            "Ah, te voilà enfin réveillé."
+            "Le vent porte une odeur étrange… quelque chose ronge notre terre."
+            "Va voir les fermiers. Ils ont remarqué des choses inquiétantes."]
+,
             x=1512,
             y=1512,
         )
@@ -295,6 +298,8 @@ class Game:
 
         # Ennemis et animaux
         for i in range(20):
+            rand_x = random.randint(1390, 1450)
+            rand_y = random.randint(1390, 1450)
             self.ennemy_grp.add(
                 ennemy.Corrupted_Chicken(
                     texture.texture_chicken_corrupted,
@@ -302,8 +307,8 @@ class Game:
                     self.player,
                     self.projectile_grp,
                     alt,
-                    1410,
-                    1400,
+                    rand_x,
+                    rand_y,
                 )
             )
 
@@ -696,21 +701,12 @@ class Game:
             content="Le fermier vous demande de lui rapporter 5 bois.",
             type="principale",
             objectives=[
-                quest_module.CollectObjective("Collecter 5 blés", "wood", 5)
-            ]
+                quest_module.CollectObjective("Collecter 5 bois", "wood", 5)
+            ],
+            rewards=[("sword", 1)]
         ),
 
-        # 4) Fabriquer une arme
-        quest_module.Quest(
-            title="Forger une arme",
-            content="Fabriquez une arme pour vous défendre.",
-            type="principale",
-            objectives=[
-                quest_module.CollectObjective("Obtenir une épée en bois", "wood_sword", 1)
-            ]
-        ),
 
-        # 5) Tuer 3 poulets corrompus
         quest_module.Quest(
             title="Purge locale",
             content="Les poulets corrompus deviennent agressifs. Éliminez-en 3.",
@@ -720,27 +716,6 @@ class Game:
             ]
         ),
 
-        # 6) Parler au garde
-        #quest_module.Quest(
-        #    title="Avertir le garde",
-        #    content="Informez le garde de la présence de corruption.",
-        #    type="principale",
-        #    objectives=[
-        #        quest_module.TalkObjective("Parler au garde", guard)
-        #    ]
-        #),
-        #
-        # 7) Atteindre la zone corrompue
-        #quest_module.Quest(
-        #    title="Explorer la corruption",
-        #    content="Rendez-vous près de la zone corrompue.",
-        #    type="principale",
-        #    objectives=[
-        #        quest_module.ReachObjective("Atteindre la zone corrompue", corrupt_x, corrupt_y, radius=80)
-        #    ]
-        #),
-
-        # 8) Entrer dans le donjon
         quest_module.Quest(
             title="Entrer dans le donjon",
             content="La corruption provient d'un donjon. Trouvez l'entrée.",
@@ -748,7 +723,12 @@ class Game:
             objectives=[
                 quest_module.ReachObjective("Trouver l'entrée du donjon", 1500, 1500, radius=60)
             ]
-        ),
+        )
+
+
+
+        ####
+      
         ]
 
         # On ajoute ttes les quêtes dans available
@@ -910,7 +890,9 @@ class Game:
 
 
                 if not self.quest_init:
-                    self.init_quest()
+                    if self.world_ready and not self.quest_init:
+                        self.init_quest()
+
 
                 self.main_map.resize(
                     int(self.screen.get_width() // 32),

@@ -289,7 +289,7 @@ def map_generate():
     # SAUVEGARDE / CHARGEMENT
     # ==============================================================================
 
-    def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes, altitude_map):
+    def save_world(filename, biome_map, texture_variants, cave_biomes, coord_vil, coord_grottes, altitude_map, origin_donjon_coords, donjons_maps):
         """Sauvegarde le monde généré."""
         data = {
             'biome_map': biome_map,
@@ -298,7 +298,9 @@ def map_generate():
             'coord_vil': coord_vil,
             'coord_grottes': coord_grottes,
             'altitude_map': altitude_map,
-            'size': SIZE
+            'size': SIZE,
+            'origin_donjon_coords': origin_donjon_coords,
+            'donjons_maps' : donjons_maps, 
         }
         with open(filename, 'wb') as f:
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -444,7 +446,7 @@ def map_generate():
         world_map[1510, 1510] = BIOME_IDS["collide"]
 
         # 5. Sauvegarder
-        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
+        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, origin_donjon_coords, donjons_maps)
         print(f"🎮 Monde généré : {SIZE}x{SIZE}")
 
     print("\n Classification et génération des villages...")
@@ -474,7 +476,7 @@ def map_generate():
     if altitude_map is None:
         print("⚠️Ancienne sauvegarde sans altitude, régénération...")
         altitude_map = generate_overworld()[3]
-        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map)
+        save_world(WORLD_FILE, world_map, texture_variants, cave, coord_vil, coord_grottes, altitude_map, origin_donjon_coords, donjons_maps)
 
     # Filtrer cliff_edges pour enlever les passages
     cliff_edges = []

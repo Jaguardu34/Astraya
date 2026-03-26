@@ -171,11 +171,13 @@ def spawn_villageois(village, game_map):
                 npc_type,
                 texture,
                 game_map,
-                ["Salut ! Je suis un fermier.", "Bonne journée !"],
-                altitude_map=None,
-                x=vx,
-                y=vy
-            )
-        )
+                dialog_tab=[
+                   "Salut ! Je suis un fermier."
+                    "J’aurais besoin d’aide pour récolter du bois."
+                    "Et… j’ai vu des poulets devenir agressifs. C’est pas normal."
+                ],
+                x=vx, y=vy
+))
+
 
     return villagers
