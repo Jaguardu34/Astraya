@@ -23,7 +23,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
         self.last_direction = "left"
         #SONSSSS
         self.last_sound = pygame.time.get_ticks()
-        self.sound_interval = random.randint(0, 100000)
+        self.sound_interval = random.randint(0, 50000)
         self.sound = None
 
     def random_cible(self):
@@ -71,7 +71,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
 
         if self.sound and now - self.last_sound >= self.sound_interval:
             self.last_sound = now
-            self.sound_interval = random.randint(10000, 48000)
+            self.sound_interval = random.randint(10000, 24000)
             self.play_sound()
 
         super().update(chunk_grid, actual_map)
