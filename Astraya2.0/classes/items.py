@@ -54,13 +54,14 @@ class Tool(Item):
     """o"""
 
     def __init__(
-        self, name, efficiency=1.0, attack_speed=1.0, range=32, texture_index=0
+        self, name, efficiency=1.0, attack_speed=1.0, range=32, texture_index=0, tool_type=None
     ):
         super().__init__(name, ItemType.TOOL, max_stack=1, texture_index=texture_index)
         self.efficiency = efficiency
         self.cooldown = int(1000 / attack_speed)
         self.range = range
         self.last_use = 0
+        self.tool_type = tool_type
 
     def on_use(self, user:Entity) -> bool:
         now = pygame.time.get_ticks()
@@ -115,7 +116,7 @@ ITEMS = {
     "wood_sword": Weapon("Épée en bois", damage=5, attack_speed=1.5, range=32),
     "stone_sword": Weapon("Épée en pierre", damage=10, attack_speed=1.2, range=32),
     "pickaxe": Tool("Pioche", efficiency=1.0),
-    "axe": Tool("Hache", efficiency=1.0),
+    "axe": Tool("Hache", efficiency=1.0, tool_type="axe"),
     "bread": Consumable("Pain", heal=10),
     "apple": Consumable("Pomme", heal=5),
     "inoxible_axe": Tool("hache", efficiency=1.0, attack_speed=1.5, range=32),
