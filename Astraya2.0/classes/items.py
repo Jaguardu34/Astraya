@@ -119,6 +119,8 @@ ITEMS = {
     "bread": Consumable("Pain", heal=10),
     "apple": Consumable("Pomme", heal=5),
     "inoxible_axe": Tool("hache", efficiency=1.0, attack_speed=1.5, range=32),
+
+    "wood": Item("Bois", ItemType.MISC, max_stack=64),
 }
 
 

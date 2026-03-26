@@ -167,7 +167,7 @@ class Game:
         self.quest_init = False
 
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
-        
+
         self.coeurs_interface = coeurs.Coeurs()
 
 
@@ -283,14 +283,14 @@ class Game:
         for idx in indices_plant:
             y_plant, x_plant = valid_positions_plant[idx]
             self.plant_grp.add(objects.Plant(texture.texture_plant, self.game_map, 8, alt, x=int(x_plant), y=int(y_plant)))
-            
+
         # Arbres
         valid_mask_tree = np.isin(self.game_map, [2, 3, 4])
         valid_positions_tree = np.argwhere(valid_mask_tree)
 
         rng_tree = np.random.default_rng()
         indices_tree = rng_tree.choice(len(valid_positions_tree), size=min(3000, len(valid_positions_tree)), replace=False)
-        
+
         for idx in indices_tree:
             y_tree, x_tree = valid_positions_tree[idx]
             self.plant_grp.add(objects.Tree(texture.texture_tree, self.game_map, alt, x=int(x_tree), y=int(y_tree)))
@@ -584,6 +584,40 @@ class Game:
                             ent.hit_flash_until = pygame.time.get_ticks() + 200
                             print("entité frappée")
                             break
+            elif isinstance(item, items.Tool):
+                    if item.on_use(self.player):  # vérifie le cooldown
+                        nearby = self.chunk_grid.get_nearby(self.player.x, self.player.y)
+                        for ent in nearby:
+                            if ent is self.player:
+                                continue
+                            if not isinstance(ent, objects.Tree):
+                                continue
+                            if ent.game_map is not self.current_map:
+                                continue
+                            dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
+                            if dist > item.range * 4:   # range en pixels (hache  = courte portée)
+                                continue
+                            # Vérifier si la souris pointe sur l'arbre
+                            tile_cx = int(self.player.x // 32)
+                            tile_cy = int(self.player.y // 32)
+                            px = ent.x - (tile_cx - self.main_map.scale_x // 2) * 32
+                            py = ent.y - (tile_cy - self.main_map.scale_y // 2) * 32
+                            ent_rect = pygame.Rect(px, py, 64, 64)  # taille sprite arbre
+                            if ent_rect.collidepoint(pygame.mouse.get_pos()):
+                                ent.life_point -= 1
+                                ent.hit_flash_until = pygame.time.get_ticks() + 150
+                                if ent.life_point <= 0:
+                                    wood_item = items.get_item("wood")
+                                    qty = random.randint(2, 5)
+                                    self.player.inventory.add_item(wood_item, qty)
+                                    self.chunk_grid.remove_entity(ent)
+                                    ent.kill()
+                                    self.main_map.build_plant_index(self.plant_grp)
+
+                                    # Notifier la quête
+                                    for _ in range(qty):
+                                        self.quest_manager.on_collect("wood")
+                                break
 
         if event.type == pygame.KEYDOWN:
             for i, key in enumerate(
@@ -843,8 +877,8 @@ class Game:
                 self.plant_index_built = True
 
                 self.sprites_initialized = True
-                
-                
+
+
             if not self.player.dead:
                 if self.sprites_initialized and not getattr(
                     self, "_chunk_registered", False
@@ -853,8 +887,8 @@ class Game:
                         [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp]
                     )
                     self._chunk_registered = True
-                    
-                
+
+
 
                 if not self.quest_init:
                     self.init_quest()
@@ -967,11 +1001,11 @@ class Game:
                     )
 
                 self.coeurs_interface.draw(10, 10, self.player.life_point, self.screen)
-                
+
                 debug.draw(self.screen)
-            
+
         else:
             self.death_menu.draw(self.screen, self.WINDOW_SCALE)
-        
+
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000
