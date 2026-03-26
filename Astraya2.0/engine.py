@@ -271,7 +271,6 @@ class Game:
         # Items de départ
         self.player.inventory.add_item(get_item("wood_sword"), 1)
         self.player.inventory.add_item(get_item("bread"), 3)
-        self.player.inventory.add_item(get_item("inoxible_axe"), 1)
 
         # Plantes
         valid_mask_plant = np.isin(self.game_map, [2, 3, 4])
@@ -929,7 +928,7 @@ class Game:
                         dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
                         if dist < self.render_distance:
                             sprite.update(self.chunk_grid, self.current_map, self.dt)
-                
+
                 for sprite in self.ennemy_grp:
                     sprite.update(self.chunk_grid, self.current_map, self.dt)
 

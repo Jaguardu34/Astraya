@@ -1,6 +1,7 @@
 import random
 from classes import entity
 import pygame
+from os import path
 
 class Animal(entity.Entity_That_Move_And_Has_Collision):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
@@ -19,6 +20,10 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
         self.has_life = True
         self.life_point = 3
         self.last_direction = "left"
+        #SONSSSS
+        self.last_sound = pygame.time.get_ticks()
+        self.sound_interval = random.randint(5000, 12000)
+        self.sound = None
 
     def random_cible(self):
         for _ in range(20):
@@ -63,6 +68,11 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
                 self.state = "walking"
             self.animate_action(now)
 
+        if self.sound and now - self.last_sound >= self.sound_interval:
+            self.last_sound = now
+            self.sound_interval = random.randint(5000, 12000)
+            self.play_sound()
+
         super().update(chunk_grid, actual_map)
 
         if self.life_point <= 0:
@@ -88,10 +98,15 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
 
     def animate_on_move(self, dx, dy, now):
         pass
+    def play_sound(self):
+        pass
+
 
 
 class Chicken(Animal):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=4):
+        self.sound = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/poule.mp3")
+        self.sound.set_volume(0.4)
         super().__init__(sprite, game_map, altitude_map, x, y, speed)
         self.show_on_minimap = True
 
@@ -127,7 +142,11 @@ class Chicken(Animal):
                 else:
                     self.texture_index = 3
             self.last_walking_animation = now
-            
+    def play_sound(self):
+        self.sound.play()
+        print(f"son joué pour {self.__class__}")
+
+
 class Cow(Animal):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=4):
         super().__init__(sprite, game_map, altitude_map, x, y, speed)
@@ -165,3 +184,6 @@ class Cow(Animal):
                 else:
                     self.texture_index = 3
             self.last_walking_animation = now
+
+    def play_sound(self):
+        pass
