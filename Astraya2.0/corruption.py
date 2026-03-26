@@ -2,6 +2,7 @@ import random
 import pygame
 import numpy as np
 from settings import *
+from texture import *
 from classes import entity
 
 def generer_corruption(biome_map, nb_zones=5):
@@ -140,3 +141,33 @@ def spawn_dungeon_doors(origin_donjon_coords, world_map, altitude_map, entity_gr
 
         else:
             print(f"Impossible de placer la porte du donjon #{dungeon_index} (hors map)")
+
+
+def spawn_boss_in_dungeon(dungeon_map, dungeon_index, entity_grp, player, projectile_grp):
+    import pygame
+    from classes import boss
+
+    surf = pygame.Surface((64, 64))
+    surf.fill((200, 30, 30))
+
+    cx = dungeon_map.shape[1] // 2
+    cy = dungeon_map.shape[0] // 2
+
+    new_boss = boss.Boss(
+        texture_boss,
+        dungeon_map,
+        altitude_map=None,
+        x=cx,
+        y=cy
+    )
+
+    new_boss.dungeon_index = dungeon_index
+
+    new_boss.set_target(player)
+    new_boss.projectile_grp = projectile_grp
+
+    entity_grp.add(new_boss)
+
+    print(f"✔ Boss du donjon #{dungeon_index} spawné en ({cx}, {cy})")
+
+    return new_boss
