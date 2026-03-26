@@ -26,14 +26,10 @@ class Boss(entity.Entity_That_Move_And_Has_Collision):
         self.spawn_cooldown = 5000
         self.last_spawn = pygame.time.get_ticks()
         
-
         # --- Apparence ---
         self.texture_index = 0
         self.animation_speed = 0.15
         self.show_on_minimap = True
-        
-        self.has_life = True
-        self.life_point = 10
 
     # --------------------------
     #   ACTIONS DU BOSS

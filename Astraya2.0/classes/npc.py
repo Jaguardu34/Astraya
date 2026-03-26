@@ -4,7 +4,7 @@ from ui import debug
 import settings
 
 class Npc(entity.Entity):
-    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500, sounds=None):
+    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab
         self.type = type
@@ -22,8 +22,6 @@ class Npc(entity.Entity):
         self.in_dialog = False
         self.toast = Npc_Dialog_Toast(dialog_tab[self.index_dialog])
         self.has_talk_to_player = False
-        self.sound_tab = sounds
-        self.has_started_dialog = False
         
     def draw(self, scalex, scaley, posx, posy, surface):
         super().draw(scalex, scaley, posx, posy, surface)
@@ -37,6 +35,7 @@ class Npc(entity.Entity):
                     surface.blit(self.text_e_surface, (px + (32//2-self. main_font.size("E")[0]//2), py-(self. main_font.size("E")[1]+10)))
             
             if self.in_dialog:
+                
                 
                 if self.toast.finished_anim():
                     surface.blit(self.text_continue_surface, (px+16+(self.toast.width//2)-self.little_font.size("Espace")[0], py-40+self.toast.height))
@@ -66,14 +65,9 @@ class Npc(entity.Entity):
         
         if event.type == pygame.KEYDOWN:
             if event.key == settings.KEY_NPC:
-                
                 if not self.in_dialog:
                     self.toast.reset()
                     self.in_dialog = True
-                    if not self.has_started_dialog:
-                        if self.sound_tab and self.sound_tab[0]:
-                            self.play_sound(self.sound_tab[0])
-                        self.has_started_dialog = True
             
             if event.key == pygame.K_SPACE:
                 if self.close_to_player and self.in_dialog:
@@ -85,20 +79,10 @@ class Npc(entity.Entity):
                         self.toast.reset()
                         self.in_dialog = False
                         self.index_dialog = 0
-                        self.has_started_dialog = False
             
                     else:
                         self.toast.reset()
-                        
                         self.index_dialog += 1
-                        if self.sound_tab[self.index_dialog] is not None:
-                            self.play_sound(self.sound_tab[self.index_dialog])
-                        
-    def play_sound(self, sound):
-        channel = pygame.mixer.find_channel()
-        if channel:
-            channel.play(sound)
-        print(f"son joué pour {self.__class__}")
 
             
         
