@@ -102,7 +102,7 @@ class MainMenu(FullscreenMenu):
                 "settings" : [self.settings_btn, (self.WINDOW_SCALE[0]//2)-(self.settings_btn.width//2), self.WINDOW_SCALE[1]//2+self.play_btn.height+10]
                 }
         
-        self.surface.fill("white")
+        self.surface.fill("lightgreen")
         for button in self.buttons.values():
             button[0].draw(button[1], button[2], self.surface)
         screen.blit(self.surface, (0, 0))

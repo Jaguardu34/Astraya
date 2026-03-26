@@ -126,8 +126,7 @@ class Game:
 
         self.screen = pygame.display.set_mode(
             (settings.WINDOW_WIDTH, settings.WINDOW_HEIGTH),
-            pygame.RESIZABLE,
-            pygame.OPENGL,
+            pygame.RESIZABLE
         )
         self.WINDOW_SCALE = self.screen.get_width(), self.screen.get_height()
         self.clock = pygame.time.Clock()
@@ -169,7 +168,7 @@ class Game:
 
         self.info_swipe = [True, 0, 300, pygame.time.get_ticks()]
         
-        self.coeurs = coeurs.Coeurs()
+        self.coeurs_interface = coeurs.Coeurs()
 
 
     # charger la map gigantesque de Pau en arriere plan
@@ -261,7 +260,7 @@ class Game:
         surf = pygame.Surface((64, 64))
         surf.fill((15, 75, 0))
 
-        self.boss = boss.Boss([surf], self.game_map, altitude_map=None, x=1550, y=1500)
+        self.boss = boss.Boss(texture.texture_boss, self.game_map, altitude_map=None, x=1550, y=1500, damage=5)
         self.boss.set_target(self.player)
         self.boss.projectile_grp = self.projectile_grp
         self.entity_grp.add(self.boss)
@@ -279,7 +278,7 @@ class Game:
         valid_positions_plant = np.argwhere(valid_mask_plant)
 
         rng_plant = np.random.default_rng()
-        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(6000, len(valid_positions_plant)), replace=False)
 
         for idx in indices_plant:
             y_plant, x_plant = valid_positions_plant[idx]
@@ -844,126 +843,135 @@ class Game:
                 self.plant_index_built = True
 
                 self.sprites_initialized = True
-            if self.sprites_initialized and not getattr(
-                self, "_chunk_registered", False
-            ):
-                self.register_all_entities(
-                    [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp]
+                
+                
+            if not self.player.dead:
+                if self.sprites_initialized and not getattr(
+                    self, "_chunk_registered", False
+                ):
+                    self.register_all_entities(
+                        [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp]
+                    )
+                    self._chunk_registered = True
+                    
+                
+
+                if not self.quest_init:
+                    self.init_quest()
+
+                self.main_map.resize(
+                    int(self.screen.get_width() // 32),
+                    int((self.screen.get_height()) // 32),
                 )
-                self._chunk_registered = True
 
-            if not self.quest_init:
-                self.init_quest()
+                for sprite in self.dropped_grp:
+                    sprite.update(self.dt, self.chunk_grid, self.current_map)
 
-            self.main_map.resize(
-                int(self.screen.get_width() // 32),
-                int((self.screen.get_height()) // 32),
-            )
+                for d in list(self.dropped_grp):
+                    if entity.check_box_collide(self.player.hitbox, d.hitbox):
+                        self.player.inventory.add_item(d.item, d.quantity)
+                        d.kill()
 
-            for sprite in self.dropped_grp:
-                sprite.update(self.dt, self.chunk_grid, self.current_map)
+                self.update_chunk(
+                    [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp, self.plant_grp]
+                )
 
-            for d in list(self.dropped_grp):
-                if entity.check_box_collide(self.player.hitbox, d.hitbox):
-                    self.player.inventory.add_item(d.item, d.quantity)
-                    d.kill()
+                for sprite in self.entity_grp:
+                    if sprite is not self.player:
+                        dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
+                        if dist < self.render_distance:
+                            sprite.update(self.dt, self.chunk_grid, self.current_map)
 
-            self.update_chunk(
-                [self.entity_grp, self.ennemy_grp, self.block_grp, self.npc_grp]
-            )
+                for sprite in self.ennemy_grp:
+                    sprite.update(self.chunk_grid, self.current_map, self.dt)
 
-            for sprite in self.entity_grp:
-                if sprite is not self.player:
-                    dist = abs(self.player.x - sprite.x) + abs(self.player.y - sprite.y)
-                    if dist < self.render_distance:
-                        sprite.update(self.dt, self.chunk_grid, self.current_map)
+                for sprite in self.projectile_grp:
+                    sprite.update(self.current_map)
+                    nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
+                    for ent in nearby:
+                        if ent is sprite:
+                            continue
+                        if ent is sprite.launcher:
+                            continue
+                        if not hasattr(ent, "hitbox"):
+                            continue
+                        if entity.check_box_collide(sprite.hitbox, ent.hitbox):
+                            if hasattr(ent, "life_point"):
+                                ent.life_point -= 1
+                            self.chunk_grid.remove_entity(sprite)
+                            sprite.kill()
 
-            for sprite in self.ennemy_grp:
-                sprite.update(self.chunk_grid, self.current_map, self.dt)
+                            break
 
-            for sprite in self.projectile_grp:
-                sprite.update(self.current_map)
-                nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
-                for ent in nearby:
-                    if ent is sprite:
-                        continue
-                    if ent is self.player:
-                        continue
-                    if ent is sprite.launcher:
-                        continue
-                    if not hasattr(ent, "hitbox"):
-                        continue
-                    if entity.check_box_collide(sprite.hitbox, ent.hitbox):
-                        if hasattr(ent, "life_point"):
-                            ent.life_point -= 1
-                        self.chunk_grid.remove_entity(sprite)
-                        sprite.kill()
+                self.player.update(self.chunk_grid, self.current_map)
 
-                        break
+                if not self.inventory_open:
+                    self.player.input(keys, self.dt, self.joystick)
 
-            self.player.update(self.chunk_grid, self.current_map)
+                for sprite in self.entity_grp:
+                    if isinstance(sprite, objects.Grotte):
+                        if sprite.collides_with(self.player.hitbox):
+                            self.change_map()
 
-            if not self.inventory_open:
-                self.player.input(keys, self.dt, self.joystick)
-
-            for sprite in self.entity_grp:
-                if isinstance(sprite, objects.Grotte):
-                    if sprite.collides_with(self.player.hitbox):
-                        self.change_map()
-
-            self.main_map.draw(
-                8,
-                8,
-                self.player.position,
-                self.current_map,
-                self.player,
-                world_data.cliff_edges,
-                pygame.mouse.get_pos(),
-                self.player.inventory.selected_item,
-                self.inventory_open,
-                self.block_grp,
-            )
-            self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
-
-            self.draw_infos(20, 20, self.player.position)
-
-            if keys[settings.KEY_MAP]:
-                self.minimap.draw(
-                    (self.WINDOW_SCALE[0] // 2) - ((self.WINDOW_SCALE[1] - 200) // 2),
-                    10,
+                self.main_map.draw(
+                    8,
+                    8,
                     self.player.position,
-                    self.game_map,
-                )
-
-            if keys[settings.KEY_MENU]:
-                self.menu.in_menu = True
-
-            interfaces.Button.update_cursor()
-
-            if self.world_ready:
-                ui_inventory.draw_hotbar(self.screen, self.player.inventory)
-            if self.inventory_open:
-                ui_inventory.draw_inventory_panel(
-                    self.screen,
-                    self.player.inventory,
+                    self.current_map,
+                    self.player,
+                    world_data.cliff_edges,
                     pygame.mouse.get_pos(),
-                    self.panel_selected_slot,
+                    self.player.inventory.selected_item,
+                    self.inventory_open,
+                    self.block_grp,
                 )
+                self.minimap_left_corner.draw(8, 8, self.player.position, self.current_map)
 
-            self.quest_manager.update(self.screen)
+                self.draw_infos(20, 20, self.player.position)
 
-            if self.info_swipe[0]:
-                texture_swipe_rotate = pygame.transform.rotate(
-                    texture.texture_swipe_weapon[0], self.info_swipe[1] + 90
-                )
-                self.screen.blit(
-                    texture_swipe_rotate,
-                    (
-                        self.main_map.scale_x * 32 // 2 + 8,
-                        self.main_map.scale_y * 32 // 2 + 8,
-                    ),
-                )
+                if keys[settings.KEY_MAP]:
+                    self.minimap.draw(
+                        (self.WINDOW_SCALE[0] // 2) - ((self.WINDOW_SCALE[1] - 200) // 2),
+                        10,
+                        self.player.position,
+                        self.game_map,
+                    )
 
-            debug.draw(self.screen)
+                if keys[settings.KEY_MENU]:
+                    self.menu.in_menu = True
+
+                interfaces.Button.update_cursor()
+
+                if self.world_ready:
+                    ui_inventory.draw_hotbar(self.screen, self.player.inventory)
+                if self.inventory_open:
+                    ui_inventory.draw_inventory_panel(
+                        self.screen,
+                        self.player.inventory,
+                        pygame.mouse.get_pos(),
+                        self.panel_selected_slot,
+                    )
+
+                self.quest_manager.update(self.screen)
+
+                if self.info_swipe[0]:
+                    texture_swipe_rotate = pygame.transform.rotate(
+                        texture.texture_swipe_weapon[0], self.info_swipe[1] + 90
+                    )
+                    self.screen.blit(
+                        texture_swipe_rotate,
+                        (
+                            self.main_map.scale_x * 32 // 2 + 8,
+                            self.main_map.scale_y * 32 // 2 + 8,
+                        ),
+                    )
+
+                self.coeurs_interface.draw(10, 10, self.player.life_point, self.screen)
+                
+                debug.draw(self.screen)
+            
+        else:
+            self.death_menu.draw(self.screen, self.WINDOW_SCALE)
+        
         pygame.display.flip()
         self.dt = self.clock.tick(settings.FPS) / 1000
