@@ -1,6 +1,8 @@
 import random
+import pygame
 import numpy as np
 from settings import *
+from classes import entity
 
 def generer_corruption(biome_map, nb_zones=5):
     taille_min = 8000
@@ -40,7 +42,7 @@ def generer_corruption(biome_map, nb_zones=5):
             biome_map[y, x] = BIOME_IDS["corrupted"]
 
         donjon_coords = create_donjon_coords(centre_x, centre_y, taille=15)
-        f_origin_donjon_coords.append(donjon_coords[0])
+        f_origin_donjon_coords.append((centre_x, centre_y))
         for x, y in donjon_coords:
             biome_map[y, x] = BIOME_IDS["donjon_collide"]
 
@@ -98,3 +100,43 @@ def create_inside_donjon_map(): # Peut etre ajouter type de donjon en parametre
 
 
     return dungeon_map
+
+
+def spawn_dungeon_doors(origin_donjon_coords, world_map, altitude_map, entity_grp):
+
+    door_surface = pygame.Surface((32, 32))
+    door_surface.fill((150, 75, 0))  # marron
+
+    for dungeon_index, (cx, cy) in enumerate(origin_donjon_coords):
+
+        # --- Le donjon fait 15x15 dans ton code ---
+        taille = 15
+        rayon = taille // 2
+
+        # Coordonnées du bas du donjon
+        bottom_y = cy + rayon
+        bottom_x = cx  # centré
+
+        # Sécurité : éviter de sortir de la map
+        if 0 <= bottom_x < world_map.shape[1] and 0 <= bottom_y < world_map.shape[0]:
+
+            # On place la porte sur la map surface
+            world_map[bottom_y, bottom_x] = BIOME_IDS["donjon_collide"]
+
+            # Création de la porte
+            door = entity.DungeonDoor(
+                [door_surface],
+                world_map,
+                altitude_map,
+                x=bottom_x,
+                y=bottom_y
+            )
+
+            door.dungeon_index = dungeon_index
+            door.is_exit = False  # entrée
+            entity_grp.add(door)
+
+            print(f" Porte de donjon #{dungeon_index} placée en ({bottom_x}, {bottom_y})")
+
+        else:
+            print(f"Impossible de placer la porte du donjon #{dungeon_index} (hors map)")

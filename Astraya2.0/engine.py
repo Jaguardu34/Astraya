@@ -22,7 +22,7 @@ from classes import quest as quest_module
 from classes import village as village
 from classes import boss
 from classes.items import get_item
-from corruption import generer_corruption
+import corruption
 from ui import debug, ui_inventory
 from ui import interfaces
 
@@ -190,7 +190,7 @@ class Game:
 
         if not world_data.donjons_maps:
             print("⚠️ Ancienne sauvegarde sans donjons, régénération...")
-            _, _, world_data.donjons_maps = generer_corruption(
+            _, _, world_data.donjons_maps = corruption.generer_corruption(
                 world_data.world_map, nb_zones=5
             )
 
@@ -330,6 +330,15 @@ class Game:
 
         self.plant_index_built = False
         self._chunk_registered = False  # changer de map
+
+        corruption.spawn_dungeon_doors(
+            world_data.origin_donjon_coords,
+            world_data.world_map,
+            world_data.altitude_map,
+            self.entity_grp
+        )
+
+
 
     def change_map(self):
         change_cooldown = 2000
