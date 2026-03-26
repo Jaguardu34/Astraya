@@ -260,7 +260,7 @@ class Game:
         surf = pygame.Surface((64, 64))
         surf.fill((15, 75, 0))
 
-        self.boss = boss.Boss([surf], self.game_map, altitude_map=None, x=1550, y=1500)
+        self.boss = boss.Boss(texture.texture_boss, self.game_map, altitude_map=None, x=1550, y=1500, damage=5)
         self.boss.set_target(self.player)
         self.boss.projectile_grp = self.projectile_grp
         self.entity_grp.add(self.boss)
@@ -278,7 +278,7 @@ class Game:
         valid_positions_plant = np.argwhere(valid_mask_plant)
 
         rng_plant = np.random.default_rng()
-        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(5000, len(valid_positions_plant)), replace=False)
+        indices_plant = rng_plant.choice(len(valid_positions_plant), size=min(6000, len(valid_positions_plant)), replace=False)
 
         for idx in indices_plant:
             y_plant, x_plant = valid_positions_plant[idx]
@@ -881,8 +881,6 @@ class Game:
                     nearby = self.chunk_grid.get_nearby(sprite.x, sprite.y)
                     for ent in nearby:
                         if ent is sprite:
-                            continue
-                        if ent is self.player:
                             continue
                         if ent is sprite.launcher:
                             continue

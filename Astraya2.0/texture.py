@@ -74,7 +74,7 @@ texture_old_npc = create_texture_basic(0, 320, 1)
 texture_plant = create_texture_basic(0, 64, 9)
 #+ create_texture_with_rotation(posx =128, posy = 384, cols=4, rows=4, rotation=False, chance=1)
 
-
+texture_boss = [get_sprite(sprite_sheet, 0, 448, 160, 130), get_sprite(sprite_sheet, 176, 448, 160, 140)]
 
 texture_player = [
     get_sprite(sprite_sheet, 0,  320, 13, 35),
