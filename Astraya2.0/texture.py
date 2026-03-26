@@ -63,10 +63,16 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
     return texture
 
 ###################SONNNSSNNSNSNSNSNSN##################################
+path_sound = "Astraya2.0/assets/sound/"
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
-sound_chicken = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/poule.mp3")
+sound_chicken = pygame.mixer.Sound(path_sound + "sound_disign/poule.mp3")
 sound_chicken.set_volume(0.1)
+
+sound_fermier_welcome = pygame.mixer.Sound(path_sound+ "sound_disign/js_fermier.wav")
+sound_fermier_welcome.set_volume(0.5)
+sound_fermier_goodbye = pygame.mixer.Sound(path_sound+ "sound_disign/bonne_journe.mp3")
+sound_fermier_welcome.set_volume(0.5)
 
 texture_herbe = create_texture_basic(96, 0, 1)
 texture_sand = create_texture_basic(192, 0, 4)
@@ -131,6 +137,8 @@ for t in texture_cow_base:
         int(t.get_width() * 1.5),
         int(t.get_height() * 1.5)
     )))
+    
+texture_fermier = create_texture_basic(64, 320, 1)
 
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"

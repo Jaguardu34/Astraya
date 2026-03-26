@@ -164,7 +164,7 @@ def spawn_villageois(village, game_map):
         vy = int(village.y + distance * math.sin(angle))
 
         npc_type = "fermier"
-        texture = texture_chicken_corrupted  
+        texture = texture_fermier
 
         villagers.append(
             Npc(
@@ -174,7 +174,8 @@ def spawn_villageois(village, game_map):
                 ["Salut ! Je suis un fermier.", "Bonne journée !"],
                 altitude_map=None,
                 x=vx,
-                y=vy
+                y=vy,
+                sounds=[sound_fermier_welcome, sound_fermier_goodbye]
             )
         )
 

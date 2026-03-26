@@ -577,7 +577,7 @@ class Game:
                         if isinstance(ent, objects.Tree):  # ← ajout
                             continue
                         dist = math.hypot(self.player.x - ent.x, self.player.y - ent.y)
-                        if dist > 1000:
+                        if dist > 2000:
                             continue
 
                         tile_cx = int(self.player.x // 32)
