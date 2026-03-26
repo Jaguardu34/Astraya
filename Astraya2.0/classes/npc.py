@@ -5,7 +5,7 @@ import settings
 import texture
 
 class Npc(entity.Entity):
-    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500):
+    def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500, tab_sound=None):
         super().__init__(sprite, game_map, altitude_map, x, y)
         self.dialog_tab = dialog_tab or []
         self.dialogue_index = 0
@@ -26,10 +26,10 @@ class Npc(entity.Entity):
        
         self.has_talk_to_player = False
 
-        self.sound_bonjour = texture.sound_npc_bonjour
-        self.sound_aurevoir = texture.sound_npc_aurevoir
+        self.tab_sound = tab_sound
         ### TROUVER une chaine télé de son vide mageule
         self.sound_channel = pygame.mixer.find_channel()
+        self.has_started_dialog = False
 
     def draw(self, scalex, scaley, posx, posy, surface):
         super().draw(scalex, scaley, posx, posy, surface)
@@ -84,7 +84,12 @@ class Npc(entity.Entity):
                 if not self.in_dialog:
                     self.toast.reset()
                     self.in_dialog = True
-                    self.play_sound(self.sound_bonjour)
+                    if not self.has_started_dialog:
+                        if self.tab_sound is None: return
+                        if self.tab_sound is not None:
+                            if self.tab_sound[0] is not None:
+                                self.play_sound(self.tab_sound[0])
+                        self.has_started_dialog = True
 
             if event.key == pygame.K_SPACE:
                 if self.close_to_player and self.in_dialog:
@@ -96,12 +101,16 @@ class Npc(entity.Entity):
                         self.toast.reset()
                         self.in_dialog = False
                         self.index_dialog = 0
-                        self.play_sound(self.sound_aurevoir)
+                        self.has_started_dialog = False
+                        
 
                     else:
                         self.toast.reset()
 
                         self.index_dialog += 1
+                        if self.tab_sound is not None:
+                            if self.tab_sound[self.index_dialog] is not None:
+                                self.play_sound(self.tab_sound[self.index_dialog])
     def play_sound(self,sound):
         if self.sound_channel:
             self.sound_channel.play(sound)
