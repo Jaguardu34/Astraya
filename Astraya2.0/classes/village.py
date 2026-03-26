@@ -174,7 +174,8 @@ def spawn_villageois(village, game_map):
                 ["Salut ! Je suis un fermier.", "Bonne journée !"],
                 altitude_map=None,
                 x=vx,
-                y=vy
+                y=vy,
+                tab_sound=[sound_fermier_bonjour, sound_fermier_aurevoir]
             )
         )
 
