@@ -62,7 +62,11 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
 
     return texture
 
-
+###################SONNNSSNNSNSNSNSNSN##################################
+pygame.mixer.init()
+pygame.mixer.set_num_channels(16)
+sound_chicken = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/poule.mp3")
+sound_chicken.set_volume(0.1)
 
 texture_herbe = create_texture_basic(96, 0, 1)
 texture_sand = create_texture_basic(192, 0, 4)

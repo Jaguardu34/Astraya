@@ -2,6 +2,7 @@ import random
 from classes import entity
 import pygame
 from os import path
+import texture
 
 class Animal(entity.Entity_That_Move_And_Has_Collision):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=10):
@@ -22,7 +23,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
         self.last_direction = "left"
         #SONSSSS
         self.last_sound = pygame.time.get_ticks()
-        self.sound_interval = random.randint(5000, 12000)
+        self.sound_interval = random.randint(0, 100000)
         self.sound = None
 
     def random_cible(self):
@@ -70,7 +71,7 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
 
         if self.sound and now - self.last_sound >= self.sound_interval:
             self.last_sound = now
-            self.sound_interval = random.randint(5000, 12000)
+            self.sound_interval = random.randint(10000, 48000)
             self.play_sound()
 
         super().update(chunk_grid, actual_map)
@@ -103,10 +104,9 @@ class Animal(entity.Entity_That_Move_And_Has_Collision):
 
 class Chicken(Animal):
     def __init__(self, sprite, game_map, altitude_map=None, x=1500, y=1500, speed=4):
-        self.sound = pygame.mixer.Sound("Astraya2.0/assets/sound/sound_disign/poule.mp3")
-        self.sound.set_volume(0.4)
         super().__init__(sprite, game_map, altitude_map, x, y, speed)
         self.show_on_minimap = True
+        self.sound = texture.sound_chicken
 
     def animate_action(self, now):
         if self.state != "emoting":
@@ -141,7 +141,9 @@ class Chicken(Animal):
                     self.texture_index = 3
             self.last_walking_animation = now
     def play_sound(self):
-        self.sound.play()
+        channel = pygame.mixer.find_channel()
+        if channel:
+            channel.play(self.sound)
         print(f"son joué pour {self.__class__}")
 
 

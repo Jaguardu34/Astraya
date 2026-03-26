@@ -92,7 +92,6 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.font.init()
-        pygame.mixer.init()
         pygame.joystick.init()
 
         # sound
@@ -555,7 +554,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             item = self.player.inventory.selected_item
             if isinstance(item, items.Weapon):
-                
+
                 if item.on_use(self.player) != 0:
                     center = (
                         self.main_map.scale_x * 32 // 2 + 8,
