@@ -39,13 +39,14 @@ class Quest_Toast():
 
 
 class Quest():
-    def __init__(self, title, content, type, objectives):
+    def __init__(self, title, content, type, objectives, rewards=None):
         self.title = title
         self.content = content
         self.type = type
         self.toast = Quest_Toast(content, font_size=30)
         self.objectives = objectives
         self.done = False
+        self.rewards = rewards if rewards is not None else []
             
 
     def update(self, screen):
@@ -61,6 +62,19 @@ class Quest():
         for objective in self.objectives:
             if objective.is_complete():
                 self.objectives.remove(objective)
+
+    def give_rewards(self, player):
+        """Donne les récompenses de la quête au joueur."""
+        from classes.items import get_item  # éviter import circulaire
+
+        for item_id, qty in self.rewards:
+            try:
+                item = get_item(item_id)
+                player.inventory.add_item(item, qty)
+                print(f"Récompense obtenue : {qty}x {item.name}")
+            except KeyError:
+                print(f"[ERREUR] Item de récompense inconnu : {item_id}")
+
 
 
 class Objective():
@@ -122,24 +136,31 @@ class ReachObjective(Objective):
 
 
 class TalkObjective(Objective):
-    """Parler à un PNJ."""
-    def __init__(self, description, npc):
+    """Parler à un ou plusieurs PNJ."""
+    def __init__(self, description, npcs):
         super().__init__(description)
-        self.npc = npc
+
+        # Autoriser un seul NPC ou une liste
+        if isinstance(npcs, list):
+            self.npcs = npcs
+        else:
+            self.npcs = [npcs]
+
         self.talked = False
 
     def is_complete(self):
         return self.talked
 
     def on_talk(self, npc):
-        if npc is self.npc and npc.has_talk_to_player:
+        # Si le PNJ qui a parlé est dans la liste → objectif validé
+        if npc in self.npcs and npc.has_talk_to_player:
             self.talked = True
-            npc.has_talk_to_player = False 
-
+            npc.has_talk_to_player = False
 
 
 class QuestManager:
-    def __init__(self):
+    def __init__(self, player):
+        self.player = player
         self.available = []   # quetes disponibles mais pas encore prises
         self.active = []      # quetes en cours
         self.completed = []   # quetes terminées
@@ -179,7 +200,11 @@ class QuestManager:
             self.active.remove(quest)
             self.completed.append(quest)
             self.font_last_on_screen = now
-            print(f" Quete terminée : {quest.title}")
+            print(f" Quête terminée : {quest.title}")
+
+            # Donner les récompenses
+            quest.give_rewards(self.player)
+
 
             # --- ACTIVER LA PROCHAINE QUÊTE PRINCIPALE ---
             next_main = next((q for q in self.available if q.type == "principale"), None)
@@ -214,23 +239,5 @@ class QuestManager:
             for obj in quest.objectives:
                 if isinstance(obj, ReachObjective):
                     obj.update_position(player_x, player_y)
-
-
-
-#    quete_corruption = Quest(
-#        title="Purifier la corruption",
-#        content="La zone de corruption près de (1400, 1400) menace le village.",
-#        type="principale",
-#        objectives=[
-#            ReachObjective("Atteindre le donjon", target_x=1400, target_y=1400, radius=50),
-#        ],
-#        rewards=[GoldReward(player, 500)]
-#        )
-#
-#    quest_manager.add_quest(quete_corruption)
-#    quest_manager.accept_quest(quete_corruption)
-
-#hassoule ma poule blow blow blow
-
 
 

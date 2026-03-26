@@ -4,6 +4,7 @@ from settings import *
 from classes.npc import Npc
 from texture import *
 import numpy as np
+import math
  
 #========================================
 # Classes pour la génération de villages
@@ -153,18 +154,28 @@ class Building:
  
 
 def spawn_villageois(village, game_map):
-    """Génère des villageois autour du village."""
     villagers = []
     num_villagers = len(village.buildings) // 2
     
     for _ in range(num_villagers):
-        angle = random.uniform(0, 2 * 3.14159)
+        angle = random.uniform(0, 2 * math.pi)
         distance = random.uniform(5, village.radius)
-        vx = int(village.x + distance * np.cos(angle))
-        vy = int(village.y + distance * np.sin(angle))
-        type = random.choice(["fermier"]) # , "marchant", "garde"
+        vx = int(village.x + distance * math.cos(angle))
+        vy = int(village.y + distance * math.sin(angle))
+
+        npc_type = "fermier"
         texture = texture_chicken_corrupted  
 
-        villagers.append(Npc(type, texture, game_map, [f"Salut je ne suis un pas trop npc, je suis {type}", "C'est tout ce que j'ai a dire"], altitude_map=None, x=vx, y=vy))       
+        villagers.append(
+            Npc(
+                npc_type,
+                texture,
+                game_map,
+                ["Salut ! Je suis un fermier.", "Bonne journée !"],
+                altitude_map=None,
+                x=vx,
+                y=vy
+            )
+        )
 
     return villagers

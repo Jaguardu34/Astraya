@@ -83,6 +83,9 @@ class MainMenu(FullscreenMenu):
         self.in_menu = True
         self.launch_first_time = False
         self.in_settings= False
+
+        self.request_intro = False
+
         
     def draw(self, screen, window_scale):
         super().draw(window_scale)
@@ -114,6 +117,8 @@ class MainMenu(FullscreenMenu):
             self.in_menu = False
             if not self.launch_first_time:
                 self.launch_first_time = True
+                self.request_intro = True
+
                 self.buttons["play"] = [self.resume_btn, (self.WINDOW_SCALE[0]//2)-(self.resume_btn.width//2), self.WINDOW_SCALE[1]//2]
         if self.buttons["settings"][0].state():
             self.in_menu = False
@@ -189,8 +194,8 @@ class SettingsMenu(FullscreenMenu):
         for i in range(len(self.button_fps)):
             self.button_fps[i][0].draw(200+i*80, self.WINDOW_SCALE[1]//2-200, self.surface)
             
-        for i in range(len(self.tab_display_button)):
-            self.tab_display_button[i].draw(self.WINDOW_SCALE[0]-400, 10+i*30, self.surface)
+
+        
         
         fps_text = "FPS :"
         text_fps_surface = self.font.render(fps_text, True, "black")
@@ -254,3 +259,23 @@ class SettingsMenu(FullscreenMenu):
     
             
         
+class DeathScreen(FullscreenMenu):
+    def __init__(self):
+        super().__init__()
+        self.quit_btn = Button("gray", "Quitter")
+        self.font = pygame.font.SysFont(None, 100)
+        self.text = "Game Over"
+    
+    def draw(self, screen, window_scale):
+        super().draw(window_scale)
+        self.update()
+        self.surface.fill("white")
+        text_surface = self.font.render(self.text, True, "red")   
+        self.surface.blit(text_surface, (self.WINDOW_SCALE[0]//2 - (self.font.size(self.text)[0]//2), self.WINDOW_SCALE[1]//2))
+        self.quit_btn.draw((self.WINDOW_SCALE[0]//2)-(self.quit_btn.width//2), self.WINDOW_SCALE[1]//2+300, screen)
+        screen.blit(self.surface, (0, 0))
+        Button.update_cursor()
+        
+    def update(self):
+        if self.quit_btn.state():
+            pygame.quit()

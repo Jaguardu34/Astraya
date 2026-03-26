@@ -87,7 +87,7 @@ Dépendances listées dans `requirements.txt`.
 Cloner le dépôt :
 
 ```bash
-git clone https://github.com/Jaguardu34/Astraya.git
+git clone https://github.com/Jaguardu34pf/Astraya.git
 cd Astraya/Astraya2.0
 ```
 

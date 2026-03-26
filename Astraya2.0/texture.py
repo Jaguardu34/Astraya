@@ -6,8 +6,6 @@ import random
 
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
-sprite_sheet_player = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'player_texture.png'))
-sprite_sheet_buildings = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'batiment_texture_Pyxel.png'))
 sprite_sheet_terrain = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png'))
 
 
@@ -20,22 +18,22 @@ def create_texture_basic(posx, posy, nbr):
     tab = []
     for i in range(nbr):
         tab.append(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32))
-    
+
     return tab
 
 def create_texture_mirrored(posx, posy, nbr):
     tab = []
     for i in range(nbr):
         tab.append(get_sprite(sprite_sheet, posx + (i * 32), posy, 32, 32))
-    
+
     tab_return = []
-        
+
     for i in range(len(tab)):
         tab_return.append(tab[i])
         tab_return.append(pygame.transform.flip(tab[i], True, False))
-        
+
     return tab_return
-        
+
 
 def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=True):
     """
@@ -48,7 +46,7 @@ def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=
     for row in range(rows):
         for col in range(cols):
             sprite = get_sprite(sprite_sheet, posx + (col * 32), posy + (row * 32), 32, 32)
-            
+
             tab.extend([sprite] * chance)
             if rotation:
                 tab.extend([pygame.transform.rotate(sprite, 90)]  * chance)
@@ -58,18 +56,18 @@ def create_texture_with_rotation(posx, posy, cols=1, rows=1, chance=1, rotation=
     return tab
 
 def create_single_texture_by_coords(sheet,x, y, w, h):
-    
+
     texture = [get_sprite(sheet, x, y, w, h)]
-        
+
 
     return texture
-    
+
 
 
 texture_herbe = create_texture_basic(96, 0, 1)
 texture_sand = create_texture_basic(192, 0, 4)
 texture_wet_wand = create_texture_basic(384, 0 ,4)
-texture_forest = create_texture_basic(0, 0, 1) 
+texture_forest = create_texture_basic(0, 0, 1)
 
 texture_old_npc = create_texture_basic(0, 320, 1)
 
@@ -78,29 +76,28 @@ texture_plant = create_texture_basic(0, 64, 9)
 
 
 
-texture_player=[get_sprite(sprite_sheet_player, 0, 0, 32, 32),
-                get_sprite(sprite_sheet_player, 32, 0, 32, 32),
-                get_sprite(sprite_sheet_player, 0, 32, 32, 32),
-                get_sprite(sprite_sheet_player, 32, 32, 32, 32),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 0, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 0, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 0, 32, 32, 32), True, False),
-                pygame.transform.flip(get_sprite(sprite_sheet_player, 32, 32, 32, 32), True, False)
-                ]
+texture_player = [
+    get_sprite(sprite_sheet, 0,  320, 13, 35),
+    get_sprite(sprite_sheet, 15, 320, 17, 34),
+    get_sprite(sprite_sheet, 32, 320, 14, 36),
+    pygame.transform.flip(get_sprite(sprite_sheet, 0,  320, 13, 35), True, False),
+    pygame.transform.flip(get_sprite(sprite_sheet, 15, 320, 17, 34), True, False),
+    pygame.transform.flip(get_sprite(sprite_sheet, 32, 320, 14, 36), True, False),
+]
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
 
 
 texture_grotte = create_single_texture_by_coords(sprite_sheet_terrain,0, 143, 32, 32)
 
-texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16), 
+texture_chicken_base = [get_sprite(sprite_sheet, 0, 304, 16, 16), get_sprite(sprite_sheet, 0, 288, 16, 16), get_sprite(sprite_sheet, 16, 288, 16, 16),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 304, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 288, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 272, 16, 16), True, False)]
-
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 288, 16, 16), True, False)]
 
 texture_oeuf = [get_sprite(sprite_sheet, 16, 304, 16, 16)]
+
+texture_coeur = [get_sprite(sprite_sheet, 0, 944, 16, 16), get_sprite(sprite_sheet, 16, 944, 16, 16), get_sprite(sprite_sheet, 32, 944, 16, 16)]
 
 texture_chicken = []
 for t in texture_chicken_base:
@@ -109,11 +106,10 @@ for t in texture_chicken_base:
         int(t.get_height() * 1.5)
     )))
 
-texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16), 
+texture_chicken_corrupted_base = [get_sprite(sprite_sheet, 0, 240, 16, 16), get_sprite(sprite_sheet, 0, 224, 16, 16), get_sprite(sprite_sheet, 16, 224, 16, 16),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 240, 16, 16), True, False),
                    pygame.transform.flip(get_sprite(sprite_sheet, 0, 224, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False),
-                   pygame.transform.flip(get_sprite(sprite_sheet, 0, 256, 16, 16), True, False)]
+                   pygame.transform.flip(get_sprite(sprite_sheet, 16, 224, 16, 16), True, False)]
 
 texture_chicken_corrupted = []
 for t in texture_chicken_corrupted_base:
@@ -121,6 +117,8 @@ for t in texture_chicken_corrupted_base:
         int(t.get_width() * 1.5),
         int(t.get_height() * 1.5)
     )))
+
+texture_tree = [pygame.transform.scale(get_sprite(sprite_sheet, 0, 96, 32, 32), (64, 64))]
 
 texture_cow_base = create_texture_mirrored(32, 288, 3)
 texture_cow = []
@@ -133,7 +131,7 @@ for t in texture_cow_base:
 TILE_COLORS = {
     0: (0, 76, 153),      # ocean - ID 0 au lieu de "ocean"
     1: (237, 201, 120),   # sand
-    2: (100, 180, 80),  
+    2: (100, 180, 80),
     101: (237, 201, 120),
     3: (144, 238, 144),   # jungle - ID 3 au lieu de "jungle"
     4: (0, 100, 0),       # forest - ID 4 au lieu de "forest"
@@ -164,20 +162,10 @@ BLOCK_TEXTURE ={
     101: texture_wet_wand
 }
 
-texture_ocean = create_texture_basic(576, 0, 4)  
+texture_ocean = create_texture_basic(576, 0, 4)
 
 TILE_ANIMATED = {
     0: texture_ocean,   # ocean animé
-}
-
-
-BUILDING_TEXTURE = {
-    "domus": create_single_texture_by_coords(sprite_sheet_buildings,96, 96, 0, 0),
-    "villa": create_single_texture_by_coords(sprite_sheet_buildings,160, 160, 192,224),
-    "forum": create_single_texture_by_coords(sprite_sheet_buildings,256,256,0,832),
-    "stock": create_single_texture_by_coords(sprite_sheet_buildings,96,96,0,608),
-    "temple": create_single_texture_by_coords(sprite_sheet_buildings,160,160,(0+(random.randint(0,1)*160)),(1920+(random.randint(0,1)*160))),
-    "puteus": create_single_texture_by_coords(sprite_sheet_buildings,32,32,0,1633)
 }
 
 cliff_plain = create_texture_with_rotation(32,0, cols=1, rows=1, rotation=True)
