@@ -7,9 +7,11 @@ import texture
 class Npc(entity.Entity):
     def __init__(self, type, sprite, game_map, dialog_tab, altitude_map=None, x=1500, y=1500, tab_sound=None):
         super().__init__(sprite, game_map, altitude_map, x, y)
-        self.dialog_tab = dialog_tab
+        self.dialog_tab = dialog_tab or []
+        self.dialogue_index = 0
         self.type = type
         self.index_dialog = 0
+        self.toast = Npc_Dialog_Toast(dialog_tab[self.index_dialog])
         self.is_static = True
         self.range_action = 200
         self.close_to_player = False
@@ -21,7 +23,7 @@ class Npc(entity.Entity):
         self.hitbox = [pygame.Rect(self.x+8, self.y, sprite[0].get_width()//2, sprite[0].get_height())]
         self.has_hitbox = True
         self.in_dialog = False
-        self.toast = Npc_Dialog_Toast(dialog_tab[self.index_dialog])
+       
         self.has_talk_to_player = False
 
         self.tab_sound = tab_sound
@@ -55,6 +57,13 @@ class Npc(entity.Entity):
             self.toast.reset()
             self.in_dialog = False
             self.index_dialog = 0
+
+    def get_current_dialogue(self, game):
+        for d in self.dialog_tab:
+            if d["condition"](game):
+                return d["text"]
+        return "Je n'ai rien à dire."
+
 
     def update(self, actual_map, player, event, quest_manager):
         super().update(actual_map)
@@ -110,7 +119,7 @@ class Npc(entity.Entity):
 
 
 class Npc_Dialog_Toast():
-    def __init__(self, content, color="white", font_size=24,):
+    def __init__(self, content:str, color="white", font_size=24,):
         self.content = content
         self.color = color
         self.print_interval = 25

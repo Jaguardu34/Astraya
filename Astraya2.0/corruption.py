@@ -71,6 +71,10 @@ def generer_corruption(biome_map, nb_zones=5):
             break
 
     maps_donjon.append(create_inside_donjon_map())
+    if not f_origin_donjon_coords:
+        # on force un donjon à un endroit valide
+        f_origin_donjon_coords.append((1400, 1400))
+
     return biome_map, f_origin_donjon_coords, maps_donjon
 
 
@@ -167,7 +171,5 @@ def spawn_boss_in_dungeon(dungeon_map, dungeon_index, entity_grp, player, projec
     new_boss.projectile_grp = projectile_grp
 
     entity_grp.add(new_boss)
-
-    print(f"✔ Boss du donjon #{dungeon_index} spawné en ({cx}, {cy})")
 
     return new_boss
