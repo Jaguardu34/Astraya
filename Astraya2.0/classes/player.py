@@ -59,11 +59,27 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
                 self.anim_timer = now
                 base = self.texture_index - 3 if self.texture_index >= 3 else 0
                 self.texture_index = 3 + (base + 1) % 3
+        elif self.vy > 0.1:
+            self.last_orientation = "down"
+            if now - self.anim_timer >= self.anim_speed:
+                self.anim_timer = now
+                base = self.texture_index - 6 if self.texture_index >= 3 else 0
+                self.texture_index = 6 + (base + 1) % 3
+        elif self.vy < -0.1:
+            self.last_orientation = "down"
+            if now - self.anim_timer >= self.anim_speed:
+                self.anim_timer = now
+                base = self.texture_index - 9 if self.texture_index >= 3 else 0
+                self.texture_index = 9 + (base + 1) % 3
+        
         else:
             if self.last_orientation == "right":
                 self.texture_index = 0
-            else:
+            elif self.last_orientation == "left":
                 self.texture_index = 3
+            elif self.last_orientation == "down":
+                self.texture_index = 6
+            else : self.texture_index = 9
 
         def apply_deadzone(self, value, threshold=0.1):
             if abs(value) < threshold:
@@ -97,4 +113,8 @@ class Player(entity.Entity_That_Move_And_Has_Collision):
             self.last_orientation = "right"
         elif dx < -0.1:
             self.last_orientation = "left"
+        elif dy > 0.1:
+            self.last_orientation = "down"
+        elif dy < -0.1:
+            self.last_orientation = "up"
         self.move(dx * self.speed * dt, dy * self.speed * dt)

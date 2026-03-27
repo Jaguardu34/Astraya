@@ -93,6 +93,12 @@ texture_player = [
     pygame.transform.flip(get_sprite(sprite_sheet, 0,  320, 13, 35), True, False),
     pygame.transform.flip(get_sprite(sprite_sheet, 15, 320, 17, 34), True, False),
     pygame.transform.flip(get_sprite(sprite_sheet, 32, 320, 14, 36), True, False),
+    get_sprite(sprite_sheet, 51,  320, 14, 36),
+    get_sprite(sprite_sheet, 66, 320, 15, 36),
+    get_sprite(sprite_sheet, 83, 320, 13, 36),
+    get_sprite(sprite_sheet, 97,  320, 16, 36),
+    get_sprite(sprite_sheet, 113, 320, 15, 38),
+    get_sprite(sprite_sheet, 129, 320, 15, 38),
 ]
 
 texture_swipe_weapon = create_texture_basic(0, 896, 1)
