@@ -3,7 +3,6 @@ import pygame
 import random
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-print('dddddddd')
 print(BASE_DIR)
 PLAYER_PLACE_RANGE = 5
 #keys
@@ -89,8 +88,8 @@ BIOME_IDS = {
 COLLIDE_TILES = [0, 7,70,71, 10, 15]  # ocean, mountains, snow_peak, collide
 
 # textures
-TEXTURES_PATH = os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png')
-TEXTURE_MINIMAP_PATH = os.path.join('Astraya2.0', 'minimap.png')
+TEXTURES_PATH = os.path.join('sources' ,'assets', 'textures', 'astraya_textures_final.png')
+TEXTURE_MINIMAP_PATH = os.path.join('sources', 'minimap.png')
 
 
 

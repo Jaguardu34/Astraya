@@ -39,9 +39,8 @@ class IntroScreen:
         line_surface = self.big_font.render(self.current_line, True, "white")
         screen.blit(line_surface, (screen.get_width()//2 - line_surface.get_width()//2, y))
 
-        if self.line_done and self.index == len(self.text)-1:
-            small = self.font.render("Appuyez sur ESPACE", True, "gray")
-            screen.blit(small, (screen.get_width()//2 - small.get_width()//2, y + 150))
+        small = self.font.render("Appuyez sur ESPACE", True, "gray")
+        screen.blit(small, (screen.get_width()//2 - small.get_width()//2, y + 150))
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:

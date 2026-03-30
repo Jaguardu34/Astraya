@@ -95,7 +95,7 @@ class Game:
         pygame.joystick.init()
 
         # sound
-        sound_dir = "Astraya2.0/assets/sound"
+        sound_dir = "sources/assets/sound"
         self.playlist = [
             os.path.join(sound_dir, f)
             for f in os.listdir(sound_dir)

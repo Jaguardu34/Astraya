@@ -1,3 +1,5 @@
-python .\Astraya2.0\main.py
+pip install -r requirements.txt
+
+python .\sources\main.py
 
 pause

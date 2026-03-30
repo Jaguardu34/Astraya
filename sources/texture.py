@@ -6,7 +6,7 @@ import random
 
 
 sprite_sheet = pygame.image.load(TEXTURES_PATH)
-sprite_sheet_terrain = pygame.image.load(os.path.join('Astraya2.0' ,'assets', 'textures', 'astraya_textures_final.png'))
+sprite_sheet_terrain = pygame.image.load(os.path.join('sources' ,'assets', 'textures', 'astraya_textures_final.png'))
 
 
 def get_sprite(sheet, x, y, width, height):
@@ -66,7 +66,7 @@ def create_single_texture_by_coords(sheet,x, y, w, h):
 pygame.mixer.init()
 pygame.mixer.set_num_channels(16)
 
-sound_path = "Astraya2.0/assets/sound/"
+sound_path = "sources/assets/sound/"
 
 sound_chicken = pygame.mixer.Sound(sound_path+ "sound_disign/poule.mp3")
 sound_chicken.set_volume(0.1)

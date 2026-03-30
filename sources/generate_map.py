@@ -415,7 +415,7 @@ def map_generate():
     # GÉNÉRATION POUR LE JEU
     # ==============================================================================
 
-    WORLD_FILE = "Astraya2.0/assets/world_data.pkl"
+    WORLD_FILE = "sources/assets/world_data.pkl"
 
     loaded = load_world(WORLD_FILE)
 

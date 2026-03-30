@@ -4,8 +4,8 @@ from PIL import Image
 import os
 import texture
 
-minimap_path = "Astraya2.0/assets/minimap.png"
-world_path = "Astraya2.0/assets/world_data.pkl"
+minimap_path = "sources/assets/minimap.png"
+world_path = "sources/assets/world_data.pkl"
 
 def generate_minimap():
     if (not os.path.exists(minimap_path) or 
